@@ -1,0 +1,45 @@
+regions = ["br1", "kr", "euw1", "na1"]
+
+# Janela de partidas recentes por jogador e criterios de "mono".
+window_games = 60
+min_share = 0.50
+min_games = 25
+
+# Elo minimo a varrer; os tiers sao derivados na ordem
+# CHALLENGER, GRANDMASTER, MASTER, DIAMOND.
+min_tier = "MASTER"
+
+mastery_top_n = 7
+mastery_max_days = 30
+
+# Confronto: minimo de partidas e minimo por lado para o delta.
+matchup_min_games = 30
+delta_min_per_side = 15
+
+# Versao fixada do Data Dragon usada para confirmar champion_id.
+ddragon_version = "16.21.1"
+
+[[targets]]
+champion_id = 91
+champion_name = "Talon"
+role = "MIDDLE"
+
+[[targets]]
+champion_id = 79
+champion_name = "Gragas"
+role = "MIDDLE"
+
+[[targets]]
+champion_id = 79
+champion_name = "Gragas"
+role = "TOP"
+
+[[targets]]
+champion_id = 24
+champion_name = "Jax"
+role = "TOP"
+
+[[targets]]
+champion_id = 58
+champion_name = "Renekton"
+role = "TOP"
