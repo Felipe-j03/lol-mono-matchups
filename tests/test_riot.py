@@ -45,7 +45,7 @@ class FakeSend:
 def make(routes, platform="br1"):
     send = FakeSend(routes)
     limiter = FakeLimiter()
-    return RiotClient(KEY, platform, limiter, send), send, limiter
+    return RiotClient(platform, limiter, send), send, limiter
 
 
 def test_platform_to_regional_mapping():
@@ -89,16 +89,6 @@ def test_ladder_uses_platform_host_and_merges_tiers():
     assert puuids == ["A", "B", "C"]
 
 
-def test_ladder_master_follows_pages_until_empty():
-    base = LADDER + "entries/RANKED_SOLO_5x5/MASTER/I?page="
-    routes = {
-        base + "1": [FakeResponse(200, [{"puuid": "A"}, {"puuid": "B"}])],
-        base + "2": [FakeResponse(200, [{"puuid": "C"}])],
-        base + "3": [FakeResponse(200, [])],
-    }
-    client, send, _ = make(routes)
-    assert client.ladder_puuids(["MASTER"]) == ["A", "B", "C"]
-    assert len(send.urls) == 3
 
 
 def test_ladder_rejects_unknown_tier():
@@ -171,7 +161,7 @@ def test_every_send_is_preceded_by_acquire():
         order.append("send")
         return FakeResponse(200, {})
 
-    RiotClient(KEY, "br1", Lim(), send).match("X")
+    RiotClient("br1", Lim(), send).match("X")
     assert order == ["acquire", "send"]
 
 
@@ -225,10 +215,64 @@ def test_transport_exception_is_wrapped_without_leaking():
     def send(url):
         raise RuntimeError(f"boom {url} header X-Riot-Token={KEY}")
 
-    client = RiotClient(KEY, "br1", FakeLimiter(), send)
+    client = RiotClient("br1", FakeLimiter(), send)
     with pytest.raises(RiotError) as info:
         client.match("BR1_1")
     assert KEY not in str(info.value)
     assert "riotgames.com" not in str(info.value)
     assert info.value.__cause__ is None
     assert info.value.__suppress_context__ is True
+
+
+@pytest.mark.parametrize(
+    "tier,path",
+    [
+        ("CHALLENGER", "challengerleagues"),
+        ("GRANDMASTER", "grandmasterleagues"),
+        ("MASTER", "masterleagues"),
+    ],
+)
+def test_apex_tier_uses_dedicated_unpaginated_platform_url(tier, path):
+    url = f"https://br1.api.riotgames.com/lol/league/v4/{path}/by-queue/RANKED_SOLO_5x5"
+    client, send, _ = make({url: [FakeResponse(200, {"entries": [{"puuid": "A"}]})]})
+    assert client.ladder_puuids([tier]) == ["A"]
+    assert send.urls == [url]
+
+
+def test_diamond_walks_four_divisions_and_stops_on_empty_page():
+    base = LADDER + "entries/RANKED_SOLO_5x5/DIAMOND/"
+    routes = {
+        base + "I?page=1": [FakeResponse(200, [{"puuid": "A"}])],
+        base + "I?page=2": [FakeResponse(200, [{"puuid": "B"}])],
+        base + "I?page=3": [FakeResponse(200, [])],
+        base + "II?page=1": [FakeResponse(200, [{"puuid": "C"}])],
+        base + "II?page=2": [FakeResponse(200, [])],
+        base + "III?page=1": [FakeResponse(200, [])],
+        base + "IV?page=1": [FakeResponse(200, [{"puuid": "A"}, {"puuid": "D"}])],
+        base + "IV?page=2": [FakeResponse(200, [])],
+    }
+    client, send, _ = make(routes)
+    assert client.ladder_puuids(["DIAMOND"]) == ["A", "B", "C", "D"]
+    assert len(send.urls) == 8
+
+
+def test_missing_puuid_raises_naming_the_field():
+    url = LADDER + "challengerleagues/by-queue/RANKED_SOLO_5x5"
+    client, _, _ = make({url: [FakeResponse(200, {"entries": [{"summonerId": "x"}]})]})
+    with pytest.raises(RiotError, match="puuid"):
+        client.ladder_puuids(["CHALLENGER"])
+
+
+def test_tier_with_zero_entries_raises():
+    url = LADDER + "masterleagues/by-queue/RANKED_SOLO_5x5"
+    client, _, _ = make({url: [FakeResponse(200, {"entries": []})]})
+    with pytest.raises(RiotError, match="MASTER"):
+        client.ladder_puuids(["MASTER"])
+
+
+def test_diamond_with_no_entries_in_any_division_raises():
+    client, _, _ = make(
+        {LADDER + f"entries/RANKED_SOLO_5x5/DIAMOND/{d}?page=1": [FakeResponse(200, [])] for d in ("I", "II", "III", "IV")}
+    )
+    with pytest.raises(RiotError, match="DIAMOND"):
+        client.ladder_puuids(["DIAMOND"])

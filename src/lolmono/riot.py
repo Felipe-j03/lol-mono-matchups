@@ -22,7 +22,9 @@ DEFAULT_RETRY_AFTER = 1.0
 _LEAGUE_TIERS = {
     "CHALLENGER": "challengerleagues",
     "GRANDMASTER": "grandmasterleagues",
+    "MASTER": "masterleagues",
 }
+_DIVISIONS = ("I", "II", "III", "IV")
 
 
 class RiotError(Exception):
@@ -57,13 +59,10 @@ def _retry_after(response: HttpResponse) -> float:
 class RiotClient:
     def __init__(
         self,
-        api_key: str,
         platform: str,
         limiter,
         send: Callable[[str], HttpResponse],
     ) -> None:
-        # A chave pertence ao transporte (send); o cliente nunca a guarda.
-        del api_key
         self._platform_host = f"https://{platform}.api.riotgames.com"
         self._regional_host = f"https://{PLATFORM_TO_REGIONAL[platform]}.api.riotgames.com"
         self._limiter = limiter
@@ -97,18 +96,32 @@ class RiotClient:
     def _tier_puuids(self, tier: str) -> list[str]:
         base = f"{self._platform_host}/lol/league/v4"
         if tier in _LEAGUE_TIERS:
+            # Apex: uma liga unica, sem paginacao.
             body = self._get(f"{base}/{_LEAGUE_TIERS[tier]}/by-queue/{QUEUE}")
-            return [entry["puuid"] for entry in body["entries"]]
-        if tier == "MASTER":
-            puuids: list[str] = []
-            page = 1
-            while True:
-                entries = self._get(f"{base}/entries/{QUEUE}/MASTER/I?page={page}")
-                if not entries:
-                    return puuids
-                puuids.extend(entry["puuid"] for entry in entries)
-                page += 1
-        raise ValueError(f"unsupported tier: {tier}")
+            entries = body["entries"]
+        elif tier == "DIAMOND":
+            entries = []
+            for division in _DIVISIONS:
+                page = 1
+                while True:
+                    batch = self._get(f"{base}/entries/{QUEUE}/DIAMOND/{division}?page={page}")
+                    if not batch:
+                        break
+                    entries.extend(batch)
+                    page += 1
+        else:
+            raise ValueError(f"unsupported tier: {tier}")
+        puuids = [self._entry_puuid(entry, tier) for entry in entries]
+        if not puuids:
+            raise RiotError(f"tier {tier} returned no entries (schema or endpoint changed?)")
+        return puuids
+
+    @staticmethod
+    def _entry_puuid(entry: dict, tier: str) -> str:
+        try:
+            return entry["puuid"]
+        except KeyError:
+            raise RiotError(f"ladder entry in tier {tier} is missing field 'puuid'") from None
 
     def top_masteries(self, puuid: str, count: int) -> list[Mastery]:
         url = (
