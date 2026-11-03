@@ -243,3 +243,77 @@ def test_commit_persists_across_connections(tmp_path):
     assert second.pending_candidates("br1") == ["A"]
     second.close()
     first.close()
+
+
+def test_confirmed_player_count_excludes_players_without_stored_matches(db):
+    db.insert_match(make_row(match_id="BR1_1", puuid="P1"))
+    db.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    db.confirm_player("br1", "P2", "B#BR1", 79, "TOP", 30, 0.6)  # no matches
+    assert db.confirmed_player_count(79, "TOP") == 1
+
+
+def test_record_discard_twice_counts_once(db):
+    db.record_discard("BR1_1", "unpaired_lanes")
+    db.record_discard("BR1_1", "unpaired_lanes")
+    assert db.discard_counts() == {"unpaired_lanes": 1}
+
+
+def test_batch_commits_on_clean_exit(tmp_path):
+    path = tmp_path / "b.db"
+    first = Database(path)
+    first.init_schema()
+    with first.batch():
+        first.add_candidates("br1", ["A"])
+    second = Database(path)
+    assert second.pending_candidates("br1") == ["A"]
+    second.close()
+    first.close()
+
+
+def test_batch_does_not_commit_or_swallow_on_exception(tmp_path):
+    path = tmp_path / "b.db"
+    first = Database(path)
+    first.init_schema()
+    first.commit()
+    with pytest.raises(RuntimeError):
+        with first.batch():
+            first.add_candidates("br1", ["A"])
+            raise RuntimeError("boom")
+    second = Database(path)
+    assert second.pending_candidates("br1") == []
+    second.close()
+    first._conn.close()  # close() would commit; skip it
+
+
+def test_reconfirming_for_another_pair_keeps_one_row(db):
+    top = make_row(match_id="BR1_1", champion_id=79, role="TOP")
+    mid = make_row(match_id="BR1_2", champion_id=79, role="MIDDLE")
+    db.insert_match(top)
+    db.insert_match(mid)
+    db.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    db.confirm_player("br1", "P1", "A#BR1", 79, "MIDDLE", 25, 0.5)
+    n = db._conn.execute("SELECT COUNT(*) FROM player").fetchone()[0]
+    assert n == 1
+    assert db.confirmed_matches(79, "TOP") == []
+    assert db.confirmed_matches(79, "MIDDLE") == [mid]
+    assert db.confirmed_player_count(79, "TOP") == 0
+    assert db.confirmed_player_count(79, "MIDDLE") == 1
+
+
+def test_last_verdict_wins_reject_then_confirm(db):
+    row = make_row()
+    db.insert_match(row)
+    db.reject_player("br1", "P1")
+    db.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    assert db.confirmed_matches(79, "TOP") == [row]
+    db.reject_player("br1", "P1")
+    assert db.confirmed_matches(79, "TOP") == []
+
+
+def test_timelines_for_crosses_chunk_boundary(db):
+    ids = [f"BR1_{i}" for i in range(1203)]
+    for mid in ids:
+        db.insert_timeline(make_timeline(mid, "P1"))
+    result = db.timelines_for(ids)
+    assert len(result) == 1203
+    assert result[("BR1_1202", "P1")].match_id == "BR1_1202"

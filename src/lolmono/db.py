@@ -6,6 +6,8 @@ so an interruption loses at most the current batch.
 
 import json
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from lolmono.rows import MatchRow, PlayerRow, RunePage, TimelineRow
@@ -57,7 +59,8 @@ CREATE TABLE IF NOT EXISTS timeline (
 );
 CREATE TABLE IF NOT EXISTS discard (
     match_id TEXT NOT NULL,
-    reason TEXT NOT NULL
+    reason TEXT NOT NULL,
+    PRIMARY KEY (match_id, reason)
 );
 """
 
@@ -117,6 +120,12 @@ class Database:
 
     def commit(self) -> None:
         self._conn.commit()
+
+    @contextmanager
+    def batch(self) -> Iterator[None]:
+        """Commit on clean exit; on an exception, propagate without committing."""
+        yield
+        self.commit()
 
     def close(self) -> None:
         self._conn.commit()
@@ -243,7 +252,7 @@ class Database:
 
     def record_discard(self, match_id: str, reason: str) -> None:
         self._conn.execute(
-            "INSERT INTO discard (match_id, reason) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO discard (match_id, reason) VALUES (?, ?)",
             (match_id, reason),
         )
 
@@ -306,8 +315,8 @@ class Database:
 
     def confirmed_player_count(self, champion_id: int, role: str) -> int:
         return self._conn.execute(
-            "SELECT COUNT(*) FROM player WHERE confirmed = 1 "
-            "AND champion_id = ? AND role = ?",
+            "SELECT COUNT(DISTINCT m.platform || char(0) || m.puuid) "
+            + _CONFIRMED_JOIN,
             (champion_id, role),
         ).fetchone()[0]
 
