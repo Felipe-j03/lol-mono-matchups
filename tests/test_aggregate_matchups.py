@@ -5,7 +5,7 @@ import pytest
 from lolmono.aggregate import MatchupSummary, rank_matchups
 from lolmono.rows import MatchRow, RunePage
 
-EKKO, SYLAS, AHRI, ZED, YONE = 245, 517, 103, 238, 777
+EKKO, SYLAS, AHRI, ZED, YONE, LUX = 245, 517, 103, 238, 777, 99
 
 PAGE = RunePage(
     keystone=8437,
@@ -46,39 +46,52 @@ def by_opponent(ranked):
 
 
 def mixed_rows():
-    """Ekko 40g 30%, Sylas 35g 60%, Ahri 10g 100%, Zed 5g 0%."""
+    """Built so every plausible wrong sort key gives a different order.
+
+    Reliable (floor 30): Ekko 40g 30% (12 wins), Sylas 50g 60% (30 wins),
+    Yone 30g 67% (20 wins).
+      win rate asc  -> Ekko, Sylas, Yone   (the rule)
+      games desc    -> Sylas, Ekko, Yone
+      games asc     -> Yone, Ekko, Sylas
+      wins asc      -> Ekko, Yone, Sylas
+      win rate desc -> Yone, Sylas, Ekko
+    Thin: Zed 10g 100%, Ahri 5g 0%. The one with more games also has the
+    higher win rate, so games desc -> Zed, Ahri but win rate asc -> Ahri, Zed.
+    """
     return (
-        games_vs(SYLAS, wins=21, losses=14)
-        + games_vs(AHRI, wins=10, losses=0)
+        games_vs(SYLAS, wins=30, losses=20)
+        + games_vs(ZED, wins=10, losses=0)
         + games_vs(EKKO, wins=12, losses=28)
-        + games_vs(ZED, wins=0, losses=5)
+        + games_vs(AHRI, wins=0, losses=5)
+        + games_vs(YONE, wins=20, losses=10)
     )
 
 
 def test_matchups_sorted_worst_first():
     ranked = rank_matchups(mixed_rows(), min_games=30)
-    assert [m.opponent_champion_id for m in ranked][:2] == [EKKO, SYLAS]
+    assert [m.opponent_champion_id for m in ranked][:3] == [EKKO, SYLAS, YONE]
     assert ranked[0].win_rate == pytest.approx(0.30)
     assert ranked[1].win_rate == pytest.approx(0.60)
+    assert ranked[2].win_rate == pytest.approx(2 / 3)
 
 
 def test_matchups_below_floor_are_flagged_and_sorted_last():
     ranked = rank_matchups(mixed_rows(), min_games=30)
     assert ranked[-1].below_floor is True
-    assert all(not m.below_floor for m in ranked[:2])
-    assert all(m.below_floor for m in ranked[2:])
+    assert all(not m.below_floor for m in ranked[:3])
+    assert all(m.below_floor for m in ranked[3:])
 
 
 def test_below_floor_matchups_are_not_mixed_in_by_win_rate():
-    # Zed is 0% and would be "worst" if sorted with the others
+    # Ahri is 0% and would be "worst" if sorted with the others
     ranked = rank_matchups(mixed_rows(), min_games=30)
-    assert [m.opponent_champion_id for m in ranked].index(ZED) > 1
+    assert [m.opponent_champion_id for m in ranked].index(AHRI) > 2
 
 
 def test_below_floor_matchups_are_ordered_by_games_descending():
     ranked = rank_matchups(mixed_rows(), min_games=30)
-    # Ahri 10 games at 100% precedes Zed 5 games at 0%: not by win rate
-    assert [m.opponent_champion_id for m in ranked] == [EKKO, SYLAS, AHRI, ZED]
+    # Zed 10 games at 100% precedes Ahri 5 games at 0%: not by win rate asc
+    assert [m.opponent_champion_id for m in ranked] == [EKKO, SYLAS, YONE, ZED, AHRI]
 
 
 def test_floor_is_inclusive_games_equal_to_min_are_not_below():
@@ -99,9 +112,10 @@ def test_floor_is_a_parameter_not_a_constant():
 def test_counts_games_and_wins_per_opponent():
     ranked = by_opponent(rank_matchups(mixed_rows(), min_games=30))
     assert (ranked[EKKO].games, ranked[EKKO].wins) == (40, 12)
-    assert (ranked[SYLAS].games, ranked[SYLAS].wins) == (35, 21)
-    assert (ranked[AHRI].games, ranked[AHRI].wins) == (10, 10)
-    assert (ranked[ZED].games, ranked[ZED].wins) == (5, 0)
+    assert (ranked[SYLAS].games, ranked[SYLAS].wins) == (50, 30)
+    assert (ranked[YONE].games, ranked[YONE].wins) == (30, 20)
+    assert (ranked[ZED].games, ranked[ZED].wins) == (10, 10)
+    assert (ranked[AHRI].games, ranked[AHRI].wins) == (5, 0)
 
 
 def test_matchup_with_zero_wins_does_not_raise():
@@ -114,7 +128,7 @@ def test_matchup_with_zero_wins_does_not_raise():
 def test_matchup_with_zero_games_is_absent_not_zero():
     ranked = rank_matchups(mixed_rows(), min_games=1)
     assert all(m.games > 0 for m in ranked)
-    assert YONE not in {m.opponent_champion_id for m in ranked}
+    assert LUX not in {m.opponent_champion_id for m in ranked}
 
 
 def test_no_rows_gives_empty_ranking():

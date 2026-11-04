@@ -1,4 +1,5 @@
 import dataclasses
+from collections import Counter
 
 import pytest
 
@@ -154,22 +155,41 @@ def test_build_is_aggregated_item_by_item_in_descending_count():
     }
 
 
+def _first_seen_order(rows):
+    """Items in the order a Counter over the rows would first see them."""
+    return list(Counter(item for row in rows for item in dict.fromkeys(row.items)))
+
+
 def test_item_frequency_ties_break_by_item_id_ascending():
-    # Inputs deliberately list the higher ids first so that insertion order
-    # (the Counter default for ties) would give the wrong answer.
+    # One item per game, so the order in which a Counter first sees the items
+    # is exactly the row order and does not depend on set iteration. That
+    # order (3500, 3100, 3300, 3400, 3200) differs from the expected one, so
+    # dropping the tie-break gives the wrong answer.
+    rows = [
+        make_row(n, items=(item,))
+        for n, item in enumerate((3500, 3500, 3100, 3100, 3300, 3300, 3400, 3200))
+    ]
+    expected = ((3100, 2), (3300, 2), (3500, 2), (3200, 1), (3400, 1))
+    assert _first_seen_order(rows) != [item for item, _ in expected]
+    assert base_of(rows).item_frequency == expected
+
+
+def test_item_frequency_tie_break_also_holds_within_multi_item_builds():
     rows = [
         make_row(1, items=(3500, 3100, 3300)),
         make_row(2, items=(3500, 3100, 3300)),
         make_row(3, items=(3400, 3200)),
     ]
-    base = base_of(rows)
-    assert base.item_frequency == (
-        (3100, 2),
-        (3300, 2),
-        (3500, 2),
-        (3200, 1),
-        (3400, 1),
-    )
+    expected = ((3100, 2), (3300, 2), (3500, 2), (3200, 1), (3400, 1))
+    # Precondition that makes this test able to fail without a tie-break: count
+    # the way the implementation does (one set per game, whose iteration order
+    # for small ints is an accident of hashing) and stable-sort by count alone.
+    # If that ever happens to equal the expected order, this assert says so
+    # instead of letting the test silently stop testing anything.
+    counts = Counter(item for row in rows for item in set(row.items))
+    untied = sorted(counts.items(), key=lambda pair: -pair[1])
+    assert tuple(untied) != expected
+    assert base_of(rows).item_frequency == expected
 
 
 def test_item_frequency_counts_games_not_copies():
