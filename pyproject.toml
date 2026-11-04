@@ -1,0 +1,21 @@
+[build-system]
+# Without this table `pip install -e .` has no backend to call, so the package
+# is never installed and every documented `python -m lolmono ...` command fails
+# with "No module named lolmono".
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lolmono"
+version = "0.1.0"
+requires-python = ">=3.11"
+# Pinned: the collector runs for hours against a third-party API, and a silent
+# httpx major bump is not something to discover at 3am.
+dependencies = ["httpx>=0.27,<1.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

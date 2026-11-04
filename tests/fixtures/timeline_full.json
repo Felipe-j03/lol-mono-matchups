@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "matchId": "BR1_1001",
+    "participants": ["P1", "P2", "ME", "P4", "P5", "P6", "P7", "THEM", "P9", "P10"]
+  },
+  "info": {
+    "frameInterval": 60000,
+    "frames": [
+      {"timestamp": 0, "participantFrames": {}, "events": [
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 3, "itemId": 1055},
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 3, "itemId": 2003},
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 3, "itemId": 2003},
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 8, "itemId": 1056},
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 1, "itemId": 1054}
+      ]},
+      {"timestamp": 60000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 20000, "participantId": 3, "skillSlot": 1, "levelUpType": "NORMAL"},
+        {"type": "SKILL_LEVEL_UP", "timestamp": 21000, "participantId": 8, "skillSlot": 2, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 120000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 100000, "participantId": 3, "skillSlot": 3, "levelUpType": "NORMAL"},
+        {"type": "SKILL_LEVEL_UP", "timestamp": 101000, "participantId": 8, "skillSlot": 1, "levelUpType": "NORMAL"},
+        {"type": "SKILL_LEVEL_UP", "timestamp": 102000, "participantId": 8, "skillSlot": 3, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 180000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 150000, "participantId": 3, "skillSlot": 2, "levelUpType": "EVOLVE"},
+        {"type": "ITEM_SOLD", "timestamp": 160000, "participantId": 3, "itemId": 2003},
+        {"type": "ITEM_SOLD", "timestamp": 161000, "participantId": 3, "itemId": 2003},
+        {"type": "ITEM_SOLD", "timestamp": 162000, "participantId": 8, "itemId": 1055},
+        {"type": "SKILL_LEVEL_UP", "timestamp": 170000, "participantId": 3, "skillSlot": 1, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 240000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 230000, "participantId": 3, "skillSlot": 2, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 300000, "participantFrames": {}, "events": [
+        {"type": "CHAMPION_KILL", "timestamp": 250000, "killerId": 3, "victimId": 8, "assistingParticipantIds": []}
+      ]},
+      {"timestamp": 360000, "participantFrames": {}, "events": [
+        {"type": "CHAMPION_KILL", "timestamp": 330000, "killerId": 8, "victimId": 3, "assistingParticipantIds": []}
+      ]},
+      {"timestamp": 420000, "participantFrames": {}, "events": [
+        {"type": "ITEM_PURCHASED", "timestamp": 400000, "participantId": 3, "itemId": 3134},
+        {"type": "ITEM_PURCHASED", "timestamp": 401000, "participantId": 8, "itemId": 3134}
+      ]},
+      {"timestamp": 480000, "participantFrames": {}, "events": [
+        {"type": "CHAMPION_KILL", "timestamp": 450000, "killerId": 1, "victimId": 3, "assistingParticipantIds": [2]}
+      ]},
+      {"timestamp": 540000, "participantFrames": {}, "events": [
+        {"type": "ITEM_PURCHASED", "timestamp": 500000, "participantId": 3, "itemId": 1038},
+        {"type": "ITEM_UNDO", "timestamp": 500500, "participantId": 3, "beforeId": 1038, "afterId": 0},
+        {"type": "ITEM_UNDO", "timestamp": 501000, "participantId": 3, "beforeId": 7777, "afterId": 0},
+        {"type": "CHAMPION_KILL", "timestamp": 520000, "killerId": 1, "victimId": 8, "assistingParticipantIds": [3]}
+      ]},
+      {"timestamp": 600000, "participantFrames": {}, "events": [
+        {"type": "CHAMPION_KILL", "timestamp": 600000, "killerId": 3, "victimId": 8, "assistingParticipantIds": []}
+      ]},
+      {"timestamp": 660000, "participantFrames": {}, "events": []},
+      {"timestamp": 720000, "participantFrames": {}, "events": [
+        {"type": "CHAMPION_KILL", "timestamp": 700000, "killerId": 3, "victimId": 8, "assistingParticipantIds": []}
+      ]},
+      {"timestamp": 780000, "participantFrames": {
+        "1": {"totalGold": 4000, "minionsKilled": 99, "jungleMinionsKilled": 99},
+        "3": {"totalGold": 4800, "minionsKilled": 120, "jungleMinionsKilled": 12},
+        "8": {"totalGold": 4600, "minionsKilled": 115, "jungleMinionsKilled": 8}
+      }, "events": []},
+      {"timestamp": 840000, "participantFrames": {
+        "1": {"totalGold": 4300, "minionsKilled": 99, "jungleMinionsKilled": 99},
+        "3": {"totalGold": 5200, "minionsKilled": 130, "jungleMinionsKilled": 12},
+        "8": {"totalGold": 4900, "minionsKilled": 122, "jungleMinionsKilled": 8}
+      }, "events": []},
+      {"timestamp": 900000, "participantFrames": {
+        "1": {"totalGold": 4600, "minionsKilled": 99, "jungleMinionsKilled": 99},
+        "3": {"totalGold": 5900, "minionsKilled": 140, "jungleMinionsKilled": 12},
+        "8": {"totalGold": 5200, "minionsKilled": 130, "jungleMinionsKilled": 8}
+      }, "events": [
+        {"type": "ITEM_PURCHASED", "timestamp": 870000, "participantId": 3, "itemId": 6692}
+      ]}
+    ]
+  }
+}

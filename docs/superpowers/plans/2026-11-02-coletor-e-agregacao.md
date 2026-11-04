@@ -257,7 +257,7 @@ git commit -m "feat: cliente da API da Riot com roteamento duplo e retry em 429"
 - Consumes: nada.
 - Produces: em `rows.py`, congelados: `RunePage(keystone: int, primary_style: int, primary_perks: tuple[int, ...], secondary_style: int, secondary_perks: tuple[int, ...], shards: tuple[int, int, int])`; `MatchRow(match_id: str, platform: str, puuid: str, champion_id: int, role: str, opponent_champion_id: int, opponent_puuid: str, win: bool, items: tuple[int, ...], runes: RunePage, spells: tuple[int, int])`; `TimelineRow(match_id: str, puuid: str, gold_at_14: int | None, cs_diff_at_14: int | None, starting_items: tuple[int, ...], item_order: tuple[int, ...], skill_order: tuple[int, int, int], deaths_before_10: int, kills_before_10: int)`.
 
-Em `db.py`, `Database(path: Path)` com: `init_schema()`, `add_candidates(platform, puuids)`, `pending_candidates(platform) -> list[str]`, `mark_screened(platform, puuid, suspect: bool)`, `pending_suspects(platform) -> list[str]`, `confirm_player(platform, puuid, riot_id, champion_id, role, games, share)`, `reject_player(platform, puuid)`, `insert_match(row: MatchRow)`, `match_exists(match_id, puuid) -> bool`, `record_discard(match_id, reason)`, `discard_counts() -> dict[str, int]`, `insert_timeline(row: TimelineRow)`, `matches_awaiting_timeline() -> list[tuple[str, str, str]]`, `confirmed_matches(champion_id, role) -> list[MatchRow]`, `timelines_for(match_ids) -> dict[tuple[str, str], TimelineRow]`, `confirmed_player_count(champion_id, role) -> int`, `confirmed_group_win_rate(champion_id, role) -> float`, `confirmed_players(champion_id, role) -> list[PlayerRow]`.
+Em `db.py`, `Database(path: Path)` com: `init_schema()`, `add_candidates(platform, puuids)`, `pending_candidates(platform) -> list[str]`, `mark_screened(platform, puuid, suspect: bool)`, `pending_suspects(platform) -> list[str]`, `confirm_player(platform, puuid, riot_id, champion_id, role, games, share)`, `reject_player(platform, puuid)`, `insert_match(row: MatchRow)`, `match_exists(match_id, puuid) -> bool`, `record_discard(match_id, reason)`, `discard_counts() -> dict[str, int]`, `insert_timeline(row: TimelineRow)`, `matches_awaiting_timeline() -> list[tuple[str, str, str]]`, `confirmed_matches(champion_id, role) -> list[MatchRow]`, `timelines_for(match_ids) -> dict[tuple[str, str], TimelineRow]`, `confirmed_player_count(champion_id, role) -> int`, `confirmed_group_win_rate(champion_id, role) -> float`, `confirmed_players(champion_id, role) -> list[PlayerRow]`, `table_names() -> list[str]`.
 
 `PlayerRow(platform: str, puuid: str, riot_id: str, champion_id: int, role: str, games: int, share: float, win_rate: float)` congelado, em `rows.py`. É a lista de referência que a Tela 2 da spec mostra; `puuid` não é exportado, só `riot_id` e `platform`.
 
@@ -266,6 +266,8 @@ Em `db.py`, `Database(path: Path)` com: `init_schema()`, `add_candidates(platfor
 ```python
 def test_init_schema_is_idempotent():
     db.init_schema(); db.init_schema()
+    tables = db.table_names()
+    assert {"candidate", "player", "match", "timeline", "discard"} <= set(tables)
 
 def test_candidate_lifecycle_tracks_progress():
     db.add_candidates("br1", ["A", "B"])
@@ -622,9 +624,10 @@ def test_rejects_high_share_with_too_few_absolute_games():
     rows = [talon_mid()] * 8 + [other()] * 4      # 67%, mas 8 partidas
     assert qualify(rows, targets, 60, 0.50, 25) is None
 
-def test_rejects_many_games_with_low_share():
-    rows = [talon_mid()] * 30 + [other()] * 270
-    assert qualify(rows[:60], targets, 60, 0.50, 25) is None
+def test_rejects_enough_absolute_games_with_low_share():
+    # 25 na janela de 60 satisfaz o minimo absoluto, mas 0.4167 < 0.50
+    rows = [talon_mid()] * 25 + [other()] * 35
+    assert qualify(rows, targets, 60, 0.50, 25) is None
 
 def test_same_champion_in_two_roles_counts_separately():
     rows = [gragas_top()] * 26 + [gragas_mid()] * 26
