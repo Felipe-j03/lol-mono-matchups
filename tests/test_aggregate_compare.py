@@ -188,12 +188,37 @@ def test_runes_are_compared_perk_by_perk_not_as_whole_pages():
     assert runes["8316"].loser_share == pytest.approx(0.5)
 
 
-def test_headline_names_the_largest_divergence():
+def test_headline_is_empty_when_there_is_a_divergence_and_nothing_was_skipped():
+    rows = diverging_rows()
+    detail = compare_matchup(rows, timelines_for(rows), EKKO, min_per_side=15)
+    assert detail.divergences  # the site words the largest one from divergences[0]
+    assert detail.headline is None
+
+
+def test_headline_never_names_a_choice_or_a_number():
+    # Divergences exist, but without timelines two fields could not be compared.
     detail = compare_matchup(diverging_rows(), {}, EKKO, min_per_side=15)
-    top = detail.divergences[0]
-    assert top.field == "boots"
-    assert str(top.label) in detail.headline
-    assert "80%" in detail.headline or "20%" in detail.headline
+    assert detail.divergences
+    assert detail.headline == (
+        "Sem partidas suficientes com timeline para comparar: "
+        "itens iniciais e ordem de habilidades."
+    )
+    assert not any(ch.isdigit() for ch in detail.headline)
+    assert not any(d.label in detail.headline for d in detail.divergences)
+    assert "%" not in detail.headline
+
+
+def test_headline_names_only_the_fields_that_were_skipped():
+    rows = diverging_rows()
+    timelines = timelines_for(rows)
+    for r in rows:  # every game has a starting build but none has a skill order
+        timelines[(r.match_id, r.puuid)] = dataclasses.replace(
+            timelines[(r.match_id, r.puuid)], skill_order=None
+        )
+    detail = compare_matchup(rows, timelines, EKKO, min_per_side=15)
+    assert detail.headline == (
+        "Sem partidas suficientes com timeline para comparar: ordem de habilidades."
+    )
 
 
 def test_identical_groups_produce_no_divergence_and_say_so():
@@ -219,6 +244,39 @@ def test_gap_just_above_the_threshold_is_a_divergence():
     detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
     assert {d.label for d in detail.divergences} == {str(SERAPHINE), str(STEELCAPS)}
     assert all(d.gap == pytest.approx(0.2) for d in detail.divergences)
+
+
+def test_the_threshold_is_fifteen_points():
+    assert MIN_GAP == 0.15  # the load-bearing number, pinned apart from the probes
+
+
+@pytest.mark.parametrize(
+    "per_side, winners_with_sorcerers, losers_with_sorcerers",
+    [
+        (30, 20, 15),  # 0.667 vs 0.500: a gap of 0.167
+        (45, 25, 18),  # 0.556 vs 0.400: a gap of 0.156
+    ],
+)
+def test_gaps_just_above_the_threshold_are_divergences(
+    per_side, winners_with_sorcerers, losers_with_sorcerers
+):
+    # Probes between 0.15 and 0.2: any threshold from 0.16 up would hide them.
+    wins = group(
+        True,
+        (winners_with_sorcerers, {"boots": SERAPHINE}),
+        (per_side - winners_with_sorcerers, {"boots": STEELCAPS}),
+    )
+    losses = group(
+        False,
+        (losers_with_sorcerers, {"boots": SERAPHINE}),
+        (per_side - losers_with_sorcerers, {"boots": STEELCAPS}),
+    )
+    detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
+    expected = (winners_with_sorcerers - losers_with_sorcerers) / per_side
+    assert 0.15 < expected < 0.17
+    found = {d.label: d for d in detail.divergences}
+    assert set(found) == {str(SERAPHINE), str(STEELCAPS)}
+    assert found[str(SERAPHINE)].gap == pytest.approx(expected)
 
 
 def test_input_order_does_not_change_the_result():

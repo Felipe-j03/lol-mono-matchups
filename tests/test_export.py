@@ -195,7 +195,10 @@ def test_matchup_file_carries_the_comparison(db, cfg, tmp_path):
     assert [d["gap"] for d in detail["divergences"]] == sorted(
         (d["gap"] for d in detail["divergences"]), reverse=True
     )
-    assert detail["headline"]
+    # The fixture diverges and every field was compared: the site words the
+    # largest difference itself from divergences[0], so there is no headline.
+    assert detail["headline"] is None
+    assert detail["divergences"][0]["field"] == "boots"
 
 
 def test_exports_reference_player_list_with_name_and_region(db, cfg, tmp_path):

@@ -52,12 +52,6 @@ BOOT_ITEM_IDS = frozenset(
 )
 
 _SKILL_KEYS = {1: "Q", 2: "W", 3: "E", 4: "R"}
-_FIELD_NAMES = {
-    "boots": "botas",
-    "rune": "runa",
-    "starting_items": "item inicial",
-    "skill_order": "ordem de habilidades",
-}
 
 
 @dataclass(frozen=True)
@@ -214,9 +208,11 @@ class MatchupDetail:
     wins: int
     losses: int
     comparable: bool
-    divergences: tuple[Divergence, ...]
+    divergences: tuple[Divergence, ...]  # largest gap first; the site words it
     winner_gold_at_14: float | None
     loser_gold_at_14: float | None
+    # Free text, never names a choice. None when there is nothing to add to the
+    # divergences: not comparable, or divergences exist and every field was compared.
     headline: str | None
     # Games each timeline-derived figure rests on, per side (distinct from
     # wins/losses: a game without a usable timeline does not count here).
@@ -341,11 +337,11 @@ def compare_matchup(
     )
 
     gold_ok = len(golds_w) >= floor and len(golds_l) >= floor
-    skipped_timeline_field = False
+    not_compared: list[str] = []
     if len(starts_w) >= floor and len(starts_l) >= floor:
         found += _divergences("starting_items", starts_w, starts_l, str)
     else:
-        skipped_timeline_field = True
+        not_compared.append("itens iniciais")
     if len(skills_w) >= floor and len(skills_l) >= floor:
         found += _divergences(
             "skill_order",
@@ -354,27 +350,29 @@ def compare_matchup(
             _skill_label,
         )
     else:
-        skipped_timeline_field = True
+        not_compared.append("ordem de habilidades")
 
     found.sort(key=lambda d: (-d.gap, d.field, d.label))
 
-    if found:
-        top = found[0]
-        headline = (
-            f"Maior diferença: {_FIELD_NAMES[top.field]} {top.label}, "
-            f"em {top.winner_share:.0%} das vitórias contra "
-            f"{top.loser_share:.0%} das derrotas."
+    # The headline is free text for the player, so it never names a choice: ids
+    # are not names and the site would have to parse prose to resolve them. The
+    # largest difference is built by the site from divergences[0]. The headline
+    # only says what the divergences cannot: that there were none, and which
+    # fields could not be compared.
+    parts = []
+    if not found:
+        parts.append(
+            "Vencedores e perdedores fizeram as escolhas de forma igual neste "
+            f"confronto: nenhuma diferença passou de {MIN_GAP * 100:.0f} pontos "
+            "percentuais."
         )
-    else:
-        headline = (
-            "Vencedores e perdedores fizeram as escolhas de forma igual neste confronto: "
-            f"nenhuma diferença passou de {MIN_GAP * 100:.0f} pontos percentuais."
+    if not_compared:
+        parts.append(
+            "Sem partidas suficientes com timeline para comparar: "
+            + " e ".join(not_compared)
+            + "."
         )
-        if skipped_timeline_field:
-            headline += (
-                " Início de jogo e ordem de habilidades não foram comparados, "
-                "por falta de partidas com essa informação."
-            )
+    headline = " ".join(parts) or None
 
     return MatchupDetail(
         opponent_champion_id=opponent_champion_id,
