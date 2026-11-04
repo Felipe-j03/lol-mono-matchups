@@ -121,7 +121,9 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
         if verdict is not None:
             try:
                 riot_id = client.riot_id(puuid)
-            except RiotError:
+            except (RiotError, KeyError, TypeError):
+                # Tambem resposta sem gameName/tagLine: falha estrutural do
+                # corpo, nao so da requisicao. A politica fica aqui, no chamador.
                 unnamed += 1
 
         with db.batch():
