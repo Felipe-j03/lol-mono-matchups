@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from lolmono.collect import (
+    ExtractionFailing,
     collect_ladder,
     collect_matches,
     collect_timelines,
@@ -126,9 +127,20 @@ def main(
                     f"screen {args.platform}: triados: {report.screened}, "
                     f"suspeitos: {report.suspects}"
                 )
+        except ExtractionFailing as exc:
+            print(
+                f"{args.command} {args.platform}: coleta interrompida porque a extracao "
+                f"esta falhando de forma sistematica ({exc}). Nada foi marcado como "
+                "falha para essas partidas: elas continuam na fila e serao pedidas de "
+                "novo depois que o parser for conferido. O que ja tinha sido extraido "
+                "foi mantido. Use --raw-sample-dir para guardar os payloads e inspecionar.",
+                file=sys.stderr,
+            )
+            return 1
         except RiotError as exc:
-            # Chave de desenvolvimento expira em 24h: o lote em andamento foi
-            # descartado, os anteriores estao gravados; basta reexecutar.
+            # Chave de desenvolvimento expira em 24h. Em ladder/screen/matches o lote
+            # em andamento foi descartado; em timelines ele ja foi gravado antes de
+            # o erro subir. Os anteriores estao gravados; basta reexecutar.
             print(
                 f"{args.command} {args.platform}: falha na API da Riot ({exc}). "
                 "O progresso ja gravado foi mantido; confira a chave e reexecute.",

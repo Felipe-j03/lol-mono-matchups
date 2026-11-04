@@ -9,7 +9,12 @@ from pathlib import Path
 import pytest
 
 from lolmono.__main__ import main
-from lolmono.collect import TimelineReport, collect_timelines
+from lolmono.collect import (
+    CONSECUTIVE_FAILURE_LIMIT,
+    ExtractionFailing,
+    TimelineReport,
+    collect_timelines,
+)
 from lolmono.db import Database
 from lolmono.riot import RiotError
 from lolmono.rows import MatchRow, RunePage
@@ -291,6 +296,90 @@ def test_a_riot_error_keeps_what_was_already_paid_for(db):
     report = collect_timelines(resumed, db, "br1")
     assert resumed.timeline_calls == ["BR1_3", "BR1_4"]
     assert report.requested == 2
+
+
+def marked(db):
+    return {
+        (r["match_id"], r["puuid"]): r["reason"]
+        for r in db._conn.execute("SELECT match_id, puuid, reason FROM timeline_missing")
+    }
+
+
+def broken_payload(match_id):
+    payload = timeline_payload(match_id)
+    del payload["info"]
+    return payload
+
+
+def test_markers_carry_the_right_reason_for_404_and_for_parse_failure(db):
+    seed(db, "BR1_404", "BR1_BAD", "BR1_OK")
+    fake = FakeClient({"BR1_BAD": broken_payload("BR1_BAD"), "BR1_OK": timeline_payload("BR1_OK")})
+    collect_timelines(fake, db, "br1")
+    assert marked(db) == {
+        ("BR1_404", HERO): "not_found",
+        ("BR1_BAD", HERO): "parse_error",
+    }
+
+
+def test_consecutive_extraction_failures_abort_without_marking_them(db):
+    good = [f"BR1_{i:03d}" for i in range(3)]
+    bad = [f"BR1_{i:03d}" for i in range(3, 3 + CONSECUTIVE_FAILURE_LIMIT + 5)]
+    seed(db, *good, *bad)
+    fake = FakeClient(
+        {**{m: timeline_payload(m) for m in good}, **{m: broken_payload(m) for m in bad}}
+    )
+    with pytest.raises(ExtractionFailing):
+        collect_timelines(fake, db, "br1")
+    # It stops paying as soon as the limit is hit.
+    assert len(fake.timeline_calls) == len(good) + CONSECUTIVE_FAILURE_LIMIT
+    # What was fine is kept; the failures that tripped it are not marked...
+    assert set(db.timelines_for(good + bad)) == {(m, HERO) for m in good}
+    assert marked(db) == {}
+    # ...so they stay queued, along with the matches never requested.
+    assert [m for m, _, _ in db.matches_awaiting_timeline("br1")] == bad
+
+
+def test_failures_interleaved_with_successes_do_not_abort(db):
+    limit = CONSECUTIVE_FAILURE_LIMIT
+    ids = [f"BR1_{i:03d}" for i in range(2 * limit + 5)]
+    good = {ids[limit - 1], ids[2 * limit - 1]}  # streaks of limit - 1, then 5 at the end
+    seed(db, *ids)
+    fake = FakeClient(
+        {m: timeline_payload(m) if m in good else broken_payload(m) for m in ids}
+    )
+    report = collect_timelines(fake, db, "br1")
+    assert report == TimelineReport(
+        requested=len(ids), extracted=2, missing=0, failed=len(ids) - 2
+    )
+    # A short failure streak at the very end is real: those are marked.
+    assert len(marked(db)) == len(ids) - 2
+    assert db.matches_awaiting_timeline("br1") == []
+
+
+def test_a_404_does_not_reset_the_failure_streak(db):
+    ids = [f"BR1_{i:03d}" for i in range(CONSECUTIVE_FAILURE_LIMIT + 1)]
+    seed(db, *ids)
+    payloads = {m: broken_payload(m) for m in ids}
+    del payloads[ids[5]]  # Riot answers 404 for this one
+    with pytest.raises(ExtractionFailing):
+        collect_timelines(FakeClient(payloads), db, "br1")
+
+
+def test_cli_aborts_on_systematic_extraction_failure(tmp_path, capsys):
+    ids = [f"BR1_{i:03d}" for i in range(CONSECUTIVE_FAILURE_LIMIT + 3)]
+    seed_cli_db(tmp_path, *ids)
+    fake = FakeClient({m: broken_payload(m) for m in ids})
+    code = cli(["timelines", "--platform", "br1"], tmp_path, client=fake)
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "sistematica" in err
+    assert "Nada foi marcado" in err
+    reopened = Database(tmp_path / "cli.db")
+    try:
+        assert marked(reopened) == {}
+        assert len(reopened.matches_awaiting_timeline("br1")) == len(ids)
+    finally:
+        reopened.close()
 
 
 def test_timeline_report_is_frozen():

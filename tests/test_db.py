@@ -433,5 +433,7 @@ def test_init_schema_refuses_a_timeline_table_from_before_the_skill_order_fix(tm
     try:
         with pytest.raises(SchemaError, match="skill_order"):
             stale.init_schema()
+        # Refused before anything is created: the file is left as it was found.
+        assert stale.table_names() == ["timeline"]
     finally:
         stale.close()

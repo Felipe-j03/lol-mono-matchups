@@ -20,6 +20,10 @@ from lolmono.timelineparse import extract_timeline
 
 BATCH_SIZE = 50
 RAW_SAMPLE_LIMIT = 200  # timelines cruas guardadas para auditar a extracao
+# Falhas de extracao seguidas que abortam a coleta de timelines: o parser quebrou
+# em tudo (formato novo da Riot ou defeito nosso) e continuar so gastaria a
+# requisicao mais cara do projeto para nao guardar nada.
+CONSECUTIVE_FAILURE_LIMIT = 20
 
 
 @dataclass(frozen=True)
@@ -59,6 +63,10 @@ class TimelineReport:
     extracted: int
     missing: int
     failed: int
+
+
+class ExtractionFailing(Exception):
+    """A extracao de timelines falha de forma sistematica; a coleta foi abortada."""
 
 
 def collect_ladder(client, db, cfg, platform: str) -> int:
@@ -207,6 +215,13 @@ def collect_timelines(
     morre no meio (chave expirada, rede), o que ja foi pago e gravado antes de
     a excecao subir.
 
+    ``CONSECUTIVE_FAILURE_LIMIT`` falhas de extracao seguidas abortam a coleta com
+    ``ExtractionFailing``. As falhas ainda nao confirmadas por um sucesso seguinte
+    (a sequencia que disparou o aborto) NAO sao marcadas: ficam na fila para serem
+    refeitas quando o parser for consertado. So uma falha seguida de um sucesso
+    (ou o fim da fila, com a sequencia abaixo do limite) vira ``parse_error``.
+    Um 404 nao e extracao: nao zera nem aumenta a sequencia.
+
     Com ``raw_sample_dir``, o JSON cru comprimido das primeiras
     ``RAW_SAMPLE_LIMIT`` timelines (contando as de execucoes anteriores) fica
     em disco para auditoria, inclusive as que a extracao nao entendeu. O resto
@@ -221,26 +236,31 @@ def collect_timelines(
         sampled = len(list(raw_sample_dir.glob("*.json.gz")))
 
     requested = extracted = missing = failed = 0
-    # Por partida: (match_id, linhas extraidas, puuids ausentes, puuids com falha).
-    pending: list[tuple[str, list, list[str], list[str]]] = []
+    # Por partida: (match_id, linhas extraidas, puuids ausentes).
+    pending: list[tuple[str, list, list[str]]] = []
+    # Falhas ainda nao confirmadas (nenhum sucesso depois delas); nao sao gravadas.
+    streak: list[tuple[str, str]] = []
+    # Falhas confirmadas por um sucesso posterior, a gravar no proximo lote.
+    confirmed_failures: list[tuple[str, str]] = []
 
     def flush() -> None:
         nonlocal extracted, missing, failed
-        if not pending:
+        if not pending and not confirmed_failures:
             return
         with db.batch():
-            for match_id, rows, absent, unreadable in pending:
+            for match_id, rows, absent in pending:
                 for row in rows:
                     db.insert_timeline(row)
                 for puuid in absent:
                     db.mark_timeline_missing(match_id, puuid, "not_found")
-                for puuid in unreadable:
-                    db.mark_timeline_missing(match_id, puuid, "parse_error")
-        for _, rows, absent, unreadable in pending:
+            for match_id, puuid in confirmed_failures:
+                db.mark_timeline_missing(match_id, puuid, "parse_error")
+        for _, rows, absent in pending:
             extracted += len(rows)
             missing += len(absent)
-            failed += len(unreadable)
+        failed += len(confirmed_failures)
         pending.clear()
+        confirmed_failures.clear()
 
     try:
         for match_id, pairs in by_match.items():
@@ -251,23 +271,38 @@ def collect_timelines(
                 _save_raw_sample(raw_sample_dir, match_id, payload)
                 sampled += 1
 
-            rows, absent, unreadable = [], [], []
+            rows, absent = [], []
             for puuid, opponent_puuid in pairs:
                 if payload is None:
                     absent.append(puuid)
                     continue
                 try:
-                    rows.append(extract_timeline(payload, puuid, opponent_puuid))
+                    row = extract_timeline(payload, puuid, opponent_puuid)
                 except Exception:
                     # Captura larga de proposito: um payload estranho nao pode
                     # matar uma coleta de horas. Mas aqui a contagem e a
                     # evidencia: vai para ``failed`` (nunca para ``missing``) e
                     # para a tabela com motivo ``parse_error``, e o CLI avisa.
-                    unreadable.append(puuid)
-            pending.append((match_id, rows, absent, unreadable))
+                    # Nao e gravada ja: so depois de um sucesso (ver docstring).
+                    streak.append((match_id, puuid))
+                    if len(streak) >= CONSECUTIVE_FAILURE_LIMIT:
+                        # Guarda o que esta partida ja rendeu antes de abortar.
+                        pending.append((match_id, rows, absent))
+                        raise ExtractionFailing(
+                            f"{len(streak)} timelines seguidas falharam na extracao "
+                            f"(a partir de {streak[0][0]}): a falha e sistematica"
+                        ) from None
+                    continue
+                rows.append(row)
+                confirmed_failures.extend(streak)
+                streak.clear()
+            pending.append((match_id, rows, absent))
 
             if len(pending) >= BATCH_SIZE:
                 flush()
+        # Fim da fila com uma sequencia curta de falhas: sao falhas reais e isoladas.
+        confirmed_failures.extend(streak)
+        streak.clear()
     except BaseException:
         # Nao perde o que ja foi pago. Se a propria gravacao falhar, a excecao
         # original (a que importa) continua sendo a que sobe.

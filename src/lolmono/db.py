@@ -152,8 +152,9 @@ class Database:
         self._conn.close()
 
     def init_schema(self) -> None:
-        self._conn.executescript(_SCHEMA)
+        # Antes de criar qualquer coisa: um banco recusado fica como foi encontrado.
         self._refuse_old_timeline_schema()
+        self._conn.executescript(_SCHEMA)
 
     def _refuse_old_timeline_schema(self) -> None:
         # Early builds declared skill_order NOT NULL. insert_timeline is INSERT OR
