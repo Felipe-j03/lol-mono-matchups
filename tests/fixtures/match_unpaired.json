@@ -1,0 +1,753 @@
+{
+  "metadata": {
+    "matchId": "BR1_2900000002",
+    "participants": [
+      "TOP_100",
+      "JG_100",
+      "TALON_PLAYER",
+      "BOT_100",
+      "SUP_100",
+      "TOP_200",
+      "JG_200",
+      "EKKO_PLAYER",
+      "BOT_200",
+      "SUP_200"
+    ]
+  },
+  "info": {
+    "queueId": 420,
+    "platformId": "BR1",
+    "participants": [
+      {
+        "puuid": "TOP_100",
+        "teamId": 100,
+        "teamPosition": "TOP",
+        "championId": 58,
+        "win": true,
+        "summoner1Id": 4,
+        "summoner2Id": 12,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "JG_100",
+        "teamId": 100,
+        "teamPosition": "MIDDLE",
+        "championId": 64,
+        "win": true,
+        "summoner1Id": 4,
+        "summoner2Id": 11,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "TALON_PLAYER",
+        "teamId": 100,
+        "teamPosition": "MIDDLE",
+        "championId": 91,
+        "win": true,
+        "summoner1Id": 4,
+        "summoner2Id": 14,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 3142,
+        "item1": 0,
+        "item2": 6693,
+        "item3": 3158,
+        "item4": 0,
+        "item5": 6694,
+        "item6": 3363
+      },
+      {
+        "puuid": "BOT_100",
+        "teamId": 100,
+        "teamPosition": "BOTTOM",
+        "championId": 222,
+        "win": true,
+        "summoner1Id": 4,
+        "summoner2Id": 7,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "SUP_100",
+        "teamId": 100,
+        "teamPosition": "UTILITY",
+        "championId": 412,
+        "win": true,
+        "summoner1Id": 4,
+        "summoner2Id": 3,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "TOP_200",
+        "teamId": 200,
+        "teamPosition": "TOP",
+        "championId": 24,
+        "win": false,
+        "summoner1Id": 4,
+        "summoner2Id": 12,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "JG_200",
+        "teamId": 200,
+        "teamPosition": "JUNGLE",
+        "championId": 60,
+        "win": false,
+        "summoner1Id": 4,
+        "summoner2Id": 11,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "EKKO_PLAYER",
+        "teamId": 200,
+        "teamPosition": "MIDDLE",
+        "championId": 245,
+        "win": false,
+        "summoner1Id": 4,
+        "summoner2Id": 12,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8229,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8237,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8300,
+              "selections": [
+                {
+                  "perk": 8304,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8347,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 6655,
+        "item1": 3020,
+        "item2": 3157,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3364
+      },
+      {
+        "puuid": "BOT_200",
+        "teamId": 200,
+        "teamPosition": "BOTTOM",
+        "championId": 51,
+        "win": false,
+        "summoner1Id": 4,
+        "summoner2Id": 7,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      },
+      {
+        "puuid": "SUP_200",
+        "teamId": 200,
+        "teamPosition": "UTILITY",
+        "championId": 117,
+        "win": false,
+        "summoner1Id": 4,
+        "summoner2Id": 3,
+        "perks": {
+          "statPerks": {
+            "offense": 5005,
+            "flex": 5008,
+            "defense": 5001
+          },
+          "styles": [
+            {
+              "description": "primaryStyle",
+              "style": 8100,
+              "selections": [
+                {
+                  "perk": 8112,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8126,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8138,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8135,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            },
+            {
+              "description": "subStyle",
+              "style": 8200,
+              "selections": [
+                {
+                  "perk": 8226,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                },
+                {
+                  "perk": 8210,
+                  "var1": 0,
+                  "var2": 0,
+                  "var3": 0
+                }
+              ]
+            }
+          ]
+        },
+        "item0": 1055,
+        "item1": 0,
+        "item2": 0,
+        "item3": 0,
+        "item4": 0,
+        "item5": 0,
+        "item6": 3340
+      }
+    ]
+  }
+}
