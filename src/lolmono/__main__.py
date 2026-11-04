@@ -16,6 +16,7 @@ from lolmono.collect import (
 )
 from lolmono.config import ConfigError, load_config
 from lolmono.db import Database, SchemaError
+from lolmono.export import export_all
 from lolmono.ratelimit import riot_limiter
 from lolmono.riot import PLATFORM_TO_REGIONAL, RiotClient, RiotError, httpx_sender
 
@@ -52,7 +53,38 @@ def _parser() -> argparse.ArgumentParser:
                 default=None,
                 help="guarda o JSON cru (gzip) das primeiras 200 timelines, para auditar a extracao",
             )
+    export = commands.add_parser(
+        "export",
+        help="escreve os JSON do site a partir do banco (nao usa a API nem a chave)",
+    )
+    export.add_argument("--config", type=Path, default=Path("config.toml"))
+    export.add_argument("--db", type=Path, default=Path("data/lolmono.sqlite"))
+    export.add_argument("--out", type=Path, default=Path("site/data"))
     return parser
+
+
+def _export(args: argparse.Namespace) -> int:
+    try:
+        cfg = load_config(args.config)
+    except (ConfigError, OSError) as exc:
+        print(f"configuracao invalida ({args.config}): {exc}", file=sys.stderr)
+        return 2
+    if not args.db.is_file():
+        # Database() would create an empty file and the export would "succeed".
+        print(f"banco nao encontrado: {args.db}", file=sys.stderr)
+        return 2
+    db = Database(args.db)
+    try:
+        try:
+            db.init_schema()
+        except SchemaError as exc:
+            print(f"banco incompativel ({args.db}): {exc}", file=sys.stderr)
+            return 2
+        export_all(db, cfg, args.out)
+    finally:
+        db.close()
+    print(f"export: arquivos escritos em {args.out}")
+    return 0
 
 
 def main(
@@ -61,6 +93,8 @@ def main(
     client_factory=_make_client,
 ) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "export":
+        return _export(args)  # so le o banco: nao precisa da chave da Riot
     environ = os.environ if environ is None else environ
 
     api_key = environ.get(API_KEY_VAR)

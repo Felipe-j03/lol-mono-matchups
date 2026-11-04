@@ -16,13 +16,48 @@ three points only, where the matchup decision lives.
 
 Ties are always resolved the same way (more games first, then the smaller
 key), so the same rows give the same output whatever order they arrive in.
+
+The matchup detail compares what the winners of one matchup did against what the
+losers did. It reports a choice only where the two groups disagree by more than
+MIN_GAP in share: a choice both groups made alike is not a lesson. Nothing here
+touches the filesystem; export.py owns the writing.
 """
 
 from collections import Counter
-from collections.abc import Hashable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
 from dataclasses import astuple, dataclass
+from typing import Any
 
 from lolmono.rows import MatchRow, RunePage, TimelineRow
+
+
+# Absolute difference in share (0 to 1) above which winners and losers are said to
+# disagree on a choice. A difference of exactly this size is not enough.
+MIN_GAP = 0.15
+
+# Boots, from the Data Dragon item list. A new boot item added in a later patch
+# is invisible to the "boots" comparison until it is listed here.
+BOOT_ITEM_IDS = frozenset(
+    {
+        1001,  # Boots
+        2422,  # Slightly Magical Footwear
+        3006,  # Berserker's Greaves
+        3009,  # Boots of Swiftness
+        3020,  # Sorcerer's Shoes
+        3047,  # Plated Steelcaps
+        3111,  # Mercury's Treads
+        3117,  # Mobility Boots
+        3158,  # Ionian Boots of Lucidity
+    }
+)
+
+_SKILL_KEYS = {1: "Q", 2: "W", 3: "E", 4: "R"}
+_FIELD_NAMES = {
+    "boots": "botas",
+    "rune": "runa",
+    "starting_items": "item inicial",
+    "skill_order": "ordem de habilidades",
+}
 
 
 @dataclass(frozen=True)
@@ -155,3 +190,178 @@ def rank_matchups(rows: Sequence[MatchRow], min_games: int) -> list[MatchupSumma
         key=lambda m: (-m.games, m.opponent_champion_id),
     )
     return reliable + thin
+
+
+@dataclass(frozen=True)
+class Divergence:
+    """A choice winners and losers made at clearly different rates.
+
+    `label` identifies the choice: an item id or a rune perk id as a string (the
+    site resolves the name from the Data Dragon), or a readable skill order such
+    as "Q > W > E".
+    """
+
+    field: str  # "boots", "rune", "starting_items" or "skill_order"
+    label: str
+    winner_share: float
+    loser_share: float
+    gap: float  # abs(winner_share - loser_share)
+
+
+@dataclass(frozen=True)
+class MatchupDetail:
+    opponent_champion_id: int
+    wins: int
+    losses: int
+    comparable: bool
+    divergences: tuple[Divergence, ...]
+    winner_gold_at_14: float | None
+    loser_gold_at_14: float | None
+    headline: str | None
+
+
+def _rune_perks(page: RunePage) -> set[int]:
+    # The keystone is also the first primary perk; a set counts it once.
+    return {page.keystone, *page.primary_perks, *page.secondary_perks, *page.shards}
+
+
+def _divergences(
+    field: str,
+    winners: Sequence[Iterable[Hashable]],
+    losers: Sequence[Iterable[Hashable]],
+    label: Callable[[Any], str],
+) -> list[Divergence]:
+    """Options chosen at clearly different rates by the two groups.
+
+    Each element of `winners`/`losers` is the options one game took; a game counts
+    once per option. Shares are over the games given, per side.
+    """
+    won = Counter(option for game in winners for option in set(game))
+    lost = Counter(option for game in losers for option in set(game))
+    found = []
+    for option in won.keys() | lost.keys():
+        winner_share = won[option] / len(winners)
+        loser_share = lost[option] / len(losers)
+        gap = abs(winner_share - loser_share)
+        # Rounded so that a gap of exactly MIN_GAP is not pushed over it by
+        # floating point (0.65 - 0.5 is 0.15000000000000002).
+        if round(gap, 9) > MIN_GAP:
+            found.append(
+                Divergence(field, label(option), winner_share, loser_share, gap)
+            )
+    return found
+
+
+def _mean(values: list[int]) -> float | None:
+    return sum(values) / len(values) if values else None
+
+
+def _skill_label(order: tuple[int, ...]) -> str:
+    return " > ".join(_SKILL_KEYS.get(slot, str(slot)) for slot in order)
+
+
+def compare_matchup(
+    rows: Sequence[MatchRow],
+    timelines: Mapping[tuple[str, str], TimelineRow],
+    opponent_champion_id: int,
+    min_per_side: int,
+) -> MatchupDetail:
+    """What winners did differently from losers against one opponent.
+
+    `rows` may hold games against other opponents too; only those against
+    `opponent_champion_id` are used. With fewer than `min_per_side` games on
+    either side (zero included) the matchup is not comparable: the counts are
+    reported and nothing else. Boots and runes come from the match rows. Starting
+    items and skill order come from the timelines and are compared only when both
+    sides have at least `min_per_side` games with that data, so a few timelines
+    cannot produce a 100% against 0% that means nothing.
+    """
+    games = [r for r in rows if r.opponent_champion_id == opponent_champion_id]
+    winners = [r for r in games if r.win]
+    losers = [r for r in games if not r.win]
+    wins, losses = len(winners), len(losers)
+
+    floor = max(min_per_side, 1)  # a side with no games can never be compared
+    if wins < floor or losses < floor:
+        return MatchupDetail(
+            opponent_champion_id, wins, losses, False, (), None, None, None
+        )
+
+    def boots_of(row: MatchRow) -> list[int]:
+        return [item for item in row.items if item in BOOT_ITEM_IDS]
+
+    found: list[Divergence] = []
+    found += _divergences(
+        "boots", [boots_of(r) for r in winners], [boots_of(r) for r in losers], str
+    )
+    found += _divergences(
+        "rune",
+        [_rune_perks(r.runes) for r in winners],
+        [_rune_perks(r.runes) for r in losers],
+        str,
+    )
+
+    winner_tls = [
+        timelines[(r.match_id, r.puuid)]
+        for r in winners
+        if (r.match_id, r.puuid) in timelines
+    ]
+    loser_tls = [
+        timelines[(r.match_id, r.puuid)]
+        for r in losers
+        if (r.match_id, r.puuid) in timelines
+    ]
+    starts_w = [tl.starting_items for tl in winner_tls if tl.starting_items]
+    starts_l = [tl.starting_items for tl in loser_tls if tl.starting_items]
+    skills_w = [tl.skill_order for tl in winner_tls if tl.skill_order is not None]
+    skills_l = [tl.skill_order for tl in loser_tls if tl.skill_order is not None]
+
+    skipped_timeline_field = False
+    if len(starts_w) >= floor and len(starts_l) >= floor:
+        found += _divergences("starting_items", starts_w, starts_l, str)
+    else:
+        skipped_timeline_field = True
+    if len(skills_w) >= floor and len(skills_l) >= floor:
+        found += _divergences(
+            "skill_order",
+            [[order] for order in skills_w],
+            [[order] for order in skills_l],
+            _skill_label,
+        )
+    else:
+        skipped_timeline_field = True
+
+    found.sort(key=lambda d: (-d.gap, d.field, d.label))
+
+    if found:
+        top = found[0]
+        headline = (
+            f"Maior diferença: {_FIELD_NAMES[top.field]} {top.label}, "
+            f"em {top.winner_share:.0%} das vitórias contra "
+            f"{top.loser_share:.0%} das derrotas."
+        )
+    else:
+        headline = (
+            "Vencedores e perdedores fizeram as escolhas de forma igual neste confronto: "
+            f"nenhuma diferença passou de {MIN_GAP * 100:.0f} pontos percentuais."
+        )
+        if skipped_timeline_field:
+            headline += (
+                " Início de jogo e ordem de habilidades não foram comparados, "
+                "por falta de partidas com essa informação."
+            )
+
+    return MatchupDetail(
+        opponent_champion_id=opponent_champion_id,
+        wins=wins,
+        losses=losses,
+        comparable=True,
+        divergences=tuple(found),
+        winner_gold_at_14=_mean(
+            [tl.gold_at_14 for tl in winner_tls if tl.gold_at_14 is not None]
+        ),
+        loser_gold_at_14=_mean(
+            [tl.gold_at_14 for tl in loser_tls if tl.gold_at_14 is not None]
+        ),
+        headline=headline,
+    )
