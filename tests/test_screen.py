@@ -5,7 +5,7 @@ from lolmono.screen import is_suspect
 TALON = 91
 ZED = 238
 GRAGAS = 79
-ZED_FILLER = [10, 11, 12, 13, 14, 15, 16]
+FILLER_IDS = [10, 11, 12, 13, 14, 15, 16]
 
 DAY_MS = 24 * 60 * 60 * 1000
 now_ms = 1_750_000_000_000
@@ -35,7 +35,7 @@ def test_only_the_first_top_n_entries_count():
     # alvo na oitava posicao por pontos, top_n=7
     masteries = [
         Mastery(champion_id, 900_000 - i * 1_000, now_ms)
-        for i, champion_id in enumerate(ZED_FILLER)
+        for i, champion_id in enumerate(FILLER_IDS)
     ]
     masteries.append(Mastery(TALON, 1_000, now_ms))
     assert len(masteries) == 8
@@ -46,11 +46,45 @@ def test_target_in_last_counted_top_n_position_is_suspect():
     # alvo na setima posicao por pontos, top_n=7: ainda conta
     masteries = [
         Mastery(champion_id, 900_000 - i * 1_000, now_ms)
-        for i, champion_id in enumerate(ZED_FILLER[:6])
+        for i, champion_id in enumerate(FILLER_IDS[:6])
     ]
     masteries.append(Mastery(TALON, 1_000, now_ms))
     assert len(masteries) == 7
     assert is_suspect(masteries, targets, top_n=7, max_days=30, now_ms=now_ms)
+
+
+def test_target_first_by_points_but_last_in_list_is_suspect():
+    # a lista nao vem ordenada: o alvo tem mais pontos que todos e esta no fim,
+    # alem de top_n entradas. Sem ordenar, cairia fora do corte.
+    masteries = [
+        Mastery(champion_id, 900_000 - i * 1_000, now_ms)
+        for i, champion_id in enumerate(FILLER_IDS)
+    ]
+    masteries.append(Mastery(TALON, 950_000, now_ms))
+    assert len(masteries) == 8
+    assert is_suspect(masteries, targets, top_n=7, max_days=30, now_ms=now_ms)
+
+
+def test_low_points_target_first_in_list_is_not_suspect():
+    # o alvo esta no inicio da lista mas tem poucos pontos, e 8o por pontos:
+    # sem ordenar, passaria pelo corte de top_n=7 e daria falso positivo.
+    masteries = [Mastery(TALON, 1_000, now_ms)] + [
+        Mastery(champion_id, 900_000 - i * 1_000, now_ms)
+        for i, champion_id in enumerate(FILLER_IDS)
+    ]
+    assert len(masteries) == 8
+    assert not is_suspect(masteries, targets, top_n=7, max_days=30, now_ms=now_ms)
+
+
+def test_play_exactly_max_days_ago_is_suspect():
+    # a janela e inclusiva: jogar exatamente max_days atras ainda conta
+    masteries = [Mastery(TALON, 500_000, now_ms - days(30))]
+    assert is_suspect(masteries, targets, top_n=7, max_days=30, now_ms=now_ms)
+
+
+def test_play_one_millisecond_older_than_max_days_is_not_suspect():
+    masteries = [Mastery(TALON, 500_000, now_ms - days(30) - 1)]
+    assert not is_suspect(masteries, targets, top_n=7, max_days=30, now_ms=now_ms)
 
 
 def test_role_is_not_considered_at_this_stage():
