@@ -48,6 +48,32 @@ def test_each_pair_holds_one_participant_from_each_team_in_that_position():
         assert {a["teamId"], b["teamId"]} == {100, 200}
 
 
+def test_each_pair_is_ordered_by_ascending_team_id():
+    pairs = pair_lanes(clean["info"]["participants"])
+    for a, b in pairs.values():
+        assert a["teamId"] < b["teamId"]
+
+
+def test_pair_order_does_not_depend_on_participant_order():
+    match = variant()
+    match["info"]["participants"].reverse()
+    pairs = pair_lanes(match["info"]["participants"])
+    for a, b in pairs.values():
+        assert (a["teamId"], b["teamId"]) == (100, 200)
+
+
+def test_team_of_six_with_all_five_positions_plus_a_repeat_is_discarded():
+    # Eleven participants: team 100 holds all five positions and a second TOP.
+    # Every position is present, so only the repeat itself can reveal the problem.
+    match = variant()
+    extra = copy.deepcopy(find(match, "TOP_100"))
+    extra["puuid"] = "TOP2_100"
+    match["info"]["participants"].append(extra)
+    with pytest.raises(DiscardMatch) as exc:
+        pair_lanes(match["info"]["participants"])
+    assert exc.value.reason == "unpaired_lanes"
+
+
 def test_empty_team_position_is_discarded():
     match = variant()
     find(match, "TALON_PLAYER")["teamPosition"] = ""
@@ -179,6 +205,36 @@ def test_opponent_is_chosen_by_position_not_by_slot():
     assert row.role == "JUNGLE"
     assert row.opponent_puuid == "JG_200"
     assert row.opponent_champion_id == 60
+
+
+def test_role_and_opponent_ignore_individual_position_lane_and_role():
+    # Every participant carries decoys that differ from the true teamPosition.
+    # Only teamPosition may decide the stored role and the lane opponent.
+    match = variant()
+    decoy = {
+        "TOP": ("JUNGLE", "BOTTOM", "SUPPORT"),
+        "JUNGLE": ("TOP", "MIDDLE", "NONE"),
+        "MIDDLE": ("JUNGLE", "TOP", "SOLO"),  # Talon: really MIDDLE
+        "BOTTOM": ("UTILITY", "MIDDLE", "CARRY"),
+        "UTILITY": ("BOTTOM", "JUNGLE", "SUPPORT"),
+    }
+    for p in match["info"]["participants"]:
+        individual, lane, role = decoy[p["teamPosition"]]
+        p["individualPosition"] = individual
+        p["lane"] = lane
+        p["role"] = role
+    talon = find(match, "TALON_PLAYER")
+    assert (talon["individualPosition"], talon["lane"]) == ("JUNGLE", "TOP")
+
+    row = extract_match(match, puuid="TALON_PLAYER")
+    assert row.role == "MIDDLE"
+    assert row.opponent_puuid == "EKKO_PLAYER"
+    assert row.opponent_champion_id == EKKO
+
+    row = extract_match(match, puuid="EKKO_PLAYER")
+    assert row.role == "MIDDLE"
+    assert row.opponent_puuid == "TALON_PLAYER"
+    assert row.opponent_champion_id == TALON
 
 
 def test_win_comes_from_the_participants_own_field():
@@ -317,6 +373,20 @@ def test_missing_position_outranks_unpaired_lanes_in_extract_match():
     with pytest.raises(DiscardMatch) as exc:
         extract_match(match, puuid="TALON_PLAYER")
     assert exc.value.reason == "missing_position"
+
+
+def test_payload_without_info_raises_key_error_not_discard():
+    # Deliberate boundary: malformed payloads are not one of the four discard
+    # reasons. The caller (Task 9) wraps the call and classifies them.
+    with pytest.raises(KeyError):
+        extract_match({"metadata": clean["metadata"]}, puuid="TALON_PLAYER")
+
+
+def test_participant_without_perks_raises_key_error_not_discard():
+    match = variant()
+    del find(match, "TALON_PLAYER")["perks"]
+    with pytest.raises(KeyError):
+        extract_match(match, puuid="TALON_PLAYER")
 
 
 def test_discard_match_is_an_exception_with_a_reason_attribute():
