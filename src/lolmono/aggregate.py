@@ -218,6 +218,14 @@ class MatchupDetail:
     winner_gold_at_14: float | None
     loser_gold_at_14: float | None
     headline: str | None
+    # Games each timeline-derived figure rests on, per side (distinct from
+    # wins/losses: a game without a usable timeline does not count here).
+    winner_gold_games: int
+    loser_gold_games: int
+    winner_starting_items_games: int
+    loser_starting_items_games: int
+    winner_skill_order_games: int
+    loser_skill_order_games: int
 
 
 def _rune_perks(page: RunePage) -> set[int]:
@@ -271,10 +279,13 @@ def compare_matchup(
     `rows` may hold games against other opponents too; only those against
     `opponent_champion_id` are used. With fewer than `min_per_side` games on
     either side (zero included) the matchup is not comparable: the counts are
-    reported and nothing else. Boots and runes come from the match rows. Starting
-    items and skill order come from the timelines and are compared only when both
-    sides have at least `min_per_side` games with that data, so a few timelines
-    cannot produce a 100% against 0% that means nothing.
+    reported and nothing else (plus the per-side timeline counts). Boots and runes
+    come from the match rows. Starting items, skill order and the gold-at-14
+    averages come from the timelines and appear only when both sides have at least
+    `min_per_side` games with that data, so a few timelines cannot produce a
+    100% against 0%, or a confident average, that means nothing. The gold
+    averages are both present or both None. The counts of games behind each
+    figure are always reported.
     """
     games = [r for r in rows if r.opponent_champion_id == opponent_champion_id]
     winners = [r for r in games if r.win]
@@ -282,9 +293,37 @@ def compare_matchup(
     wins, losses = len(winners), len(losers)
 
     floor = max(min_per_side, 1)  # a side with no games can never be compared
+
+    winner_tls = [
+        timelines[(r.match_id, r.puuid)]
+        for r in winners
+        if (r.match_id, r.puuid) in timelines
+    ]
+    loser_tls = [
+        timelines[(r.match_id, r.puuid)]
+        for r in losers
+        if (r.match_id, r.puuid) in timelines
+    ]
+    starts_w = [tl.starting_items for tl in winner_tls if tl.starting_items]
+    starts_l = [tl.starting_items for tl in loser_tls if tl.starting_items]
+    skills_w = [tl.skill_order for tl in winner_tls if tl.skill_order is not None]
+    skills_l = [tl.skill_order for tl in loser_tls if tl.skill_order is not None]
+    golds_w = [tl.gold_at_14 for tl in winner_tls if tl.gold_at_14 is not None]
+    golds_l = [tl.gold_at_14 for tl in loser_tls if tl.gold_at_14 is not None]
+    # How many games each timeline-derived figure rests on, per side. Reported
+    # even when the matchup is not comparable, so the absence is explained.
+    counts = {
+        "winner_gold_games": len(golds_w),
+        "loser_gold_games": len(golds_l),
+        "winner_starting_items_games": len(starts_w),
+        "loser_starting_items_games": len(starts_l),
+        "winner_skill_order_games": len(skills_w),
+        "loser_skill_order_games": len(skills_l),
+    }
+
     if wins < floor or losses < floor:
         return MatchupDetail(
-            opponent_champion_id, wins, losses, False, (), None, None, None
+            opponent_champion_id, wins, losses, False, (), None, None, None, **counts
         )
 
     def boots_of(row: MatchRow) -> list[int]:
@@ -301,21 +340,7 @@ def compare_matchup(
         str,
     )
 
-    winner_tls = [
-        timelines[(r.match_id, r.puuid)]
-        for r in winners
-        if (r.match_id, r.puuid) in timelines
-    ]
-    loser_tls = [
-        timelines[(r.match_id, r.puuid)]
-        for r in losers
-        if (r.match_id, r.puuid) in timelines
-    ]
-    starts_w = [tl.starting_items for tl in winner_tls if tl.starting_items]
-    starts_l = [tl.starting_items for tl in loser_tls if tl.starting_items]
-    skills_w = [tl.skill_order for tl in winner_tls if tl.skill_order is not None]
-    skills_l = [tl.skill_order for tl in loser_tls if tl.skill_order is not None]
-
+    gold_ok = len(golds_w) >= floor and len(golds_l) >= floor
     skipped_timeline_field = False
     if len(starts_w) >= floor and len(starts_l) >= floor:
         found += _divergences("starting_items", starts_w, starts_l, str)
@@ -357,11 +382,9 @@ def compare_matchup(
         losses=losses,
         comparable=True,
         divergences=tuple(found),
-        winner_gold_at_14=_mean(
-            [tl.gold_at_14 for tl in winner_tls if tl.gold_at_14 is not None]
-        ),
-        loser_gold_at_14=_mean(
-            [tl.gold_at_14 for tl in loser_tls if tl.gold_at_14 is not None]
-        ),
+        # Both averages or neither: a gold gap needs both sides on solid ground.
+        winner_gold_at_14=_mean(golds_w) if gold_ok else None,
+        loser_gold_at_14=_mean(golds_l) if gold_ok else None,
         headline=headline,
+        **counts,
     )

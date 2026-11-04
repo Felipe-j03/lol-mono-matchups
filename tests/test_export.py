@@ -286,3 +286,43 @@ def test_cli_export_refuses_a_missing_database(tmp_path, capsys):
     assert code == 2
     assert not (tmp_path / "nope.sqlite").exists()
     assert not (tmp_path / "o").exists()
+
+
+def test_matchup_file_states_how_many_timelines_back_each_figure(db, cfg, tmp_path):
+    out = tmp_path / "out"
+    export_all(db, cfg, out)
+    detail = _read(out / f"talon-middle-vs-{EKKO}.json")
+    assert detail["timeline_games"] == {
+        "gold_at_14": {"winners": 20, "losers": 20},
+        "starting_items": {"winners": 20, "losers": 20},
+        "skill_order": {"winners": 20, "losers": 20},
+    }
+
+
+def test_exported_timeline_counts_match_the_timelines_actually_stored(cfg, tmp_path):
+    database = Database(tmp_path / "thin.sqlite")
+    database.init_schema()
+    database.confirm_player("br1", KNOWN_PUUID, "Mono#BR1", TALON, "MIDDLE", 40, 0.8)
+    n = 0
+    # 20 wins and 20 losses; 18 winners but only 9 losers have a timeline.
+    for win, with_timeline in ((True, 18), (False, 9)):
+        for i in range(20):
+            n += 1
+            database.insert_match(_match(n, win, EKKO, 3020 if win else 3047))
+            if i < with_timeline:
+                database.insert_timeline(_timeline(n, 5200 if win else 4000))
+    database.commit()
+    out = tmp_path / "out"
+    export_all(database, cfg, out)
+    database.close()
+    detail = _read(out / f"talon-middle-vs-{EKKO}.json")
+    assert detail["timeline_games"]["gold_at_14"] == {"winners": 18, "losers": 9}
+    assert detail["timeline_games"]["starting_items"] == {"winners": 18, "losers": 9}
+    assert detail["timeline_games"]["skill_order"] == {"winners": 18, "losers": 9}
+    # 9 < 15 losers with data: no gold figure, but the match counts and the
+    # boots divergence are still there.
+    assert detail["winner_gold_at_14"] is None and detail["loser_gold_at_14"] is None
+    assert (detail["wins"], detail["losses"], detail["games"]) == (20, 20, 40)
+    assert detail["comparable"] is True
+    assert any(d["field"] == "boots" for d in detail["divergences"])
+    assert not any(d["field"] in ("starting_items", "skill_order") for d in detail["divergences"])

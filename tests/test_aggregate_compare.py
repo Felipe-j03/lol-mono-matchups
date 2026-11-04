@@ -229,8 +229,8 @@ def test_input_order_does_not_change_the_result():
 
 
 def test_gold_at_14_averages_skip_rows_without_the_field():
-    wins = group(True, (16, {}))
-    losses = group(False, (16, {}))
+    wins = group(True, (20, {}))
+    losses = group(False, (20, {}))
     timelines = timelines_for(wins, gold=5200)
     timelines.update(timelines_for(losses, gold=4000))
     # One winner is a remake: no gold at 14. Another winner has no timeline at all.
@@ -242,12 +242,86 @@ def test_gold_at_14_averages_skip_rows_without_the_field():
     detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
     assert detail.winner_gold_at_14 == pytest.approx(5200.0)
     assert detail.loser_gold_at_14 == pytest.approx(4000.0)
+    assert (detail.winner_gold_games, detail.loser_gold_games) == (18, 20)
+
+
+def test_gold_needs_the_floor_on_both_sides_or_both_averages_are_none():
+    wins = group(True, (20, {}))
+    losses = group(False, (20, {}))
+    # Every winner has a timeline, only 14 losers do: 14 < 15.
+    timelines = timelines_for(wins, gold=5200)
+    timelines.update(timelines_for(losses[:14], gold=4000))
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    assert detail.winner_gold_at_14 is None
+    assert detail.loser_gold_at_14 is None
+    assert (detail.winner_gold_games, detail.loser_gold_games) == (20, 14)
+    # Everything that does not depend on timelines is unaffected.
+    assert detail.comparable is True
+    assert (detail.wins, detail.losses) == (20, 20)
+    assert detail.headline
+
+
+def test_thin_timelines_leave_match_counts_and_non_timeline_divergences_alone():
+    rows = diverging_rows()
+    wins = [r for r in rows if r.win]
+    losses = [r for r in rows if not r.win]
+    timelines = timelines_for(wins, gold=5200)
+    timelines.update(timelines_for(losses[:3], gold=4000))
+    thin = compare_matchup(rows, timelines, EKKO, min_per_side=15)
+    none = compare_matchup(rows, {}, EKKO, min_per_side=15)
+    assert thin.winner_gold_at_14 is None and thin.loser_gold_at_14 is None
+    assert (thin.wins, thin.losses) == (20, 20)
+    assert thin.divergences == none.divergences
+    assert {d.field for d in thin.divergences} == {"boots", "rune"}
+
+
+def test_gold_floor_is_exactly_min_per_side():
+    wins = group(True, (20, {}))
+    losses = group(False, (20, {}))
+    timelines = timelines_for(wins, gold=5200)
+    timelines.update(timelines_for(losses[:15], gold=4000))
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    assert detail.winner_gold_at_14 == pytest.approx(5200.0)
+    assert detail.loser_gold_at_14 == pytest.approx(4000.0)
+
+
+def test_timeline_counts_match_the_timelines_supplied():
+    wins = group(True, (20, {}))
+    losses = group(False, (20, {}))
+    timelines = timelines_for(wins[:18])  # 18 winners with a timeline
+    timelines.update(timelines_for(losses[:16]))  # 16 losers with a timeline
+    # One loser's timeline is a short game: no skill order. One winner has no
+    # starting items recorded and no gold.
+    short = losses[0]
+    timelines[(short.match_id, short.puuid)] = dataclasses.replace(
+        timelines[(short.match_id, short.puuid)], skill_order=None
+    )
+    odd = wins[0]
+    timelines[(odd.match_id, odd.puuid)] = dataclasses.replace(
+        timelines[(odd.match_id, odd.puuid)], starting_items=(), gold_at_14=None
+    )
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    assert (detail.winner_gold_games, detail.loser_gold_games) == (17, 16)
+    assert (detail.winner_starting_items_games, detail.loser_starting_items_games) == (17, 16)
+    assert (detail.winner_skill_order_games, detail.loser_skill_order_games) == (18, 15)
+
+
+def test_timeline_counts_are_reported_even_when_not_comparable():
+    wins = group(True, (14, {}))
+    losses = group(False, (20, {}))
+    timelines = timelines_for(wins[:9])
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    assert detail.comparable is False
+    assert detail.winner_gold_at_14 is None
+    assert (detail.winner_gold_games, detail.loser_gold_games) == (9, 0)
+    assert (detail.winner_skill_order_games, detail.loser_skill_order_games) == (9, 0)
 
 
 def test_gold_is_none_when_no_timeline_has_it():
     rows = group(True, (16, {})) + group(False, (16, {}))
     detail = compare_matchup(rows, {}, EKKO, min_per_side=15)
     assert detail.winner_gold_at_14 is None and detail.loser_gold_at_14 is None
+    assert (detail.winner_gold_games, detail.loser_gold_games) == (0, 0)
 
 
 def test_starting_items_compared_item_by_item():
@@ -306,6 +380,9 @@ def test_detail_and_divergence_are_frozen_with_the_agreed_fields():
     assert [f.name for f in dataclasses.fields(MatchupDetail)] == [
         "opponent_champion_id", "wins", "losses", "comparable", "divergences",
         "winner_gold_at_14", "loser_gold_at_14", "headline",
+        "winner_gold_games", "loser_gold_games",
+        "winner_starting_items_games", "loser_starting_items_games",
+        "winner_skill_order_games", "loser_skill_order_games",
     ]
     detail = compare_matchup(diverging_rows(), {}, EKKO, min_per_side=15)
     with pytest.raises(dataclasses.FrozenInstanceError):

@@ -118,6 +118,22 @@ def _detail(target: Target, detail: MatchupDetail, min_per_side: int) -> dict:
         "headline": detail.headline,
         "winner_gold_at_14": detail.winner_gold_at_14,
         "loser_gold_at_14": detail.loser_gold_at_14,
+        # Games each timeline-derived figure rests on, per side. Not the match
+        # counts above: a game without a usable timeline is not counted here.
+        "timeline_games": {
+            "gold_at_14": {
+                "winners": detail.winner_gold_games,
+                "losers": detail.loser_gold_games,
+            },
+            "starting_items": {
+                "winners": detail.winner_starting_items_games,
+                "losers": detail.loser_starting_items_games,
+            },
+            "skill_order": {
+                "winners": detail.winner_skill_order_games,
+                "losers": detail.loser_skill_order_games,
+            },
+        },
         "divergences": [
             {
                 "field": d.field,
