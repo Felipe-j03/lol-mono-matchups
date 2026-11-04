@@ -349,6 +349,24 @@ def test_a_malformed_name_response_confirms_the_player_with_an_empty_name(db):
     assert db.pending_suspects("br1") == []
 
 
+class NameBodyNotJson(FakeClient):
+    def riot_id(self, puuid):
+        super().riot_id(puuid)
+        raise ValueError("Expecting value: line 1 column 1")  # json.JSONDecodeError's base
+
+
+def test_a_non_json_name_response_confirms_the_player_with_an_empty_name(db):
+    fake, ids, matches = world()
+    fake = NameBodyNotJson(ids, matches, {"TALONER": "unused"})
+    suspects(db, "TALONER", "ZEDDER")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert (report.players, report.confirmed, report.unnamed) == (2, 1, 1)
+    [player] = db.confirmed_players(TALON, "MIDDLE")
+    assert (player.puuid, player.riot_id, player.games) == ("TALONER", "", 30)
+    assert len(db.confirmed_matches(TALON, "MIDDLE")) == 30
+    assert db.pending_suspects("br1") == []
+
+
 def test_named_players_are_not_counted_as_unnamed(db):
     fake, _, _ = world()
     suspects(db, "TALONER")

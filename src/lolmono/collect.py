@@ -11,7 +11,6 @@ from dataclasses import dataclass
 
 from lolmono.matchparse import DiscardMatch, extract_match
 from lolmono.mono import qualify
-from lolmono.riot import RiotError
 from lolmono.screen import is_suspect
 
 BATCH_SIZE = 50
@@ -121,9 +120,17 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
         if verdict is not None:
             try:
                 riot_id = client.riot_id(puuid)
-            except (RiotError, KeyError, TypeError):
-                # Tambem resposta sem gameName/tagLine: falha estrutural do
-                # corpo, nao so da requisicao. A politica fica aqui, no chamador.
+            except Exception:
+                # Captura larga de proposito, so aqui: o nome e puramente
+                # cosmetico (alimenta so a lista de jogadores de referencia), o
+                # fallback e definido e CONTADO em ``unnamed`` (nada fica oculto),
+                # e a alternativa e uma coleta de horas morta num loop: um corpo
+                # sem gameName/tagLine (KeyError), nao-JSON (ValueError), erro de
+                # rede... cada tipo novo reproduziria o mesmo travamento.
+                # ``Exception`` nao pega KeyboardInterrupt nem SystemExit, entao
+                # interromper a mao continua funcionando. NAO estreitar de volta.
+                # (A captura de malformed_payload e uma tupla explicita, de
+                # proposito: la o alarme e a taxa de descartes.)
                 unnamed += 1
 
         with db.batch():
