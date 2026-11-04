@@ -1,12 +1,16 @@
-"""Estagios 1 e 2 do coletor: escada (todas as contas do elo) e peneira.
+"""Estagios do coletor: escada (todas as contas do elo), peneira e partidas.
 
 A peneira gasta uma unica requisicao de maestria por conta e descarta quase
-todas; so os suspeitos seguem para o estagio caro de partidas. Ambos os
-estagios sao retomaveis: o progresso fica no banco e e confirmado por lote.
+todas; so os suspeitos seguem para o estagio caro de partidas, onde o criterio
+de mono decide de verdade. Todos os estagios sao retomaveis: o progresso fica no
+banco e e confirmado por lote (peneira) ou por jogador (partidas).
 """
 
+from collections import Counter
 from dataclasses import dataclass
 
+from lolmono.matchparse import DiscardMatch, extract_match
+from lolmono.mono import qualify
 from lolmono.screen import is_suspect
 
 BATCH_SIZE = 50
@@ -16,6 +20,20 @@ BATCH_SIZE = 50
 class ScreenReport:
     screened: int
     suspects: int
+
+
+@dataclass(frozen=True)
+class MatchReport:
+    """Resultado de uma execucao do estagio 3.
+
+    ``discarded`` conta, por motivo, as partidas buscadas nesta execucao e
+    descartadas (uma por par jogador/partida); so aparecem motivos ocorridos.
+    """
+
+    players: int
+    confirmed: int
+    matches: int
+    discarded: dict[str, int]
 
 
 def collect_ladder(client, db, cfg, platform: str) -> int:
@@ -56,3 +74,62 @@ def screen_candidates(client, db, cfg, platform: str, now_ms: int) -> ScreenRepo
         screened += len(verdicts)
         suspects += sum(suspect for _, suspect in verdicts)
     return ScreenReport(screened=screened, suspects=suspects)
+
+
+def collect_matches(client, db, cfg, platform: str) -> MatchReport:
+    """Baixa as partidas de cada suspeito pendente e decide se e mono.
+
+    Cada jogador e gravado inteiro, numa transacao curta ao final dele: partidas,
+    descartes e veredito, ou nada. Toda a rede (partidas e o nome de quem foi
+    confirmado) acontece antes dela, para que regioes em paralelo no mesmo banco
+    nao esbarrem em "database is locked".
+    """
+    players = 0
+    confirmed = 0
+    stored = 0
+    discarded: Counter[str] = Counter()
+
+    for puuid in db.pending_suspects(platform):
+        rows = []  # mais recente primeiro, na ordem em que a Riot devolve
+        discards = []
+        for match_id in client.match_ids(puuid, cfg.window_games):
+            if db.match_exists(match_id, puuid):
+                continue
+            payload = client.match(match_id)
+            try:
+                rows.append(extract_match(payload, puuid))
+            except DiscardMatch as exc:
+                discards.append((match_id, exc.reason))
+            except (KeyError, TypeError):
+                # Payload estruturalmente quebrado: o extrator deixa a
+                # classificacao para ca. Uma partida corrompida nao derruba uma
+                # coleta de horas, mas entra no relatorio de descartes.
+                discards.append((match_id, "malformed_payload"))
+
+        verdict = qualify(
+            rows, cfg.targets, cfg.window_games, cfg.min_share, cfg.min_games
+        )
+        # Uma requisicao por confirmado; rejeitados nao custam nenhuma.
+        riot_id = client.riot_id(puuid) if verdict is not None else None
+
+        with db.batch():
+            for row in rows:
+                db.insert_match(row)
+            for match_id, reason in discards:
+                db.record_discard(match_id, reason)
+            if verdict is None:
+                db.reject_player(platform, puuid)
+            else:
+                target, games, share = verdict
+                db.confirm_player(
+                    platform, puuid, riot_id, target.champion_id, target.role, games, share
+                )
+
+        players += 1
+        confirmed += verdict is not None
+        stored += len(rows)
+        discarded.update(reason for _, reason in discards)
+
+    return MatchReport(
+        players=players, confirmed=confirmed, matches=stored, discarded=dict(discarded)
+    )

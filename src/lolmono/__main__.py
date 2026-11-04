@@ -7,7 +7,7 @@ import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from lolmono.collect import collect_ladder, screen_candidates
+from lolmono.collect import collect_ladder, collect_matches, screen_candidates
 from lolmono.config import ConfigError, load_config
 from lolmono.db import Database
 from lolmono.ratelimit import riot_limiter
@@ -27,6 +27,7 @@ def _parser() -> argparse.ArgumentParser:
     for name, help_text in (
         ("ladder", "estagio 1: coleta as contas dos elos configurados"),
         ("screen", "estagio 2: peneira por maestria"),
+        ("matches", "estagio 3: partidas e confirmacao de mono"),
     ):
         command = commands.add_parser(name, help=help_text)
         command.add_argument("--platform", required=True, choices=sorted(PLATFORM_TO_REGIONAL))
@@ -62,6 +63,19 @@ def main(
             if args.command == "ladder":
                 added = collect_ladder(client, db, cfg, args.platform)
                 print(f"ladder {args.platform}: candidatos novos: {added}")
+            elif args.command == "matches":
+                report = collect_matches(client, db, cfg, args.platform)
+                print(
+                    f"matches {args.platform}: jogadores: {report.players}, "
+                    f"confirmados: {report.confirmed}, partidas: {report.matches}"
+                )
+                if report.discarded:
+                    breakdown = ", ".join(
+                        f"{reason}={n}" for reason, n in sorted(report.discarded.items())
+                    )
+                    print(f"descartes: {breakdown}")
+                else:
+                    print("descartes: nenhum")
             else:
                 report = screen_candidates(
                     client, db, cfg, args.platform, int(time.time() * 1000)
