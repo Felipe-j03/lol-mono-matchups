@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from lolmono.timelineparse import extract_timeline
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -155,6 +157,31 @@ def test_timeline_one_frame_short_of_minute_14_has_no_snapshot():
     row = run(count=14)  # indices 0..13: the match ended during minute 13
     assert row.gold_at_14 is None
     assert row.cs_diff_at_14 is None
+
+
+def test_truncated_final_frame_at_index_14_is_not_a_minute_14_frame():
+    # The game ended at 13:40: frames 0..13 sit on minute marks and Riot's extra
+    # end-of-game frame lands at index 14 with a timestamp below 14:00.
+    timeline_json = series(14)
+    last = dict(timeline_json["info"]["frames"][13])
+    last["timestamp"] = 820_000
+    last["events"] = []
+    timeline_json["info"]["frames"].append(last)
+    assert len(timeline_json["info"]["frames"]) == 15
+    row = extract_timeline(timeline_json, "ME", "THEM")
+    assert row.gold_at_14 is None
+    assert row.cs_diff_at_14 is None
+    assert row.skill_order == (1, 3, 1)  # everything else is still populated
+
+
+def test_unknown_tracked_puuid_raises():
+    with pytest.raises(ValueError):
+        extract_timeline(series(1), "NOBODY", "THEM")
+
+
+def test_unknown_opponent_puuid_raises():
+    with pytest.raises(ValueError):
+        extract_timeline(series(1), "ME", "NOBODY")
 
 
 def test_jittered_timestamps_still_select_the_minute_14_frame():

@@ -39,8 +39,9 @@ def extract_timeline(timeline_json: dict, puuid: str, opponent_puuid: str) -> Ti
     per `info.frameInterval` ms from index 0 = time 0, and their timestamps sit
     slightly above the minute mark, so a timestamp cutoff would pick minute 13.
     `gold_at_14` and `cs_diff_at_14` come from `frames[14 * 60_000 // interval]`,
-    and are None when the timeline has no such frame (the match ended before
-    minute 14; its last frame must not be passed off as minute 14).
+    and are None when the timeline has no such frame, or when that frame's
+    timestamp is below 14:00 (the match ended before minute 14 and the frame
+    is Riot's truncated end-of-game frame; it must not be passed off as 14).
 
     Frames are walked up to and including the one after that (minute 15), so
     `item_order` covers the first 15 minutes only. It is NOT the full build
@@ -96,7 +97,9 @@ def extract_timeline(timeline_json: dict, puuid: str, opponent_puuid: str) -> Ti
                         kills += 1
 
     gold_at_14 = cs_diff_at_14 = None
-    if len(frames) > snapshot_idx:
+    # The timestamp floor rejects Riot's extra end-of-game frame: a game that
+    # ended at 13:40 has that frame at index 14, but it is not a minute-14 frame.
+    if len(frames) > snapshot_idx and frames[snapshot_idx]["timestamp"] >= SNAPSHOT_MS:
         stats = frames[snapshot_idx]["participantFrames"]
         mine = stats[str(pid)]
         theirs = stats[str(opp_pid)]
