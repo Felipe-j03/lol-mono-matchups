@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from lolmono.matchparse import DiscardMatch, extract_match
 from lolmono.mono import qualify
+from lolmono.riot import RiotError
 from lolmono.screen import is_suspect
 
 BATCH_SIZE = 50
@@ -34,6 +35,8 @@ class MatchReport:
     confirmed: int
     matches: int
     discarded: dict[str, int]
+    # Confirmados cujo nome nao pode ser obtido (gravados com nome vazio).
+    unnamed: int = 0
 
 
 def collect_ladder(client, db, cfg, platform: str) -> int:
@@ -87,6 +90,7 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
     players = 0
     confirmed = 0
     stored = 0
+    unnamed = 0
     discarded: Counter[str] = Counter()
 
     for puuid in db.pending_suspects(platform):
@@ -100,17 +104,25 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
                 rows.append(extract_match(payload, puuid))
             except DiscardMatch as exc:
                 discards.append((match_id, exc.reason))
-            except (KeyError, TypeError):
+            except (KeyError, TypeError, IndexError, AttributeError, StopIteration):
                 # Payload estruturalmente quebrado: o extrator deixa a
                 # classificacao para ca. Uma partida corrompida nao derruba uma
-                # coleta de horas, mas entra no relatorio de descartes.
+                # coleta de horas, mas entra no relatorio de descartes. A lista
+                # e larga de proposito: uma excecao nao capturada aqui deixaria o
+                # jogador sem veredito e toda nova execucao morreria nele.
                 discards.append((match_id, "malformed_payload"))
 
         verdict = qualify(
             rows, cfg.targets, cfg.window_games, cfg.min_share, cfg.min_games
         )
-        # Uma requisicao por confirmado; rejeitados nao custam nenhuma.
-        riot_id = client.riot_id(puuid) if verdict is not None else None
+        # Uma requisicao por confirmado; rejeitados nao custam nenhuma. O nome
+        # e cosmetico: falhar nele nao pode jogar fora as partidas ja pagas.
+        riot_id = ""
+        if verdict is not None:
+            try:
+                riot_id = client.riot_id(puuid)
+            except RiotError:
+                unnamed += 1
 
         with db.batch():
             for row in rows:
@@ -131,5 +143,9 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
         discarded.update(reason for _, reason in discards)
 
     return MatchReport(
-        players=players, confirmed=confirmed, matches=stored, discarded=dict(discarded)
+        players=players,
+        confirmed=confirmed,
+        matches=stored,
+        discarded=dict(discarded),
+        unnamed=unnamed,
     )

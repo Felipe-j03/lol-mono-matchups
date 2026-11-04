@@ -67,7 +67,8 @@ def main(
                 report = collect_matches(client, db, cfg, args.platform)
                 print(
                     f"matches {args.platform}: jogadores: {report.players}, "
-                    f"confirmados: {report.confirmed}, partidas: {report.matches}"
+                    f"confirmados: {report.confirmed}, partidas: {report.matches}, "
+                    f"sem nome: {report.unnamed}"
                 )
                 if report.discarded:
                     breakdown = ", ".join(

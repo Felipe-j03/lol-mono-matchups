@@ -30,8 +30,10 @@ def qualify(
     roles is counted separately; an evenly split 26 TOP + 26 MIDDLE player is
     50% each and qualifies at ``min_share=0.5``, and is excluded by raising it.
 
-    With ``min_share >= 0.5`` two targets cannot both qualify; below that, the
-    target with the highest count wins (the first listed, on a tie).
+    Above ``min_share = 0.5`` two targets cannot both qualify. At exactly 0.5
+    they can (26 TOP + 26 MIDDLE Gragas are 50% each), and below 0.5 more can.
+    The target with the highest count wins; on a tie the one listed first in the
+    config wins, so the order of ``[[targets]]`` is significant at those values.
     """
     window = rows[:window_games]
     if not window:

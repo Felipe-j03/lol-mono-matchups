@@ -55,6 +55,14 @@ def broken(match_id, puuid, how):
         del match["info"]
     elif how == "null_info":
         match["info"] = None
+    elif how in ("empty_styles", "empty_selections", "platform_not_a_string"):
+        participant = next(p for p in match["info"]["participants"] if p["puuid"] == puuid)
+        if how == "empty_styles":
+            participant["perks"]["styles"] = []
+        elif how == "empty_selections":
+            participant["perks"]["styles"][0]["selections"] = []
+        else:
+            match["info"]["platformId"] = None
     elif how == "no_perks":
         next(p for p in match["info"]["participants"] if p["puuid"] == puuid).pop("perks")
     else:
@@ -84,7 +92,7 @@ class FakeClient:
     def match_ids(self, puuid, count, queue=420):
         self._watch()
         self.id_requests.append((puuid, count, queue))
-        return list(self._ids[puuid])
+        return list(self._ids[puuid])[:count]  # the real API honours count
 
     def match(self, match_id):
         self._watch()
@@ -261,6 +269,9 @@ def test_discarded_matches_are_counted_not_raised(db):
         ("no_info", "malformed_payload"),
         ("null_info", "malformed_payload"),
         ("no_perks", "malformed_payload"),
+        ("empty_styles", "malformed_payload"),
+        ("empty_selections", "malformed_payload"),
+        ("platform_not_a_string", "malformed_payload"),
     ],
 )
 def test_every_failure_kind_is_a_counted_discard_and_the_run_continues(db, how, reason):
@@ -271,6 +282,9 @@ def test_every_failure_kind_is_a_counted_discard_and_the_run_continues(db, how, 
     assert report.discarded == {reason: 1}
     assert db.discard_counts() == {reason: 1}
     assert report.players == 2 and report.confirmed == 1  # the run went on
+    # Both players were decided: a deterministic bad payload must not leave a
+    # player pending, or every rerun would die at the same one.
+    assert db.pending_suspects("br1") == []
 
 
 def test_discards_are_broken_down_by_reason(db):
@@ -297,6 +311,30 @@ def test_malformed_payload_is_not_confused_with_a_player_level_failure(db):
     report = collect_matches(fake, db, cfg, "br1")
     assert (report.players, report.confirmed, report.matches) == (1, 0, 0)
     assert report.discarded == {"malformed_payload": 1}
+
+
+class NameFails(FakeClient):
+    def riot_id(self, puuid):
+        super().riot_id(puuid)
+        raise RiotError("HTTP 404 for /riot/account/v1/accounts/by-puuid/x")
+
+
+def test_a_failing_name_lookup_confirms_the_player_with_an_empty_name(db):
+    fake, ids, matches = world()
+    fake = NameFails(ids, matches, {"TALONER": "unused"})
+    suspects(db, "TALONER", "ZEDDER")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert (report.players, report.confirmed, report.unnamed) == (2, 1, 1)
+    [player] = db.confirmed_players(TALON, "MIDDLE")
+    assert (player.puuid, player.riot_id, player.games) == ("TALONER", "", 30)
+    assert len(db.confirmed_matches(TALON, "MIDDLE")) == 30
+    assert db.pending_suspects("br1") == []
+
+
+def test_named_players_are_not_counted_as_unnamed(db):
+    fake, _, _ = world()
+    suspects(db, "TALONER")
+    assert collect_matches(fake, db, cfg, "br1").unnamed == 0
 
 
 def test_matches_already_stored_are_not_requested_again(db):
@@ -432,6 +470,7 @@ def test_cli_matches_prints_the_four_figures_and_the_discard_breakdown(tmp_path,
     assert code == 0
     assert "br1" in out
     assert "jogadores: 2" in out
+    assert "sem nome: 0" in out
     assert "confirmados: 1" in out
     assert "partidas: 98" in out
     assert "unpaired_lanes=1" in out
