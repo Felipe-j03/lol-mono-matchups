@@ -279,10 +279,36 @@ def test_batch_does_not_commit_or_swallow_on_exception(tmp_path):
         with first.batch():
             first.add_candidates("br1", ["A"])
             raise RuntimeError("boom")
+    first.close()
     second = Database(path)
     assert second.pending_candidates("br1") == []
     second.close()
-    first._conn.close()  # close() would commit; skip it
+
+
+def test_batch_rollback_prevents_later_commit_on_same_database(tmp_path):
+    path = tmp_path / "b.db"
+    first = Database(path)
+    first.init_schema()
+    first.commit()
+    with pytest.raises(RuntimeError):
+        with first.batch():
+            first.add_candidates("br1", ["A"])
+            raise RuntimeError("boom")
+    first.commit()  # caller carries on; the aborted batch must be gone
+    assert first.pending_candidates("br1") == []
+    first.close()
+
+
+def test_close_without_commit_discards_writes(tmp_path):
+    path = tmp_path / "c.db"
+    first = Database(path)
+    first.init_schema()
+    first.commit()
+    first.add_candidates("br1", ["A"])
+    first.close()
+    second = Database(path)
+    assert second.pending_candidates("br1") == []
+    second.close()
 
 
 def test_reconfirming_for_another_pair_keeps_one_row(db):

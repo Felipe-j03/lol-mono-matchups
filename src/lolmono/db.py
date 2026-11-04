@@ -123,12 +123,16 @@ class Database:
 
     @contextmanager
     def batch(self) -> Iterator[None]:
-        """Commit on clean exit; on an exception, propagate without committing."""
-        yield
+        """Commit on clean exit; on an exception, roll back and re-raise."""
+        try:
+            yield
+        except BaseException:
+            self._conn.rollback()
+            raise
         self.commit()
 
     def close(self) -> None:
-        self._conn.commit()
+        """Close the connection; uncommitted writes are discarded."""
         self._conn.close()
 
     def init_schema(self) -> None:
