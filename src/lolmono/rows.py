@@ -36,7 +36,7 @@ class TimelineRow:
     cs_diff_at_14: int | None
     starting_items: tuple[int, ...]
     item_order: tuple[int, ...]
-    skill_order: tuple[int, int, int]
+    skill_order: tuple[int, int, int] | None
     deaths_before_10: int
     kills_before_10: int
 

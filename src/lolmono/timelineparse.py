@@ -8,8 +8,8 @@ frames up to minute 15 are walked; later frames are never looked into.
 from lolmono.rows import TimelineRow
 
 MINUTE_MS = 60_000
-GAME_FRAME_MS = 14 * MINUTE_MS  # the snapshot the matchup comparison is made at
-FRAME_WINDOW_MS = 15 * MINUTE_MS  # frames after this are not traversed
+DEFAULT_FRAME_INTERVAL_MS = MINUTE_MS
+SNAPSHOT_MS = 14 * MINUTE_MS  # the moment the matchup comparison is made at
 STARTING_ITEMS_MS = 60_000  # pre-game shop sits at ~0; nobody shops twice in a minute
 KILL_WINDOW_MS = 10 * MINUTE_MS  # kills/deaths strictly before this count
 SKILL_POINTS = 3
@@ -35,53 +35,52 @@ def _remove_last(items: list[int], item_id: int) -> None:
 def extract_timeline(timeline_json: dict, puuid: str, opponent_puuid: str) -> TimelineRow:
     """Extract the early-game numbers of `puuid` against `opponent_puuid`.
 
-    `gold_at_14` and `cs_diff_at_14` come from the frame with the greatest
-    timestamp <= 14:00, and only if the timeline holds a frame at or after
-    14:00. A match that ended earlier still has a last frame below 14:00, and
-    reporting it as "gold at 14" would be false, so both fields are None then.
+    The minute-14 frame is chosen by index, never by timestamp: frames come one
+    per `info.frameInterval` ms from index 0 = time 0, and their timestamps sit
+    slightly above the minute mark, so a timestamp cutoff would pick minute 13.
+    `gold_at_14` and `cs_diff_at_14` come from `frames[14 * 60_000 // interval]`,
+    and are None when the timeline has no such frame (the match ended before
+    minute 14; its last frame must not be passed off as minute 14).
 
-    `item_order` covers the first 15 minutes only, because that is as far as
-    frames are traversed. It is NOT the full build path: the final build comes
-    from the match payload (see matchparse). Sales and undos remove the last
-    occurrence of the item from the order; an unknown item is ignored.
+    Frames are walked up to and including the one after that (minute 15), so
+    `item_order` covers the first 15 minutes only. It is NOT the full build
+    path: the final build comes from the match payload (see matchparse). Sales
+    and undos remove the last occurrence of the item, from `item_order` and,
+    when they happen inside the first minute, from `starting_items` too; an
+    unknown item is ignored.
 
-    Raises ValueError if either puuid is not in metadata.participants or the
-    player has fewer than three NORMAL skill points in the first 15 minutes.
+    `skill_order` is None when the player has fewer than three NORMAL
+    level-ups (a short game); it is never padded.
+
+    Raises ValueError if either puuid is not in metadata.participants.
     """
     pid = _participant_id(timeline_json, puuid)
     opp_pid = _participant_id(timeline_json, opponent_puuid)
 
-    reached_14 = False
-    frame_14_ms = -1
-    frame_14_stats: dict | None = None
-    purchases: list[tuple[int, int]] = []  # (itemId, timestamp), for starting_items
+    info = timeline_json["info"]
+    frames = info["frames"]
+    interval = info.get("frameInterval", DEFAULT_FRAME_INTERVAL_MS)
+    snapshot_idx = SNAPSHOT_MS // interval
+
+    starting_items: list[int] = []
     item_order: list[int] = []
     skill_order: list[int] = []
     kills = deaths = 0
 
-    for frame in timeline_json["info"]["frames"]:
-        ts = frame["timestamp"]
-        if ts > FRAME_WINDOW_MS:
-            reached_14 = True  # a frame past 15:00 proves the game got to 14:00
-            break
-        if ts >= GAME_FRAME_MS:
-            reached_14 = True
-        if frame_14_ms < ts <= GAME_FRAME_MS:
-            frame_14_ms = ts
-            frame_14_stats = frame["participantFrames"]
-
+    for frame in frames[: snapshot_idx + 2]:
         for event in frame["events"]:
             kind = event["type"]
             if kind == "ITEM_PURCHASED":
                 if event["participantId"] == pid:
-                    purchases.append((event["itemId"], event["timestamp"]))
                     item_order.append(event["itemId"])
-            elif kind == "ITEM_SOLD":
+                    if event["timestamp"] <= STARTING_ITEMS_MS:
+                        starting_items.append(event["itemId"])
+            elif kind in ("ITEM_SOLD", "ITEM_UNDO"):
                 if event["participantId"] == pid:
-                    _remove_last(item_order, event["itemId"])
-            elif kind == "ITEM_UNDO":
-                if event["participantId"] == pid:
-                    _remove_last(item_order, event["beforeId"])
+                    gone = event["itemId"] if kind == "ITEM_SOLD" else event["beforeId"]
+                    _remove_last(item_order, gone)
+                    if event["timestamp"] <= STARTING_ITEMS_MS:
+                        _remove_last(starting_items, gone)
             elif kind == "SKILL_LEVEL_UP":
                 if (
                     event["participantId"] == pid
@@ -96,15 +95,11 @@ def extract_timeline(timeline_json: dict, puuid: str, opponent_puuid: str) -> Ti
                     if event.get("killerId") == pid:
                         kills += 1
 
-    if len(skill_order) < SKILL_POINTS:
-        raise ValueError(
-            f"expected {SKILL_POINTS} skill points in the first 15 minutes, found {len(skill_order)}"
-        )
-
     gold_at_14 = cs_diff_at_14 = None
-    if reached_14 and frame_14_stats is not None:
-        mine = frame_14_stats[str(pid)]
-        theirs = frame_14_stats[str(opp_pid)]
+    if len(frames) > snapshot_idx:
+        stats = frames[snapshot_idx]["participantFrames"]
+        mine = stats[str(pid)]
+        theirs = stats[str(opp_pid)]
         gold_at_14 = mine["totalGold"]
         cs_diff_at_14 = _creep_score(mine) - _creep_score(theirs)
 
@@ -113,9 +108,13 @@ def extract_timeline(timeline_json: dict, puuid: str, opponent_puuid: str) -> Ti
         puuid=puuid,
         gold_at_14=gold_at_14,
         cs_diff_at_14=cs_diff_at_14,
-        starting_items=tuple(item for item, ts in purchases if ts <= STARTING_ITEMS_MS),
+        starting_items=tuple(starting_items),
         item_order=tuple(item_order),
-        skill_order=(skill_order[0], skill_order[1], skill_order[2]),
+        skill_order=(
+            (skill_order[0], skill_order[1], skill_order[2])
+            if len(skill_order) == SKILL_POINTS
+            else None
+        ),
         deaths_before_10=deaths,
         kills_before_10=kills,
     )

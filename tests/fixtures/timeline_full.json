@@ -4,6 +4,7 @@
     "participants": ["P1", "P2", "ME", "P4", "P5", "P6", "P7", "THEM", "P9", "P10"]
   },
   "info": {
+    "frameInterval": 60000,
     "frames": [
       {"timestamp": 0, "participantFrames": {}, "events": [
         {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 3, "itemId": 1055},

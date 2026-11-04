@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from lolmono.timelineparse import extract_timeline
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -20,21 +18,6 @@ def load(name: str) -> dict:
 
 def stats(gold: int, cs: int = 0, jungle: int = 0) -> dict:
     return {"totalGold": gold, "minionsKilled": cs, "jungleMinionsKilled": jungle}
-
-
-def frame(timestamp: int, events: list | None = None, pframes: dict | None = None) -> dict:
-    return {
-        "timestamp": timestamp,
-        "participantFrames": pframes or {},
-        "events": events or [],
-    }
-
-
-def timeline(frames: list[dict]) -> dict:
-    return {
-        "metadata": {"matchId": "BR1_X", "participants": PARTICIPANTS},
-        "info": {"frames": frames},
-    }
 
 
 def buy(item: int, ts: int = 0, pid: int = ME) -> dict:
@@ -66,10 +49,41 @@ def kill(killer: int, victim: int, ts: int, assists: tuple[int, ...] = ()) -> di
 THREE_SKILLS = [skill(1), skill(3), skill(1)]
 
 
-def run(frames: list[dict]):
-    """Extract from a minimal timeline; three skill points are always supplied."""
-    frames = [frame(0, THREE_SKILLS)] + frames
-    return extract_timeline(timeline(frames), "ME", "THEM")
+def series(count: int, events: dict[int, list] | None = None, interval: int = MIN, drift: int = 0) -> dict:
+    """A timeline of `count` frames, one per `interval` ms from index 0.
+
+    Frame i carries ME gold 1000*i, ME cs 10*i + i jungle, THEM cs 8*i, so every
+    frame is distinguishable: gold at index 14 is 14000, cs diff 3*14 = 42.
+    `drift` adds i*drift ms to frame i's timestamp, as Riot's frames sit a few
+    ms above the minute mark and the error accumulates. `events` maps a frame
+    index to the events inside that frame; three skill points are always added.
+    """
+    by_index: dict[int, list] = {0: list(THREE_SKILLS)}
+    for index, evs in (events or {}).items():
+        by_index.setdefault(index, []).extend(evs)
+    frames = [
+        {
+            "timestamp": i * interval + i * drift,
+            "participantFrames": {
+                str(ME): stats(1000 * i, 10 * i, i),
+                str(THEM): stats(900 * i, 8 * i, 0),
+            },
+            "events": by_index.get(i, []),
+        }
+        for i in range(max(count, max(by_index) + 1))
+    ]
+    return timeline(frames, interval)
+
+
+def timeline(frames: list[dict], interval: int | None = MIN) -> dict:
+    info: dict = {"frames": frames}
+    if interval is not None:
+        info["frameInterval"] = interval
+    return {"metadata": {"matchId": "BR1_X", "participants": PARTICIPANTS}, "info": info}
+
+
+def run(count: int = 1, events: dict[int, list] | None = None):
+    return extract_timeline(series(count, events), "ME", "THEM")
 
 
 # --- the brief's tests, against the fixtures -------------------------------
@@ -128,82 +142,111 @@ def test_swapping_roles_flips_the_sign_and_reads_the_other_frame():
     assert row.cs_diff_at_14 == -12
 
 
-# --- the minute-14 guard ----------------------------------------------------
-
-AT_14 = {str(ME): stats(5000, 100, 10), str(THEM): stats(4000, 90, 8)}
+# --- the minute-14 frame is chosen by index ---------------------------------
 
 
-def test_frame_exactly_at_minute_14_counts_as_reaching_it():
-    row = run([frame(14 * MIN, pframes=AT_14)])
-    assert row.gold_at_14 == 5000
-    assert row.cs_diff_at_14 == 12
+def test_frame_index_14_is_the_minute_14_snapshot():
+    row = run(count=15)
+    assert row.gold_at_14 == 14_000
+    assert row.cs_diff_at_14 == 42  # (140 + 14) - 112: jungle counted, ME minus THEM
 
 
-def test_last_frame_just_before_minute_14_is_not_reported_as_minute_14():
-    row = run([frame(14 * MIN - 1, pframes=AT_14)])
+def test_timeline_one_frame_short_of_minute_14_has_no_snapshot():
+    row = run(count=14)  # indices 0..13: the match ended during minute 13
     assert row.gold_at_14 is None
     assert row.cs_diff_at_14 is None
 
 
-def test_frame_past_minute_14_is_not_used_for_the_value():
-    early = {str(ME): stats(4000, 80, 0), str(THEM): stats(3900, 80, 0)}
-    late = {str(ME): stats(9999, 300, 0), str(THEM): stats(1, 1, 0)}
-    row = run([frame(13 * MIN, pframes=early), frame(14 * MIN + 500, pframes=late)])
-    # Pins the stated rule: greatest timestamp <= 14:00 (here minute 13), gated
-    # only on some frame being >= 14:00. A frame at 14:00.5 is never the value.
-    assert row.gold_at_14 == 4000
-    assert row.cs_diff_at_14 == 0
+def test_jittered_timestamps_still_select_the_minute_14_frame():
+    # Frames sit above the minute mark and the error accumulates: index 14 is at
+    # 840_168 ms, past the 14:00 cutoff. A "greatest timestamp <= 14:00" rule
+    # would take index 13 (13_000 gold) here; the index rule takes index 14.
+    timeline_json = series(16, drift=12)
+    frames = timeline_json["info"]["frames"]
+    assert frames[13]["timestamp"] < 14 * MIN < frames[14]["timestamp"]
+    row = extract_timeline(timeline_json, "ME", "THEM")
+    assert row.gold_at_14 == 14_000
+    assert row.cs_diff_at_14 == 42
 
 
-def test_jungle_creeps_count_toward_cs():
-    pframes = {str(ME): stats(0, 100, 20), str(THEM): stats(0, 100, 0)}
-    row = run([frame(14 * MIN, pframes=pframes)])
-    assert row.cs_diff_at_14 == 20
+def test_snapshot_index_follows_the_frame_interval():
+    row = extract_timeline(series(29, interval=30_000, drift=7), "ME", "THEM")
+    assert row.gold_at_14 == 28_000  # 14 min / 30 s = index 28
+    short = extract_timeline(series(28, interval=30_000, drift=7), "ME", "THEM")
+    assert short.gold_at_14 is None
+
+
+def test_missing_frame_interval_defaults_to_one_minute():
+    timeline_json = series(15)
+    del timeline_json["info"]["frameInterval"]
+    assert extract_timeline(timeline_json, "ME", "THEM").gold_at_14 == 14_000
 
 
 # --- items ------------------------------------------------------------------
 
 
 def test_starting_items_bound_is_the_first_minute_inclusive():
-    row = run([frame(MIN, [buy(1, 0), buy(2, MIN), buy(3, MIN + 1)])])
+    row = run(events={1: [buy(1, 0), buy(2, MIN), buy(3, MIN + 1)]})
     assert row.starting_items == (1, 2)
     assert row.item_order == (1, 2, 3)
 
 
 def test_other_players_purchases_are_ignored():
-    row = run([frame(MIN, [buy(1), buy(9, pid=THEM), buy(8, pid=1)])])
+    row = run(events={1: [buy(1), buy(9, pid=THEM), buy(8, pid=1)]})
     assert row.starting_items == (1,)
     assert row.item_order == (1,)
 
 
 def test_sale_removes_the_last_occurrence_of_the_item():
-    row = run([frame(MIN, [buy(5), buy(6), buy(5), sell(5)])])
+    row = run(events={1: [buy(5), buy(6), buy(5), sell(5)]})
     assert row.item_order == (5, 6)
 
 
 def test_undo_removes_the_last_occurrence_of_before_id():
-    row = run([frame(MIN, [buy(5), buy(5), buy(6), undo(5)])])
+    row = run(events={1: [buy(5), buy(5), buy(6), undo(5)]})
     assert row.item_order == (5, 6)
 
 
 def test_sale_or_undo_of_an_item_not_in_the_order_is_a_no_op():
-    row = run([frame(MIN, [buy(5), sell(77), undo(88)])])
+    row = run(events={1: [buy(5), sell(77), undo(88)]})
     assert row.item_order == (5,)
+    assert row.starting_items == (5,)
 
 
 def test_other_players_sales_and_undos_do_not_touch_the_order():
-    row = run([frame(MIN, [buy(5), sell(5, pid=THEM), undo(5, pid=1)])])
+    row = run(events={1: [buy(5), sell(5, pid=THEM), undo(5, pid=1)]})
     assert row.item_order == (5,)
+    assert row.starting_items == (5,)
 
 
-def test_item_order_stops_after_minute_15():
-    frames = [
-        frame(14 * MIN, pframes=AT_14),
-        frame(15 * MIN, [buy(1, 15 * MIN - 5)]),
-        frame(15 * MIN + 1, [buy(2, 15 * MIN + 1)]),
-        frame(16 * MIN, [buy(3, 16 * MIN)]),
-    ]
-    assert run(frames).item_order == (1,)
+def test_undoing_a_starting_purchase_removes_it_from_both_lists():
+    row = run(events={1: [buy(1055), buy(2003), undo(2003, ts=5_000)]})
+    assert row.starting_items == (1055,)
+    assert row.item_order == (1055,)
+
+
+def test_selling_a_starting_item_in_the_first_minute_removes_it_from_both_lists():
+    row = run(events={1: [buy(1055), buy(2003), sell(2003, ts=30_000)]})
+    assert row.starting_items == (1055,)
+    assert row.item_order == (1055,)
+
+
+def test_selling_a_starting_item_later_keeps_it_in_starting_items():
+    row = run(events={1: [buy(1055), buy(2003)], 5: [sell(2003, ts=5 * MIN)]})
+    assert row.starting_items == (1055, 2003)
+    assert row.item_order == (1055,)
+
+
+def test_item_order_includes_the_minute_15_frame_and_stops_there():
+    row = run(count=17, events={15: [buy(1, 15 * MIN - 5)], 16: [buy(2, 15 * MIN + 5)]})
+    assert row.item_order == (1,)
+
+
+def test_item_order_reads_jittered_frame_15():
+    # Same cut-off under drift: frame 15 starts at 900_180, past 15:00, and its
+    # minute 14-15 events must still be read.
+    timeline_json = series(17, events={15: [buy(1, 15 * MIN - 5)], 16: [buy(2)]}, drift=12)
+    assert extract_timeline(timeline_json, "ME", "THEM").item_order == (1,)
 
 
 # --- skills -----------------------------------------------------------------
@@ -211,13 +254,15 @@ def test_item_order_stops_after_minute_15():
 
 def test_skill_order_ignores_evolves_and_other_players():
     events = [skill(4, kind="EVOLVE"), skill(2, pid=THEM), skill(1), skill(2), skill(4, kind="EVOLVE"), skill(3), skill(1)]
-    row = extract_timeline(timeline([frame(0, events)]), "ME", "THEM")
+    row = extract_timeline(timeline([{"timestamp": 0, "participantFrames": {}, "events": events}]), "ME", "THEM")
     assert row.skill_order == (1, 2, 3)
 
 
-def test_fewer_than_three_skill_points_is_an_error_not_a_padded_tuple():
-    with pytest.raises(ValueError):
-        extract_timeline(timeline([frame(0, [skill(1), skill(2)])]), "ME", "THEM")
+def test_fewer_than_three_skill_points_gives_none_not_a_padded_tuple():
+    events = [skill(1), skill(2), skill(4, kind="EVOLVE"), skill(3, pid=THEM)]
+    row = extract_timeline(timeline([{"timestamp": 0, "participantFrames": {}, "events": events}]), "ME", "THEM")
+    assert row.skill_order is None
+    assert row.item_order == ()  # the rest of the row is still produced
 
 
 # --- kills and deaths -------------------------------------------------------
@@ -230,11 +275,11 @@ def test_minute_10_boundary_is_exclusive():
         kill(ME, THEM, 10 * MIN),
         kill(THEM, ME, 10 * MIN),
     ]
-    row = run([frame(10 * MIN, events)])
+    row = run(events={10: events})
     assert (row.kills_before_10, row.deaths_before_10) == (1, 1)
 
 
 def test_assists_and_other_players_kills_do_not_count():
     events = [kill(1, THEM, 1000, assists=(ME,)), kill(1, 2, 2000)]
-    row = run([frame(MIN, events)])
+    row = run(events={1: events})
     assert (row.kills_before_10, row.deaths_before_10) == (0, 0)
