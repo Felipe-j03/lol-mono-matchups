@@ -59,9 +59,41 @@ def test_rejects_enough_absolute_games_with_low_share():
     assert qualify(rows, targets, 60, 0.50, 25) is None
 
 
-def test_same_champion_in_two_roles_counts_separately():
+def test_even_two_role_split_meets_a_half_share_threshold():
+    # Follows from the spec's ">= 50% das partidas": 26/52 = 0.50 qualifies, for
+    # the first matching target. The roles are counted separately (neither role
+    # is credited with the other's games), but each reaches the threshold alone.
     rows = [gragas_top()] * 26 + [gragas_mid()] * 26
-    # nenhum dos dois pares atinge 50% isolado
+    assert qualify(rows, targets, 60, 0.50, 25) == (GRAGAS_MID, 26, 0.5)
+
+
+def test_raising_min_share_excludes_an_evenly_split_two_role_player():
+    rows = [gragas_top()] * 26 + [gragas_mid()] * 26
+    assert qualify(rows, targets, 60, 0.60, 25) is None
+
+
+def test_same_champion_in_two_roles_is_not_pooled():
+    # 20 TOP + 20 MIDDLE of 40 games: pooled Gragas would be 100%, per role it
+    # is 50% with 20 games each, below min_games.
+    rows = [gragas_top()] * 20 + [gragas_mid()] * 20
+    assert qualify(rows, targets, 60, 0.50, 25) is None
+
+
+def test_low_volume_specialist_qualifies_on_the_games_actually_played():
+    # 30 Talon out of 40 games: share 0.75. Under a window_games divisor the
+    # player still qualifies (30/60 = 0.5) but with the wrong share, 0.5.
+    rows = [talon_mid()] * 30 + [other()] * 10
+    assert qualify(rows, targets, 60, 0.50, 25) == (TALON_MID, 30, 0.75)
+
+
+def test_low_volume_specialist_below_the_window_is_not_lost():
+    # Fails under a window_games divisor: 25/60 = 0.417 < 0.50.
+    rows = [talon_mid()] * 25 + [other()] * 5  # 25 of 30 games = 0.833
+    assert qualify(rows, targets, 60, 0.50, 25) == (TALON_MID, 25, 25 / 30)
+
+
+def test_min_games_rejects_a_high_share_on_a_tiny_sample():
+    rows = [talon_mid()] * 8 + [other()] * 4  # 0.67, but 8 < 25
     assert qualify(rows, targets, 60, 0.50, 25) is None
 
 
@@ -75,18 +107,6 @@ def test_only_the_window_most_recent_games_count():
 def test_share_is_measured_against_the_window_not_against_games_played():
     # 80 partidas disponiveis, 30 Talon recentes + 30 outras na janela, 20 antigas.
     rows = [talon_mid()] * 30 + [other()] * 30 + [talon_mid()] * 20
-    assert qualify(rows, targets, 60, 0.50, 25) == (TALON_MID, 30, 0.5)
-
-
-def test_share_is_measured_against_the_configured_window_even_for_short_histories():
-    # Only 40 games exist: 26/40 = 0.65 of what was played, but 26/60 = 0.433 of
-    # the window. The denominator is the window, so this player is not mono.
-    rows = [talon_mid()] * 26 + [other()] * 14
-    assert qualify(rows, targets, 60, 0.50, 25) is None
-
-
-def test_short_history_still_qualifies_when_the_window_share_is_met():
-    rows = [talon_mid()] * 30 + [other()] * 5
     assert qualify(rows, targets, 60, 0.50, 25) == (TALON_MID, 30, 0.5)
 
 

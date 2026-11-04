@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -70,11 +71,14 @@ class FakeClient:
         self.match_requests = []
         self.riot_id_requests = []
         self.watch_db = None
+        self.batch_state = None  # {"inside": bool}, kept by track_batches()
         self.open_transaction_seen = False
         self.fail_on_match = None
 
     def _watch(self):
         if self.watch_db is not None and self.watch_db._conn.in_transaction:
+            self.open_transaction_seen = True
+        if self.batch_state is not None and self.batch_state["inside"]:
             self.open_transaction_seen = True
 
     def match_ids(self, puuid, count, queue=420):
@@ -93,6 +97,28 @@ class FakeClient:
         self._watch()
         self.riot_id_requests.append(puuid)
         return self._riot_ids[puuid]
+
+
+def track_batches(db, fake):
+    """Make ``fake`` notice any request issued while ``db.batch()`` is active.
+
+    ``in_transaction`` alone misses a request made inside a batch before its
+    first write, so the batch itself is observed too.
+    """
+    state = {"inside": False}
+    original = db.batch
+
+    @contextmanager
+    def tracked():
+        state["inside"] = True
+        try:
+            with original():
+                yield
+        finally:
+            state["inside"] = False
+
+    db.batch = tracked
+    fake.batch_state = state
 
 
 def world():
@@ -325,12 +351,34 @@ def test_unscreened_candidates_and_non_suspects_are_ignored(db):
 def test_no_write_transaction_is_open_during_network_calls(db):
     fake, _, _ = world()
     fake.watch_db = db
+    track_batches(db, fake)
     suspects(db, "TALONER", "ZEDDER")
     collect_matches(fake, db, cfg, "br1")
     assert len(fake.match_requests) == 100
     assert fake.riot_id_requests == ["TALONER"]
     assert not fake.open_transaction_seen
     assert not db._conn.in_transaction
+
+
+def test_the_watcher_notices_a_request_made_inside_a_batch(db):
+    # Guards the guard: a riot_id fetched inside the write batch must be caught.
+    fake, _, _ = world()
+    track_batches(db, fake)
+    with db.batch():
+        fake.riot_id("TALONER")
+    assert fake.open_transaction_seen
+
+
+def test_a_low_volume_specialist_is_confirmed_end_to_end(db):
+    # Only 26 ranked games exist, all Talon: share 1.0. Under a window_games
+    # divisor this would be 26/60 = 0.43 and the player would be lost.
+    ids = {"LOWVOL": [f"BR1_L{i:03d}" for i in range(26)]}
+    matches = {m: payload(m, "LOWVOL", TALON) for m in ids["LOWVOL"]}
+    fake = FakeClient(ids, matches, {"LOWVOL": "Low#BR1"})
+    suspects(db, "LOWVOL")
+    assert collect_matches(fake, db, cfg, "br1").confirmed == 1
+    [player] = db.confirmed_players(TALON, "MIDDLE")
+    assert (player.games, player.share) == (26, 1.0)
 
 
 def test_a_player_is_committed_whole_and_the_interrupted_one_not_at_all(db, tmp_path):

@@ -23,11 +23,12 @@ def qualify(
     ``rows`` must be ordered most recent first: only the first ``window_games``
     count. A target qualifies only if it meets **both** conditions: at least
     ``min_games`` games in the window, and a share of at least ``min_share``,
-    where share is ``games / window_games``. The denominator is the configured
-    window, not the games the player happens to have: a player with a short
-    history is not promoted to mono by a small denominator. Each
-    ``(champion_id, role)`` is its own target, so the same champion in two roles
-    is counted separately (26 TOP + 26 MIDDLE qualifies for neither).
+    where share is ``games / len(window)``: the fraction of the games actually
+    considered (the spec's "responde por >= 50% das partidas"). Dividing by the
+    configured ``window_games`` instead would reject low-volume specialists.
+    Each ``(champion_id, role)`` is its own target, so the same champion in two
+    roles is counted separately; an evenly split 26 TOP + 26 MIDDLE player is
+    50% each and qualifies at ``min_share=0.5``, and is excluded by raising it.
 
     With ``min_share >= 0.5`` two targets cannot both qualify; below that, the
     target with the highest count wins (the first listed, on a tie).
@@ -40,7 +41,7 @@ def qualify(
     best: tuple[Target, int, float] | None = None
     for target in targets:
         games = counts[(target.champion_id, target.role)]
-        share = games / window_games
+        share = games / len(window)
         if games < min_games or share < min_share:
             continue
         if best is None or games > best[1]:
