@@ -7,6 +7,10 @@ from lolmono.db import Database, SchemaError
 from lolmono.rows import MatchRow, RunePage, TimelineRow
 
 
+# info.gameCreation of the fixtures, epoch ms (2025-11-02 00:00 UTC).
+GAME_CREATED = 1_762_041_600_000
+
+
 @pytest.fixture
 def db(tmp_path):
     database = Database(tmp_path / "lol.db")
@@ -15,11 +19,15 @@ def db(tmp_path):
     database.close()
 
 
-def make_row(match_id="BR1_1", puuid="P1", champion_id=79, role="TOP", win=True):
+def make_row(
+    match_id="BR1_1", puuid="P1", champion_id=79, role="TOP", win=True,
+    created=GAME_CREATED,
+):
     return MatchRow(
         match_id=match_id,
         platform="br1",
         puuid=puuid,
+        game_created=created,
         champion_id=champion_id,
         role=role,
         opponent_champion_id=122,
@@ -437,3 +445,84 @@ def test_init_schema_refuses_a_timeline_table_from_before_the_skill_order_fix(tm
         assert stale.table_names() == ["timeline"]
     finally:
         stale.close()
+
+
+# --- the match date survives the round trip ---------------------------------
+
+
+def test_the_match_date_is_stored_and_read_back(db):
+    db.confirm_player("br1", "P1", "Mono#BR1", 79, "TOP", 30, 0.6)
+    db.insert_match(make_row(created=1_700_000_000_000))
+    db.commit()
+    [row] = db.confirmed_matches(79, "TOP")
+    assert row.game_created == 1_700_000_000_000
+
+
+def test_a_database_without_the_match_date_is_refused(tmp_path):
+    # The pre-fix schema. CREATE TABLE IF NOT EXISTS would leave it alone and
+    # every insert would fail on the missing column; worse, an aggregation over
+    # those rows could not say which patch it covers. There is no migration.
+    path = tmp_path / "old.sqlite"
+    conn = sqlite3.connect(path)
+    conn.executescript(
+        'CREATE TABLE "match" (match_id TEXT NOT NULL, platform TEXT NOT NULL, '
+        "puuid TEXT NOT NULL, champion_id INTEGER NOT NULL, role TEXT NOT NULL, "
+        "opponent_champion_id INTEGER NOT NULL, opponent_puuid TEXT NOT NULL, "
+        "win INTEGER NOT NULL, items TEXT NOT NULL, runes TEXT NOT NULL, "
+        "spells TEXT NOT NULL, PRIMARY KEY (match_id, puuid));"
+    )
+    conn.commit()
+    conn.close()
+    database = Database(path)
+    try:
+        with pytest.raises(SchemaError, match="game_created"):
+            database.init_schema()
+        # The refusal names the recovery, which is the only one available.
+        with pytest.raises(SchemaError, match="apague o arquivo do banco"):
+            database.init_schema()
+    finally:
+        database.close()
+
+
+def test_a_fresh_database_is_not_refused(tmp_path):
+    database = Database(tmp_path / "new.sqlite")
+    try:
+        database.init_schema()  # no tables yet: nothing to refuse
+        database.init_schema()  # and it is idempotent
+        assert "match" in database.table_names()
+    finally:
+        database.close()
+
+
+# --- collection state for the status command --------------------------------
+
+
+def test_candidate_counts_report_progress_per_platform(db):
+    db.add_candidates("br1", ["A", "B", "C"])
+    db.add_candidates("kr", ["D"])
+    db.mark_screened("br1", "A", True)
+    db.mark_screened("br1", "B", False)
+    db.commit()
+    assert db.candidate_counts() == [("br1", 3, 2, 1), ("kr", 1, 0, 0)]
+
+
+def test_verdict_counts_split_confirmed_from_rejected(db):
+    db.confirm_player("br1", "A", "A#BR1", 91, "MIDDLE", 30, 0.6)
+    db.reject_player("br1", "B")
+    db.reject_player("kr", "C")
+    db.commit()
+    assert db.verdict_counts() == [("br1", 1, 1), ("kr", 0, 1)]
+
+
+def test_confirmed_counts_are_broken_down_by_pair_and_platform(db):
+    # The go/no-go number the spec asks for is per champion/role pair: one
+    # total of 3 cannot say whether Gragas TOP has any mono at all.
+    db.confirm_player("br1", "A", "A#BR1", 91, "MIDDLE", 30, 0.6)
+    db.confirm_player("kr", "B", "B#KR", 91, "MIDDLE", 28, 0.55)
+    db.confirm_player("br1", "C", "C#BR1", 79, "TOP", 26, 0.52)
+    db.reject_player("br1", "D")
+    db.commit()
+    assert db.confirmed_counts_by_target() == {
+        (91, "MIDDLE"): {"br1": 1, "kr": 1},
+        (79, "TOP"): {"br1": 1},
+    }

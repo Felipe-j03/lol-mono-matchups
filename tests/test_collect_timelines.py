@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from lolmono.__main__ import main
+from lolmono.__main__ import RAW_SAMPLE_SUBDIR, main
 from lolmono.collect import (
     CONSECUTIVE_FAILURE_LIMIT,
     ExtractionFailing,
@@ -24,6 +24,9 @@ FIXTURES = ROOT / "tests" / "fixtures"
 FULL = json.loads((FIXTURES / "timeline_full.json").read_text(encoding="utf-8"))
 
 # timeline_full.json has "ME" and "THEM" in metadata.participants.
+# info.gameCreation of the fixtures, epoch ms (2025-11-02 00:00 UTC).
+GAME_CREATED = 1_762_041_600_000
+
 HERO, FOE = "ME", "THEM"
 
 
@@ -33,11 +36,15 @@ def timeline_payload(match_id):
     return payload
 
 
-def match_row(match_id, puuid=HERO, opponent=FOE, platform="br1", champion_id=91):
+def match_row(
+    match_id, puuid=HERO, opponent=FOE, platform="br1", champion_id=91,
+    created=GAME_CREATED,
+):
     return MatchRow(
         match_id=match_id,
         platform=platform,
         puuid=puuid,
+        game_created=created,
         champion_id=champion_id,
         role="MIDDLE",
         opponent_champion_id=245,
@@ -474,3 +481,60 @@ def test_cli_refuses_a_database_with_the_old_timeline_schema(tmp_path, capsys):
     assert code == 2
     assert "skill_order" in err
     assert fake.timeline_calls == []
+
+
+# --- the raw sample is kept by default --------------------------------------
+
+
+def test_cli_keeps_the_raw_sample_without_being_asked(tmp_path, capsys):
+    # The spec treats the compressed raw sample as something that happens, not
+    # as an extra: it is the project's only check on its own extraction. An
+    # operator following the documented commands must not end up with zero
+    # payloads.
+    seed_cli_db(tmp_path, "BR1_1")
+    code = cli(["timelines", "--platform", "br1"], tmp_path, client=served("BR1_1"))
+    assert code == 0
+    default = tmp_path / RAW_SAMPLE_SUBDIR
+    assert len(list(default.glob("*.json.gz"))) == 1
+    assert str(default) in capsys.readouterr().out  # and it says where
+
+
+def test_cli_no_raw_sample_is_an_explicit_opt_out(tmp_path, capsys):
+    seed_cli_db(tmp_path, "BR1_1")
+    code = cli(
+        ["timelines", "--platform", "br1", "--no-raw-sample"],
+        tmp_path,
+        client=served("BR1_1"),
+    )
+    assert code == 0
+    assert not (tmp_path / RAW_SAMPLE_SUBDIR).exists()
+    assert "desligada" in capsys.readouterr().out  # the loss is stated
+
+
+def test_cli_raw_sample_dir_overrides_the_default(tmp_path):
+    seed_cli_db(tmp_path, "BR1_1")
+    sample = tmp_path / "elsewhere"
+    cli(
+        ["timelines", "--platform", "br1", "--raw-sample-dir", str(sample)],
+        tmp_path,
+        client=served("BR1_1"),
+    )
+    assert len(list(sample.glob("*.json.gz"))) == 1
+    assert not (tmp_path / RAW_SAMPLE_SUBDIR).exists()
+
+
+def test_cli_a_locked_database_is_reported_not_a_traceback(tmp_path, capsys):
+    # The spec runs four regions in parallel against one file. After the
+    # connection timeout this is the exception they produce.
+    seed_cli_db(tmp_path, "BR1_1")
+
+    class Locked:
+        def timeline(self, match_id):
+            raise sqlite3.OperationalError("database is locked")
+
+    code = cli(["timelines", "--platform", "br1"], tmp_path, client=Locked())
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "database is locked" in err
+    assert "paralelo" in err
+    assert "chave-de-teste" not in err

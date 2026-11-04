@@ -71,6 +71,9 @@ def extract_match(match_json: dict, puuid: str) -> MatchRow:
         match_id=match_json["metadata"]["matchId"],
         platform=info["platformId"].lower(),
         puuid=puuid,
+        # Epoch ms. Kept so the aggregation can state the window it covers; a
+        # KeyError here is a schema change and the caller counts it as a discard.
+        game_created=info["gameCreation"],
         champion_id=me["championId"],
         role=role,
         opponent_champion_id=opponent["championId"],

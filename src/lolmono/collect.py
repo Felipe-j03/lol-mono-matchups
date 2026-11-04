@@ -10,7 +10,7 @@ partidas (timelines).
 import gzip
 import json
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from lolmono.matchparse import DiscardMatch, extract_match
@@ -20,9 +20,13 @@ from lolmono.timelineparse import extract_timeline
 
 BATCH_SIZE = 50
 RAW_SAMPLE_LIMIT = 200  # timelines cruas guardadas para auditar a extracao
-# Falhas de extracao seguidas que abortam a coleta de timelines: o parser quebrou
-# em tudo (formato novo da Riot ou defeito nosso) e continuar so gastaria a
-# requisicao mais cara do projeto para nao guardar nada.
+# Falhas de extracao seguidas que abortam a coleta (estagios 3 e 4): o parser
+# quebrou em tudo (formato novo da Riot ou defeito nosso) e continuar so gastaria
+# requisicoes para nao guardar nada. No estagio 3 o estrago seria pior que gastar:
+# cada suspeito varrido receberia o veredito "rejeitado", e ``pending_suspects``
+# exclui quem ja tem linha em ``player``, entao consertar o parser depois nao os
+# devolveria para a fila -- a recuperacao seria apagar o banco e repagar o
+# estagio caro.
 CONSECUTIVE_FAILURE_LIMIT = 20
 
 
@@ -46,6 +50,10 @@ class MatchReport:
     discarded: dict[str, int]
     # Confirmados cujo nome nao pode ser obtido (gravados com nome vazio).
     unnamed: int = 0
+    # Confirmados por par (champion_id, role) NESTA execucao. O go/no-go da spec
+    # e por par, nao um total: 60 confirmados que sao todos Talon mid nao
+    # responde se ha mono de Gragas top. O acumulado esta no comando ``status``.
+    confirmed_by_target: dict[tuple[int, str], int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -66,7 +74,12 @@ class TimelineReport:
 
 
 class ExtractionFailing(Exception):
-    """A extracao de timelines falha de forma sistematica; a coleta foi abortada."""
+    """A extracao falha de forma sistematica; a coleta foi abortada.
+
+    Vale para os dois estagios que extraem payload: partidas (estagio 3) e
+    timelines (estagio 4). Em nenhum dos dois a sequencia que disparou o aborto e
+    gravada: o trabalho continua na fila para depois do conserto do parser.
+    """
 
 
 def collect_ladder(client, db, cfg, platform: str) -> int:
@@ -116,34 +129,72 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
     descartes e veredito, ou nada. Toda a rede (partidas e o nome de quem foi
     confirmado) acontece antes dela, para que regioes em paralelo no mesmo banco
     nao esbarrem em "database is locked".
+
+    O denominador da proporcao de mono e quantas partidas da janela foram
+    BUSCADAS, nao quantas o extrator conseguiu ler: um descarte continua contando
+    como partida jogada. Dividir pelas lidas inflaria toda proporcao para cima,
+    na medida exata da taxa de descarte -- justamente o sinal que a spec usa para
+    detectar erro silencioso.
+
+    ``CONSECUTIVE_FAILURE_LIMIT`` payloads seguidos com ``malformed_payload``
+    abortam a coleta com ``ExtractionFailing``, SEM gravar o jogador em curso:
+    nenhum veredito e escrito a partir de um parser quebrado, e os suspeitos
+    continuam na fila (gravar as partidas sem o veredito seria pior: na nova
+    execucao ``match_exists`` as pularia e a proporcao sairia errada).
     """
     players = 0
     confirmed = 0
     stored = 0
     unnamed = 0
     discarded: Counter[str] = Counter()
+    by_target: Counter[tuple[int, str]] = Counter()
+    # Payloads seguidos que o extrator nao conseguiu ler, atravessando jogadores.
+    streak = 0
 
     for puuid in db.pending_suspects(platform):
         rows = []  # mais recente primeiro, na ordem em que a Riot devolve
         discards = []
-        for match_id in client.match_ids(puuid, cfg.window_games):
+        window_ids = list(client.match_ids(puuid, cfg.window_games))[: cfg.window_games]
+        for match_id in window_ids:
             if db.match_exists(match_id, puuid):
                 continue
             payload = client.match(match_id)
             try:
                 rows.append(extract_match(payload, puuid))
             except DiscardMatch as exc:
+                # O extrator LEU o payload e recusou a partida por regra (fila
+                # errada, rota sem par): o parser esta funcionando.
                 discards.append((match_id, exc.reason))
-            except (KeyError, TypeError, IndexError, AttributeError, StopIteration):
-                # Payload estruturalmente quebrado: o extrator deixa a
-                # classificacao para ca. Uma partida corrompida nao derruba uma
-                # coleta de horas, mas entra no relatorio de descartes. A lista
-                # e larga de proposito: uma excecao nao capturada aqui deixaria o
-                # jogador sem veredito e toda nova execucao morreria nele.
+                streak = 0
+            except Exception:
+                # Captura larga de proposito: o payload nao foi entendido. A
+                # visibilidade vem do nome do balde, nao do tipo da excecao --
+                # ``malformed_payload`` e um motivo proprio, contado e
+                # deduplicado, e um pico nele fala mais alto que uma coleta
+                # morta. A tupla enumerada que ficava aqui so comprava o modo de
+                # falha que o disjuntor abaixo agora cobre, e deixava qualquer
+                # tipo novo matar o jogador em toda nova execucao.
+                # ``Exception`` nao pega KeyboardInterrupt nem SystemExit, entao
+                # interromper a mao continua funcionando. NAO estreitar de volta.
                 discards.append((match_id, "malformed_payload"))
+                streak += 1
+                if streak >= CONSECUTIVE_FAILURE_LIMIT:
+                    raise ExtractionFailing(
+                        f"{streak} partidas seguidas falharam na extracao "
+                        f"(a ultima: {match_id}): a falha e sistematica. Nenhum "
+                        "veredito foi gravado para este jogador; os suspeitos "
+                        "continuam na fila."
+                    ) from None
+            else:
+                streak = 0
 
         verdict = qualify(
-            rows, cfg.targets, cfg.window_games, cfg.min_share, cfg.min_games
+            rows,
+            cfg.targets,
+            cfg.window_games,
+            cfg.min_share,
+            cfg.min_games,
+            window_size=len(window_ids),
         )
         # Uma requisicao por confirmado; rejeitados nao custam nenhuma. O nome
         # e cosmetico: falhar nele nao pode jogar fora as partidas ja pagas.
@@ -160,8 +211,6 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
                 # rede... cada tipo novo reproduziria o mesmo travamento.
                 # ``Exception`` nao pega KeyboardInterrupt nem SystemExit, entao
                 # interromper a mao continua funcionando. NAO estreitar de volta.
-                # (A captura de malformed_payload e uma tupla explicita, de
-                # proposito: la o alarme e a taxa de descartes.)
                 unnamed += 1
 
         with db.batch():
@@ -179,6 +228,8 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
 
         players += 1
         confirmed += verdict is not None
+        if verdict is not None:
+            by_target[(verdict[0].champion_id, verdict[0].role)] += 1
         stored += len(rows)
         discarded.update(reason for _, reason in discards)
 
@@ -188,6 +239,7 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
         matches=stored,
         discarded=dict(discarded),
         unnamed=unnamed,
+        confirmed_by_target=dict(by_target),
     )
 
 

@@ -18,6 +18,11 @@ class MatchRow:
     match_id: str
     platform: str
     puuid: str
+    # When the game was created, in epoch milliseconds (info.gameCreation). The
+    # only date in the project: without it a second collection months later
+    # would blend two patches into one "base" with nothing marking it, and an
+    # undated match cannot be dated afterwards without downloading it again.
+    game_created: int
     champion_id: int
     role: str
     opponent_champion_id: int

@@ -12,8 +12,13 @@ Rules that hold for every file:
   static site has no use for it. Reference players carry the Riot ID only.
 * Every object that states a rate or a choice also states the number of games
   behind it.
+* Every file carries ``schema_version``. The site fetches the target and matchup
+  files directly and caches them one by one, so per-file versioning is how it
+  notices that a cached file predates a schema change.
 * The output is a pure function of the database and the config: keys in a fixed
   order, no timestamps, UTF-8 with Unix newlines. Re-running changes no byte.
+  The collection window in the index is a pair of dates computed from the
+  matches themselves, never from the clock.
 * Nothing is read from the environment.
 
 A target with no confirmed games is listed in the index with ``has_data: false``
@@ -22,6 +27,7 @@ and gets no file of its own.
 
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from lolmono.aggregate import (
@@ -47,6 +53,16 @@ def _slug(target: Target) -> str:
 def _write(path: Path, data: dict) -> None:
     text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def _utc_date(epoch_ms: int) -> str:
+    """The UTC calendar date of an epoch-millisecond timestamp, as YYYY-MM-DD.
+
+    A date and not a timestamp: the export must not change byte for byte between
+    two runs over the same data, and the day is the resolution a patch window is
+    read at anyway.
+    """
+    return datetime.fromtimestamp(epoch_ms / 1000, tz=timezone.utc).date().isoformat()
 
 
 def _runes(page: RunePage) -> dict:
@@ -106,6 +122,7 @@ def _player(player: PlayerRow) -> dict:
 
 def _detail(target: Target, detail: MatchupDetail, min_per_side: int) -> dict:
     return {
+        "schema_version": SCHEMA_VERSION,
         "champion_id": target.champion_id,
         "champion_name": target.champion_name,
         "role": target.role,
@@ -118,12 +135,18 @@ def _detail(target: Target, detail: MatchupDetail, min_per_side: int) -> dict:
         "headline": detail.headline,
         "winner_gold_at_14": detail.winner_gold_at_14,
         "loser_gold_at_14": detail.loser_gold_at_14,
+        "winner_cs_diff_at_14": detail.winner_cs_diff_at_14,
+        "loser_cs_diff_at_14": detail.loser_cs_diff_at_14,
         # Games each timeline-derived figure rests on, per side. Not the match
         # counts above: a game without a usable timeline is not counted here.
         "timeline_games": {
             "gold_at_14": {
                 "winners": detail.winner_gold_games,
                 "losers": detail.loser_gold_games,
+            },
+            "cs_diff_at_14": {
+                "winners": detail.winner_cs_diff_games,
+                "losers": detail.loser_cs_diff_games,
             },
             "starting_items": {
                 "winners": detail.winner_starting_items_games,
@@ -134,6 +157,14 @@ def _detail(target: Target, detail: MatchupDetail, min_per_side: int) -> dict:
                 "losers": detail.loser_skill_order_games,
             },
         },
+        # Games whose final build held no recognised boot item. When one of these
+        # equals that side's game count, the boots comparison saw nothing on that
+        # side (a boot id newer than aggregate.BOOT_ITEM_IDS, most likely), and
+        # the absence of a boots divergence means nothing.
+        "games_without_boots": {
+            "winners": detail.winner_games_without_boots,
+            "losers": detail.loser_games_without_boots,
+        },
         "divergences": [
             {
                 "field": d.field,
@@ -141,6 +172,12 @@ def _detail(target: Target, detail: MatchupDetail, min_per_side: int) -> dict:
                 "winner_share": d.winner_share,
                 "loser_share": d.loser_share,
                 "gap": d.gap,
+                # The denominator of each share, which differs by field: all the
+                # games of the side for boots and runes, only the games with a
+                # usable timeline for starting items and skill order. Carried
+                # here so the site never renders a share against the wrong one.
+                "winner_games": d.winner_games,
+                "loser_games": d.loser_games,
             }
             for d in detail.divergences
         ],
@@ -151,6 +188,11 @@ def export_all(db: Database, cfg: Config, out_dir: Path) -> None:
     """Write index.json, one file per target with data, one per reliable matchup."""
     out_dir.mkdir(parents=True, exist_ok=True)
     index_targets = []
+    # The oldest and newest game actually aggregated, in epoch ms. The index
+    # states them as dates so a reader can tell which patches the base covers,
+    # and so a base built from two collections months apart cannot pass for one.
+    oldest: int | None = None
+    newest: int | None = None
 
     for target in cfg.targets:
         rows = db.confirmed_matches(target.champion_id, target.role)
@@ -168,6 +210,10 @@ def export_all(db: Database, cfg: Config, out_dir: Path) -> None:
             # compute_baseline needs at least one game. The collection may
             # legitimately confirm no mono for a configured target.
             continue
+
+        dates = [r.game_created for r in rows]
+        oldest = min([oldest, *dates]) if oldest is not None else min(dates)
+        newest = max([newest, *dates]) if newest is not None else max(dates)
 
         slug = _slug(target)
         players = db.confirmed_player_count(target.champion_id, target.role)
@@ -200,6 +246,7 @@ def export_all(db: Database, cfg: Config, out_dir: Path) -> None:
         _write(
             out_dir / f"{slug}.json",
             {
+                "schema_version": SCHEMA_VERSION,
                 "champion_id": target.champion_id,
                 "champion_name": target.champion_name,
                 "role": target.role,
@@ -217,6 +264,11 @@ def export_all(db: Database, cfg: Config, out_dir: Path) -> None:
         {
             "schema_version": SCHEMA_VERSION,
             "ddragon_version": cfg.ddragon_version,
+            # The window the aggregated matches span, as UTC dates, or null when
+            # nothing was aggregated. Two collections months apart show up here
+            # as a wide window instead of passing for one patch in silence.
+            "collected_from": None if oldest is None else _utc_date(oldest),
+            "collected_through": None if newest is None else _utc_date(newest),
             "targets": index_targets,
         },
     )

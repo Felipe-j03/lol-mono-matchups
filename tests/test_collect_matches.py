@@ -7,7 +7,12 @@ from pathlib import Path
 import pytest
 
 from lolmono.__main__ import main
-from lolmono.collect import MatchReport, collect_matches
+from lolmono.collect import (
+    CONSECUTIVE_FAILURE_LIMIT,
+    ExtractionFailing,
+    MatchReport,
+    collect_matches,
+)
 from lolmono.config import load_config
 from lolmono.db import Database
 from lolmono.matchparse import extract_match
@@ -518,7 +523,11 @@ def test_cli_matches_says_so_when_nothing_was_discarded(tmp_path, capsys):
     fake, _, _ = world()
     seed_cli_db(tmp_path, "TALONER")
     cli(["matches", "--platform", "br1"], tmp_path, client=fake)
-    assert "descartes: nenhum" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    # Per run and cumulative: a multi-night collection is judged on the
+    # cumulative discard rate, which the per-run line alone never shows.
+    assert "descartes nesta execucao: nenhum" in out
+    assert "descartes acumulados: nenhum" in out
 
 
 def test_cli_matches_riot_error_exits_1_and_keeps_finished_players(tmp_path, capsys):
@@ -541,3 +550,224 @@ def test_cli_matches_riot_error_exits_1_and_keeps_finished_players(tmp_path, cap
         assert reopened.confirmed_players(TALON, "MIDDLE")
     finally:
         reopened.close()
+
+
+# --- discarded games stay in the mono-share denominator ----------------------
+
+
+def border_world(discards):
+    """25 Talon mid, 25 other, plus `discards` unreadable games, one player."""
+    ids, matches = {"BORDER": []}, {}
+    for i in range(25):
+        mid = f"BR1_B{i:03d}"
+        ids["BORDER"].append(mid)
+        matches[mid] = payload(mid, "BORDER", TALON)
+    for i in range(25):
+        mid = f"BR1_C{i:03d}"
+        ids["BORDER"].append(mid)
+        matches[mid] = payload(mid, "BORDER", EKKO)
+    for i in range(discards):
+        mid = f"BR1_D{i:03d}"
+        ids["BORDER"].append(mid)
+        matches[mid] = broken(mid, "BORDER", "no_info")
+    return FakeClient(ids, matches, {"BORDER": "Border#BR1"})
+
+
+def test_discarded_games_keep_a_borderline_player_out(db):
+    # 60 ranked games fetched, 10 unparseable, 25 Talon mid among the 50 that
+    # parsed. Over the parsed rows the share reads 25/50 = 0.50 and the player
+    # qualifies; over the games actually played it is 25/60 = 0.4167 and the
+    # spec rejects him. The bias is always upward and is as large as the
+    # discard rate, the quantity the spec names as its silent-failure signal.
+    fake = border_world(discards=10)
+    suspects(db, "BORDER")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert report.discarded == {"malformed_payload": 10}
+    assert report.confirmed == 0
+    assert db.confirmed_players(TALON, "MIDDLE") == []
+
+
+def test_the_same_player_is_confirmed_when_nothing_is_discarded(db):
+    # The control for the test above: no discards, so the share is 25/50.
+    fake = border_world(discards=0)
+    suspects(db, "BORDER")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert report.confirmed == 1
+    [player] = db.confirmed_players(TALON, "MIDDLE")
+    assert player.share == pytest.approx(0.5)
+
+
+def test_the_published_share_counts_the_discarded_games(db):
+    # 40 Talon mid of 60 fetched, with 10 of the rest unreadable: the share the
+    # export publishes must be 40/60, not 40/50.
+    ids, matches = {"MONO": []}, {}
+    for prefix, count, champion in (("M", 40, TALON), ("O", 10, EKKO)):
+        for i in range(count):
+            mid = f"BR1_{prefix}{i:03d}"
+            ids["MONO"].append(mid)
+            matches[mid] = payload(mid, "MONO", champion)
+    for i in range(10):
+        mid = f"BR1_X{i:03d}"
+        ids["MONO"].append(mid)
+        matches[mid] = broken(mid, "MONO", "no_info")
+    fake = FakeClient(ids, matches, {"MONO": "Mono#BR1"})
+    suspects(db, "MONO")
+    collect_matches(fake, db, cfg, "br1")
+    [player] = db.confirmed_players(TALON, "MIDDLE")
+    assert player.games == 40
+    assert player.share == pytest.approx(40 / 60)
+
+
+# --- stage 3 circuit breaker -------------------------------------------------
+
+
+def all_broken(puuids, per_player):
+    ids, matches = {}, {}
+    for puuid in puuids:
+        ids[puuid] = []
+        for i in range(per_player):
+            mid = f"BR1_{puuid}{i:03d}"
+            ids[puuid].append(mid)
+            matches[mid] = broken(mid, puuid, "no_info")
+    return FakeClient(ids, matches, {p: f"{p}#BR1" for p in puuids})
+
+
+def test_a_systematically_broken_parser_aborts_instead_of_rejecting_everyone(db):
+    # Without the breaker: about 60 requests per suspect, every player
+    # rejected, exit 0. And because pending_suspects excludes anyone with a
+    # player row, fixing the parser would NOT re-queue them -- recovery would
+    # mean deleting the database and re-paying the most expensive stage.
+    fake = all_broken(["A", "B", "C"], 30)
+    suspects(db, "A", "B", "C")
+    with pytest.raises(ExtractionFailing):
+        collect_matches(fake, db, cfg, "br1")
+    # No verdict was written, so every suspect is still queued.
+    assert set(db.pending_suspects("br1")) == {"A", "B", "C"}
+    assert db.confirmed_players(TALON, "MIDDLE") == []
+
+
+def test_the_breaker_stops_after_the_limit_not_after_the_whole_queue(db):
+    fake = all_broken(["A", "B", "C"], 30)
+    suspects(db, "A", "B", "C")
+    with pytest.raises(ExtractionFailing):
+        collect_matches(fake, db, cfg, "br1")
+    assert len(fake.match_requests) == CONSECUTIVE_FAILURE_LIMIT
+
+
+def test_a_streak_below_the_limit_still_decides_the_player(db):
+    # Isolated corruption is not a broken parser: the run goes on and the
+    # malformed games stay counted as discards.
+    fake, ids, matches = world()
+    for i in range(CONSECUTIVE_FAILURE_LIMIT - 1):
+        mid = f"BR1_Z{i:03d}"
+        matches[mid] = broken(mid, "ZEDDER", "no_info")
+    suspects(db, "ZEDDER", "TALONER")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert report.discarded["malformed_payload"] == CONSECUTIVE_FAILURE_LIMIT - 1
+    assert report.players == 2 and report.confirmed == 1
+    assert db.pending_suspects("br1") == []
+
+
+def test_a_readable_payload_resets_the_streak(db):
+    # 19 broken, one readable, 19 broken, one readable: 38 failures, never 20
+    # in a row.
+    ids, matches = {"MIX": []}, {}
+    pattern = ([False] * (CONSECUTIVE_FAILURE_LIMIT - 1) + [True]) * 2
+    for i, ok in enumerate(pattern):
+        mid = f"BR1_MIX{i:03d}"
+        ids["MIX"].append(mid)
+        matches[mid] = (
+            payload(mid, "MIX", TALON) if ok else broken(mid, "MIX", "no_info")
+        )
+    fake = FakeClient(ids, matches, {"MIX": "Mix#BR1"})
+    suspects(db, "MIX")
+    report = collect_matches(fake, db, cfg, "br1")  # must not raise
+    assert report.discarded["malformed_payload"] == 2 * (CONSECUTIVE_FAILURE_LIMIT - 1)
+    assert report.players == 1
+
+
+def test_a_legitimate_discard_resets_the_streak_too(db):
+    # wrong_queue means the extractor READ the payload and refused the match by
+    # rule: the parser works, so the breaker must not count it.
+    ids, matches = {"Q": []}, {}
+    for i in range(CONSECUTIVE_FAILURE_LIMIT + 10):
+        mid = f"BR1_Q{i:03d}"
+        ids["Q"].append(mid)
+        matches[mid] = broken(mid, "Q", "wrong_queue")
+    fake = FakeClient(ids, matches, {"Q": "Q#BR1"})
+    suspects(db, "Q")
+    report = collect_matches(fake, db, cfg, "br1")  # must not raise
+    assert report.discarded == {"wrong_queue": CONSECUTIVE_FAILURE_LIMIT + 10}
+    assert report.confirmed == 0
+
+
+def test_a_player_with_no_matches_at_all_is_still_rejected(db):
+    # An empty match list is not a parser failure: it is a rejection, and it
+    # must stay one or the player would be re-fetched on every run.
+    fake = FakeClient({"EMPTY": []}, {})
+    suspects(db, "EMPTY")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert (report.players, report.confirmed) == (1, 0)
+    assert db.pending_suspects("br1") == []
+
+
+def test_an_unexpected_exception_type_is_a_counted_discard(db, monkeypatch):
+    # The extractor raising a type outside the old
+    # (KeyError, TypeError, IndexError, AttributeError, StopIteration) tuple
+    # used to kill the player, and with it every rerun, because the player was
+    # left without a verdict. The visibility lives in the bucket name, not in
+    # the exception type.
+    def boom(payload, puuid):
+        raise ZeroDivisionError("um tipo fora da tupla antiga")
+
+    monkeypatch.setattr("lolmono.collect.extract_match", boom)
+    # Five games, well under the breaker's limit: isolated failures, a verdict.
+    ids = {"ONE": [f"BR1_ONE{i:03d}" for i in range(5)]}
+    matches = {mid: payload(mid, "ONE", TALON) for mid in ids["ONE"]}
+    fake = FakeClient(ids, matches, {"ONE": "One#BR1"})
+    suspects(db, "ONE")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert report.discarded == {"malformed_payload": 5}
+    assert db.pending_suspects("br1") == []
+
+
+def test_an_unexpected_exception_type_also_trips_the_breaker(db, monkeypatch):
+    def boom(payload, puuid):
+        raise ZeroDivisionError("um tipo fora da tupla antiga")
+
+    monkeypatch.setattr("lolmono.collect.extract_match", boom)
+    fake, _, _ = world()
+    suspects(db, "ZEDDER", "TALONER")
+    with pytest.raises(ExtractionFailing):
+        collect_matches(fake, db, cfg, "br1")
+    assert set(db.pending_suspects("br1")) == {"ZEDDER", "TALONER"}
+
+
+# --- the per-pair breakdown the go/no-go needs -------------------------------
+
+
+def test_report_breaks_confirmations_down_by_champion_and_role(db):
+    fake, _, _ = world()
+    suspects(db, "TALONER", "ZEDDER")
+    report = collect_matches(fake, db, cfg, "br1")
+    assert report.confirmed_by_target == {(TALON, "MIDDLE"): 1}
+    assert report.confirmed == sum(report.confirmed_by_target.values())
+
+
+def test_cli_matches_prints_the_confirmations_per_pair(tmp_path, capsys):
+    fake, _, _ = world()
+    seed_cli_db(tmp_path, "TALONER", "ZEDDER")
+    cli(["matches", "--platform", "br1"], tmp_path, client=fake)
+    out = capsys.readouterr().out
+    assert "Talon MIDDLE: 1" in out
+    assert "Gragas TOP: 0" in out  # every configured pair is listed, zero or not
+
+
+def test_cli_matches_exits_1_when_the_extraction_is_systematically_broken(
+    tmp_path, capsys
+):
+    fake = all_broken(["A", "B"], 30)
+    seed_cli_db(tmp_path, "A", "B")
+    code = cli(["matches", "--platform", "br1"], tmp_path, client=fake)
+    assert code == 1
+    assert "sistematica" in capsys.readouterr().err

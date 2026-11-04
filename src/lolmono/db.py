@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS "match" (
     match_id TEXT NOT NULL,
     platform TEXT NOT NULL,
     puuid TEXT NOT NULL,
+    -- info.gameCreation, epoch ms. Dates the row, so the export can state the
+    -- window it covers and a second collection cannot blend two patches into
+    -- one undated base.
+    game_created INTEGER NOT NULL,
     champion_id INTEGER NOT NULL,
     role TEXT NOT NULL,
     opponent_champion_id INTEGER NOT NULL,
@@ -94,6 +98,7 @@ def _match_from_row(r: sqlite3.Row) -> MatchRow:
         match_id=r["match_id"],
         platform=r["platform"],
         puuid=r["puuid"],
+        game_created=r["game_created"],
         champion_id=r["champion_id"],
         role=r["role"],
         opponent_champion_id=r["opponent_champion_id"],
@@ -130,7 +135,11 @@ def _timeline_from_row(r: sqlite3.Row) -> TimelineRow:
 
 class Database:
     def __init__(self, path: Path):
-        self._conn = sqlite3.connect(path)
+        # The spec runs the four regions in parallel against one file, so a
+        # writer will meet another writer's lock. Without a timeout SQLite
+        # raises "database is locked" at once and kills an overnight run; 30s
+        # covers the short per-batch transactions this project opens.
+        self._conn = sqlite3.connect(path, timeout=30)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
 
@@ -154,7 +163,23 @@ class Database:
     def init_schema(self) -> None:
         # Antes de criar qualquer coisa: um banco recusado fica como foi encontrado.
         self._refuse_old_timeline_schema()
+        self._refuse_undated_matches()
         self._conn.executescript(_SCHEMA)
+
+    def _refuse_undated_matches(self) -> None:
+        # Earlier builds stored no date on a match. CREATE TABLE IF NOT EXISTS
+        # would leave that table as it is, every insert would fail on the missing
+        # column, and (worse) an aggregation over those rows could not say which
+        # patch it covers. Matches cannot be dated retroactively: refuse.
+        columns = [c["name"] for c in self._conn.execute('PRAGMA table_info("match")')]
+        if columns and "game_created" not in columns:
+            raise SchemaError(
+                "o banco foi criado com um esquema antigo (match sem game_created): "
+                "as partidas ja gravadas nao tem data, entao uma segunda coleta "
+                "misturaria dois patches numa mesma base sem nenhuma marca. Nao ha "
+                "migracao possivel (datar uma partida exige baixa-la de novo); "
+                "apague o arquivo do banco e recomece a coleta."
+            )
 
     def _refuse_old_timeline_schema(self) -> None:
         # Early builds declared skill_order NOT NULL. insert_timeline is INSERT OR
@@ -249,13 +274,14 @@ class Database:
             "shards": list(r.shards),
         }
         self._conn.execute(
-            'INSERT OR IGNORE INTO "match" (match_id, platform, puuid, champion_id, '
-            "role, opponent_champion_id, opponent_puuid, win, items, runes, spells) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            'INSERT OR IGNORE INTO "match" (match_id, platform, puuid, game_created, '
+            "champion_id, role, opponent_champion_id, opponent_puuid, win, items, "
+            "runes, spells) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 row.match_id,
                 row.platform,
                 row.puuid,
+                row.game_created,
                 row.champion_id,
                 row.role,
                 row.opponent_champion_id,
@@ -370,6 +396,41 @@ class Database:
                 tl = _timeline_from_row(r)
                 result[(tl.match_id, tl.puuid)] = tl
         return result
+
+    # --- collection state (the `status` command) ---------------------------
+
+    def candidate_counts(self) -> list[tuple[str, int, int, int]]:
+        """(platform, candidates, screened, suspects), one row per platform."""
+        rows = self._conn.execute(
+            "SELECT platform, COUNT(*) AS n, SUM(screened) AS s, SUM(suspect) AS k "
+            "FROM candidate GROUP BY platform ORDER BY platform"
+        )
+        return [(r["platform"], r["n"], r["s"] or 0, r["k"] or 0) for r in rows]
+
+    def verdict_counts(self) -> list[tuple[str, int, int]]:
+        """(platform, confirmed, rejected), one row per platform with verdicts."""
+        rows = self._conn.execute(
+            "SELECT platform, SUM(confirmed) AS c, SUM(1 - confirmed) AS r "
+            "FROM player GROUP BY platform ORDER BY platform"
+        )
+        return [(r["platform"], r["c"] or 0, r["r"] or 0) for r in rows]
+
+    def confirmed_counts_by_target(self) -> dict[tuple[int, str], dict[str, int]]:
+        """Confirmed players per (champion_id, role), broken down by platform.
+
+        This is the project's go/no-go number, and the spec asks it per
+        champion/role pair ("dos suspeitos, quantos se confirmam como mono de
+        cada par?"), not as one total.
+        """
+        rows = self._conn.execute(
+            "SELECT champion_id, role, platform, COUNT(*) AS n FROM player "
+            "WHERE confirmed = 1 AND champion_id IS NOT NULL "
+            "GROUP BY champion_id, role, platform"
+        )
+        out: dict[tuple[int, str], dict[str, int]] = {}
+        for r in rows:
+            out.setdefault((r["champion_id"], r["role"]), {})[r["platform"]] = r["n"]
+        return out
 
     # --- aggregates --------------------------------------------------------
 

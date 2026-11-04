@@ -16,6 +16,9 @@ PAGE = RunePage(
     shards=(5008, 5008, 5002),
 )
 
+# info.gameCreation of the fixtures, epoch ms (2025-11-02 00:00 UTC).
+GAME_CREATED = 1_762_041_600_000
+
 _counter = iter(range(1, 10_000))
 
 
@@ -28,6 +31,7 @@ def games_vs(opponent, wins, losses):
                 match_id=f"BR1_{n}",
                 platform="br1",
                 puuid=f"P{n}",
+                game_created=GAME_CREATED,
                 champion_id=79,
                 role="TOP",
                 opponent_champion_id=opponent,

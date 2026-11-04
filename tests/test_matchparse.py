@@ -393,3 +393,23 @@ def test_discard_match_is_an_exception_with_a_reason_attribute():
     err = DiscardMatch("wrong_queue")
     assert isinstance(err, Exception)
     assert err.reason == "wrong_queue"
+
+
+# --- every match is dated ---------------------------------------------------
+
+
+def test_the_match_carries_its_creation_timestamp():
+    # Nothing else in the database is dated. Without this a second collection
+    # months later would blend two patches into one "base" with no marker, and
+    # an undated match cannot be dated afterwards without downloading it again.
+    row = extract_match(load("match_clean.json"), "TALON_PLAYER")
+    assert row.game_created == 1761955200000
+
+
+def test_a_match_without_a_creation_timestamp_is_not_silently_zero():
+    # The caller counts the KeyError as malformed_payload; what must not happen
+    # is a row that claims to be dated and is not.
+    match = variant()
+    del match["info"]["gameCreation"]
+    with pytest.raises(KeyError):
+        extract_match(match, "TALON_PLAYER")

@@ -24,15 +24,21 @@ PAGE_B = RunePage(
 )
 PAGE_C = dataclasses.replace(PAGE_A, keystone=8439)
 
+# info.gameCreation of the fixtures, epoch ms (2025-11-02 00:00 UTC).
+GAME_CREATED = 1_762_041_600_000
+
 FLASH_IGNITE = (4, 14)
 FLASH_TP = (4, 12)
 
 
-def make_row(n, *, win=True, runes=PAGE_A, spells=FLASH_IGNITE, items=(3078,)):
+def make_row(
+    n, *, win=True, runes=PAGE_A, spells=FLASH_IGNITE, items=(3078,), created=GAME_CREATED
+):
     return MatchRow(
         match_id=f"BR1_{n}",
         platform="br1",
         puuid=f"P{n}",
+        game_created=created,
         champion_id=79,
         role="TOP",
         opponent_champion_id=122,

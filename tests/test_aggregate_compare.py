@@ -23,6 +23,9 @@ PAGE = RunePage(
     shards=(5008, 5008, 5002),
 )
 
+# info.gameCreation of the fixtures, epoch ms (2025-11-02 00:00 UTC).
+GAME_CREATED = 1_762_041_600_000
+
 _counter = iter(range(1, 100_000))
 
 
@@ -32,6 +35,7 @@ def game(win, boots=SERAPHINE, runes=PAGE, opponent=EKKO, extra_items=(3078,)):
         match_id=f"BR1_{n}",
         platform="br1",
         puuid=f"P{n}",
+        game_created=GAME_CREATED,
         champion_id=79,
         role="TOP",
         opponent_champion_id=opponent,
@@ -195,7 +199,10 @@ def test_headline_is_empty_when_there_is_a_divergence_and_nothing_was_skipped():
     assert detail.headline is None
 
 
-def test_headline_never_names_a_choice_or_a_number():
+def test_not_compared_headline_names_no_choice_and_no_number():
+    # Named for what it checks: it is the NOT-COMPARED headline that carries no
+    # digit. The no-divergence headline deliberately prints "15 pontos
+    # percentuais", so no-digit is not a property of every headline.
     # Divergences exist, but without timelines two fields could not be compared.
     detail = compare_matchup(diverging_rows(), {}, EKKO, min_per_side=15)
     assert detail.divergences
@@ -235,7 +242,38 @@ def test_gap_of_exactly_the_threshold_is_not_a_divergence():
     losses = group(False, (10, {"boots": SERAPHINE}), (10, {"boots": STEELCAPS}))
     detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
     assert detail.divergences == ()
-    assert "igual" in detail.headline
+    # No timelines here, so "they chose alike" must be scoped to the two fields
+    # that WERE compared. The unscoped sentence would tell the player that it
+    # comes down to execution while two of the four fields were never examined.
+    assert detail.headline == (
+        "Vencedores e perdedores fizeram as escolhas de forma igual em botas e "
+        "runas: nenhuma diferença passou de 15 pontos percentuais. "
+        "Sem partidas suficientes com timeline para comparar: itens iniciais e "
+        "ordem de habilidades."
+    )
+
+
+def test_no_divergence_claims_sameness_only_over_the_compared_fields():
+    rows = group(True, (20, {})) + group(False, (20, {}))
+    timelines = timelines_for(rows)
+    for r in rows:  # starting items present, skill order missing everywhere
+        timelines[(r.match_id, r.puuid)] = dataclasses.replace(
+            timelines[(r.match_id, r.puuid)], skill_order=None
+        )
+    detail = compare_matchup(rows, timelines, EKKO, min_per_side=15)
+    assert detail.divergences == ()
+    assert "em botas, runas e itens iniciais" in detail.headline
+    assert "neste confronto" not in detail.headline  # the overclaiming wording
+
+
+def test_sameness_is_unscoped_only_when_every_field_was_compared():
+    rows = group(True, (20, {})) + group(False, (20, {}))
+    detail = compare_matchup(rows, timelines_for(rows), EKKO, min_per_side=15)
+    assert detail.divergences == ()
+    assert detail.headline == (
+        "Vencedores e perdedores fizeram as escolhas de forma igual neste "
+        "confronto: nenhuma diferença passou de 15 pontos percentuais."
+    )
 
 
 def test_gap_just_above_the_threshold_is_a_divergence():
@@ -434,14 +472,141 @@ def test_games_without_a_skill_order_are_not_counted_as_a_choice():
 def test_detail_and_divergence_are_frozen_with_the_agreed_fields():
     assert [f.name for f in dataclasses.fields(Divergence)] == [
         "field", "label", "winner_share", "loser_share", "gap",
+        # The denominator of each share travels with it: boots and runes are
+        # shares of all the side's games, starting items and skill order are
+        # shares of its games with a usable timeline.
+        "winner_games", "loser_games",
     ]
     assert [f.name for f in dataclasses.fields(MatchupDetail)] == [
         "opponent_champion_id", "wins", "losses", "comparable", "divergences",
-        "winner_gold_at_14", "loser_gold_at_14", "headline",
+        "winner_gold_at_14", "loser_gold_at_14",
+        "winner_cs_diff_at_14", "loser_cs_diff_at_14",
+        "headline",
         "winner_gold_games", "loser_gold_games",
+        "winner_cs_diff_games", "loser_cs_diff_games",
         "winner_starting_items_games", "loser_starting_items_games",
         "winner_skill_order_games", "loser_skill_order_games",
+        "winner_games_without_boots", "loser_games_without_boots",
     ]
     detail = compare_matchup(diverging_rows(), {}, EKKO, min_per_side=15)
     with pytest.raises(dataclasses.FrozenInstanceError):
         detail.wins = 0
+
+
+# --- boots: the set is derived, and its blindness is reported ----------------
+
+TIER_THREE = 3170  # Swiftmarch, a tier-3 upgrade; absent from the hand-made set
+
+
+def test_tier_three_boots_are_recognised():
+    # The hand-written predecessor of BOOT_ITEM_IDS stopped at 3158 and knew no
+    # tier-3 upgrade. A tier-3 consumes the tier-2 boots, so in most Master+
+    # games the final build held exactly the id the set did not have.
+    assert TIER_THREE in BOOT_ITEM_IDS
+    for upgrade in (3005, 3008, 3010, 3013, 3168, 3171, 3173, 3174, 3175, 3176):
+        assert upgrade in BOOT_ITEM_IDS
+    # Derived from the whole item list, not a handful of remembered ids.
+    assert len(BOOT_ITEM_IDS) >= 20
+    # Alternate-mode ids (Arena and friends) never reach a ranked solo payload.
+    assert not any(220_000 <= i < 230_000 or 770_000 <= i < 780_000 for i in BOOT_ITEM_IDS)
+
+
+def test_tier_three_boots_produce_a_divergence():
+    wins = group(True, (16, {"boots": TIER_THREE}), (4, {"boots": STEELCAPS}))
+    losses = group(False, (4, {"boots": TIER_THREE}), (16, {"boots": STEELCAPS}))
+    detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
+    boots = {d.label: d for d in detail.divergences if d.field == "boots"}
+    assert str(TIER_THREE) in boots
+    assert boots[str(TIER_THREE)].winner_share == pytest.approx(0.8)
+    assert detail.winner_games_without_boots == 0
+    assert detail.loser_games_without_boots == 0
+
+
+def test_games_without_a_recognised_boot_are_counted():
+    # 3078 is a Trinity Force: a build with only that holds no boots at all.
+    wins = group(True, (12, {"boots": SERAPHINE}), (8, {"boots": 3078}))
+    losses = group(False, (20, {"boots": 3078}))
+    detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
+    assert detail.winner_games_without_boots == 8
+    assert detail.loser_games_without_boots == 20
+
+
+def test_no_recognised_boots_at_all_is_reported_not_passed_off_as_sameness():
+    # What a patch newer than BOOT_ITEM_IDS looks like: every build holds a boot
+    # id we do not know, so boots_of returns [] on both sides. The groups did
+    # NOT agree on boots; we simply could not see them.
+    unknown_a, unknown_b = 9_990_001, 9_990_002
+    assert unknown_a not in BOOT_ITEM_IDS and unknown_b not in BOOT_ITEM_IDS
+    wins = group(True, (20, {"boots": unknown_a}))
+    losses = group(False, (20, {"boots": unknown_b}))
+    detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
+    assert detail.winner_games_without_boots == 20
+    assert detail.loser_games_without_boots == 20
+    assert not [d for d in detail.divergences if d.field == "boots"]
+    # The headline says boots were not compared, and does not claim sameness
+    # over them.
+    assert "botas não foram comparadas" in detail.headline
+    assert "igual em runas" in detail.headline
+
+
+def test_divergences_carry_their_own_denominators():
+    # 20 wins and 20 losses, but only 16 winner and 15 loser timelines: the
+    # starting-item shares are over those, the boots shares over all 40 games.
+    wins = group(True, (16, {"boots": SERAPHINE}), (4, {"boots": STEELCAPS}))
+    losses = group(False, (4, {"boots": SERAPHINE}), (16, {"boots": STEELCAPS}))
+    timelines = timelines_for(wins[:16], start=(1055,))
+    timelines.update(timelines_for(losses[:15], start=(1056,)))
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    by_field = {}
+    for d in detail.divergences:
+        by_field.setdefault(d.field, d)
+    assert (by_field["boots"].winner_games, by_field["boots"].loser_games) == (20, 20)
+    starts = by_field["starting_items"]
+    assert (starts.winner_games, starts.loser_games) == (16, 15)
+    # The two denominators really do differ, which is the whole point.
+    assert starts.winner_games != by_field["boots"].winner_games
+
+
+def test_mirrored_options_tied_on_gap_put_the_winners_choice_first():
+    # The two boots mirror each other exactly: same gap, 0.6. The site builds
+    # its sentence from divergences[0], so the option the WINNERS took must come
+    # first. Here the winners took Steelcaps, whose label "3047" sorts AFTER the
+    # losers' "3020": a sort on (gap, field, label) alone would put the losers'
+    # choice first and the site would state the negative.
+    wins = group(True, (16, {"boots": STEELCAPS}), (4, {"boots": SERAPHINE}))
+    losses = group(False, (4, {"boots": STEELCAPS}), (16, {"boots": SERAPHINE}))
+    detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
+    first = detail.divergences[0]
+    assert first.field == "boots"
+    assert first.label == str(STEELCAPS)
+    assert first.winner_share > first.loser_share
+
+
+def test_cs_diff_at_14_is_averaged_beside_the_gold():
+    wins = group(True, (20, {}))
+    losses = group(False, (20, {}))
+    timelines = {}
+    for row in wins:
+        timelines[(row.match_id, row.puuid)] = dataclasses.replace(
+            tl(row), cs_diff_at_14=10
+        )
+    for row in losses:
+        timelines[(row.match_id, row.puuid)] = dataclasses.replace(
+            tl(row), cs_diff_at_14=-6
+        )
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    assert detail.winner_cs_diff_at_14 == pytest.approx(10.0)
+    assert detail.loser_cs_diff_at_14 == pytest.approx(-6.0)
+    assert detail.winner_cs_diff_games == 20 and detail.loser_cs_diff_games == 20
+
+
+def test_cs_diff_averages_need_the_floor_on_both_sides():
+    wins = group(True, (20, {}))
+    losses = group(False, (20, {}))
+    timelines = timelines_for(wins)
+    for row in losses[:14]:  # only 14 losers have the figure
+        timelines[(row.match_id, row.puuid)] = tl(row)
+    detail = compare_matchup(wins + losses, timelines, EKKO, min_per_side=15)
+    assert detail.winner_cs_diff_at_14 is None
+    assert detail.loser_cs_diff_at_14 is None
+    assert detail.winner_cs_diff_games == 20 and detail.loser_cs_diff_games == 14

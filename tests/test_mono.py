@@ -1,6 +1,26 @@
 from lolmono.config import Target
-from lolmono.mono import qualify
+from lolmono.mono import qualify as _qualify
 from lolmono.rows import MatchRow, RunePage
+
+# info.gameCreation of the fixtures, epoch ms (2025-11-02 00:00 UTC).
+GAME_CREATED = 1_762_041_600_000
+
+
+def qualify(rows, targets, window_games, min_share, min_games, window_size=None):
+    """``qualify`` for a player whose games were ALL parsed.
+
+    The real ``qualify`` requires ``window_size``, the number of games the player
+    actually played in the window, because a discarded game must stay in the
+    share's denominator. With nothing discarded that is just the rows, which is
+    what every test below assumes; the discard cases pass ``window_size``
+    themselves.
+    """
+    if window_size is None:
+        window_size = min(len(rows), window_games)
+    return _qualify(
+        rows, targets, window_games, min_share, min_games, window_size=window_size
+    )
+
 
 TALON_MID = Target(91, "Talon", "MIDDLE")
 GRAGAS_TOP = Target(79, "Gragas", "TOP")
@@ -16,6 +36,7 @@ def row(champion_id, role, n=0):
         match_id=f"BR1_{n}",
         platform="br1",
         puuid="P",
+        game_created=GAME_CREATED,
         champion_id=champion_id,
         role=role,
         opponent_champion_id=1,
@@ -131,3 +152,54 @@ def test_below_half_share_returns_the_target_with_the_highest_count():
 def test_exactly_at_both_thresholds_qualifies():
     rows = [talon_mid()] * 25 + [other()] * 25
     assert qualify(rows, targets, 50, 0.50, 25) == (TALON_MID, 25, 0.5)
+
+
+# --- discarded games stay in the denominator ---------------------------------
+
+
+def test_discarded_games_stay_in_the_share_denominator():
+    # 60 ranked games played, 10 of them discarded by the extractor, 25 Talon
+    # mid among the 50 that parsed. Counting only the parsed rows gives
+    # 25/50 = 0.50 and qualifies; the truth is 25/60 = 0.4167 and the spec
+    # rejects it. The bias is always upward and grows with the discard rate.
+    rows = [talon_mid()] * 25 + [other()] * 25
+    assert _qualify(
+        rows, targets, 60, 0.50, 25, window_size=60
+    ) is None
+
+
+def test_the_same_player_qualifies_when_nothing_was_discarded():
+    # The control for the test above: same rows, no discards.
+    rows = [talon_mid()] * 25 + [other()] * 25
+    assert _qualify(rows, targets, 60, 0.50, 25, window_size=50) == (
+        TALON_MID,
+        25,
+        0.5,
+    )
+
+
+def test_the_published_share_is_the_one_over_games_played():
+    rows = [talon_mid()] * 30 + [other()] * 10
+    # 40 parsed of 50 played: 30/50, not 30/40.
+    verdict = _qualify(rows, targets, 60, 0.50, 25, window_size=50)
+    assert verdict == (TALON_MID, 30, 0.6)
+
+
+def test_window_size_cannot_push_a_share_above_one():
+    # A caller that under-reports (fewer played than parsed) is a bug, not a
+    # reason to publish a share greater than 1.
+    rows = [talon_mid()] * 30
+    target, games, share = _qualify(rows, targets, 60, 0.50, 25, window_size=3)
+    assert (target, games) == (TALON_MID, 30)
+    assert share == 1.0
+
+
+def test_window_size_is_capped_by_the_window():
+    # Riot returning more ids than asked must not shrink the share below the
+    # window it is defined over.
+    rows = [talon_mid()] * 40 + [other()] * 20
+    assert _qualify(rows, targets, 60, 0.50, 25, window_size=200) == (
+        TALON_MID,
+        40,
+        40 / 60,
+    )
