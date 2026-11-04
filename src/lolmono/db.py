@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS timeline (
     cs_diff_at_14 INTEGER,
     starting_items TEXT NOT NULL,
     item_order TEXT NOT NULL,
-    skill_order TEXT NOT NULL,
+    skill_order TEXT,
     deaths_before_10 INTEGER NOT NULL,
     kills_before_10 INTEGER NOT NULL,
     PRIMARY KEY (match_id, puuid)
@@ -106,7 +106,9 @@ def _timeline_from_row(r: sqlite3.Row) -> TimelineRow:
         cs_diff_at_14=r["cs_diff_at_14"],
         starting_items=tuple(json.loads(r["starting_items"])),
         item_order=tuple(json.loads(r["item_order"])),
-        skill_order=tuple(json.loads(r["skill_order"])),
+        skill_order=(
+            None if r["skill_order"] is None else tuple(json.loads(r["skill_order"]))
+        ),
         deaths_before_10=r["deaths_before_10"],
         kills_before_10=r["kills_before_10"],
     )
@@ -280,7 +282,7 @@ class Database:
                 row.cs_diff_at_14,
                 json.dumps(list(row.starting_items)),
                 json.dumps(list(row.item_order)),
-                json.dumps(list(row.skill_order)),
+                None if row.skill_order is None else json.dumps(list(row.skill_order)),
                 row.deaths_before_10,
                 row.kills_before_10,
             ),

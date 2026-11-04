@@ -1,3 +1,5 @@
+import dataclasses
+
 import pytest
 
 from lolmono.db import Database
@@ -202,6 +204,24 @@ def test_timeline_roundtrip_keeps_none_and_tuples(db):
     tl = make_timeline()
     db.insert_timeline(tl)
     assert db.timelines_for(["BR1_1"]) == {("BR1_1", "P1"): tl}
+
+
+def test_timeline_roundtrip_keeps_none_skill_order(db):
+    # A short game (remake): no minute-14 numbers and fewer than three skill points.
+    tl = dataclasses.replace(
+        make_timeline(), gold_at_14=None, cs_diff_at_14=None, skill_order=None
+    )
+    db.insert_timeline(tl)
+    back = db.timelines_for(["BR1_1"])[("BR1_1", "P1")]
+    assert back == tl
+    assert back.skill_order is None
+
+
+def test_timeline_roundtrip_skill_order_comes_back_as_a_tuple(db):
+    db.insert_timeline(make_timeline())
+    back = db.timelines_for(["BR1_1"])[("BR1_1", "P1")]
+    assert back.skill_order == (1, 2, 3)
+    assert isinstance(back.skill_order, tuple)
 
 
 def test_timelines_for_ignores_other_matches_and_empty_input(db):
