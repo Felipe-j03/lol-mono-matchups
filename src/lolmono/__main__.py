@@ -7,9 +7,14 @@ import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from lolmono.collect import collect_ladder, collect_matches, screen_candidates
+from lolmono.collect import (
+    collect_ladder,
+    collect_matches,
+    collect_timelines,
+    screen_candidates,
+)
 from lolmono.config import ConfigError, load_config
-from lolmono.db import Database
+from lolmono.db import Database, SchemaError
 from lolmono.ratelimit import riot_limiter
 from lolmono.riot import PLATFORM_TO_REGIONAL, RiotClient, RiotError, httpx_sender
 
@@ -28,11 +33,24 @@ def _parser() -> argparse.ArgumentParser:
         ("ladder", "estagio 1: coleta as contas dos elos configurados"),
         ("screen", "estagio 2: peneira por maestria"),
         ("matches", "estagio 3: partidas e confirmacao de mono"),
+        (
+            "timelines",
+            "estagio 4: timelines dos confirmados (so os numeros do early game; o JSON "
+            "cru e descartado). ATENCAO: um banco criado antes da correcao de "
+            "timeline.skill_order e recusado; apague-o antes de uma coleta real",
+        ),
     ):
         command = commands.add_parser(name, help=help_text)
         command.add_argument("--platform", required=True, choices=sorted(PLATFORM_TO_REGIONAL))
         command.add_argument("--config", type=Path, default=Path("config.toml"))
         command.add_argument("--db", type=Path, default=Path("data/lolmono.sqlite"))
+        if name == "timelines":
+            command.add_argument(
+                "--raw-sample-dir",
+                type=Path,
+                default=None,
+                help="guarda o JSON cru (gzip) das primeiras 200 timelines, para auditar a extracao",
+            )
     return parser
 
 
@@ -57,7 +75,11 @@ def main(
     args.db.parent.mkdir(parents=True, exist_ok=True)
     db = Database(args.db)
     try:
-        db.init_schema()
+        try:
+            db.init_schema()
+        except SchemaError as exc:
+            print(f"banco incompativel ({args.db}): {exc}", file=sys.stderr)
+            return 2
         client = client_factory(args.platform, api_key)
         try:
             if args.command == "ladder":
@@ -77,6 +99,25 @@ def main(
                     print(f"descartes: {breakdown}")
                 else:
                     print("descartes: nenhum")
+            elif args.command == "timelines":
+                report = collect_timelines(
+                    client, db, args.platform, raw_sample_dir=args.raw_sample_dir
+                )
+                print(
+                    f"timelines {args.platform}: pedidas: {report.requested}, "
+                    f"extraidas: {report.extracted}, ausentes: {report.missing}, "
+                    f"falhas: {report.failed}"
+                )
+                if report.failed:
+                    # Ausente e a Riot nao ter dado (normal); falha e a nossa
+                    # extracao nao entender um payload: precisa de olho humano.
+                    print(
+                        f"ATENCAO: {report.failed} timeline(s) com falha na extracao "
+                        "(defeito do parser, nao ausencia na Riot). Foram marcadas "
+                        "(parse_error) e nao serao pedidas de novo; use "
+                        "--raw-sample-dir para inspecionar.",
+                        file=sys.stderr,
+                    )
             else:
                 report = screen_candidates(
                     client, db, cfg, args.platform, int(time.time() * 1000)

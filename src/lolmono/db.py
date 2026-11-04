@@ -57,6 +57,16 @@ CREATE TABLE IF NOT EXISTS timeline (
     kills_before_10 INTEGER NOT NULL,
     PRIMARY KEY (match_id, puuid)
 );
+-- Pairs whose timeline will not be requested again: Riot has none ('not_found',
+-- a normal 404) or we could not read it ('parse_error', our bug, not Riot's).
+-- A marker is NOT a timeline: aggregation never sees these pairs. Deleting the
+-- 'parse_error' rows re-queues them after the parser is fixed.
+CREATE TABLE IF NOT EXISTS timeline_missing (
+    match_id TEXT NOT NULL,
+    puuid TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    PRIMARY KEY (match_id, puuid)
+);
 CREATE TABLE IF NOT EXISTS discard (
     match_id TEXT NOT NULL,
     reason TEXT NOT NULL,
@@ -72,6 +82,10 @@ WHERE p.confirmed = 1
   AND p.champion_id = m.champion_id AND p.role = m.role
   AND m.champion_id = ? AND m.role = ?
 """
+
+
+class SchemaError(Exception):
+    """The database file was created by an incompatible earlier schema."""
 
 
 def _match_from_row(r: sqlite3.Row) -> MatchRow:
@@ -139,6 +153,20 @@ class Database:
 
     def init_schema(self) -> None:
         self._conn.executescript(_SCHEMA)
+        self._refuse_old_timeline_schema()
+
+    def _refuse_old_timeline_schema(self) -> None:
+        # Early builds declared skill_order NOT NULL. insert_timeline is INSERT OR
+        # IGNORE, so a short game (skill_order None) would be dropped silently and
+        # its match re-requested on every run. There is no migration: refuse.
+        for column in self._conn.execute("PRAGMA table_info(timeline)"):
+            if column["name"] == "skill_order" and column["notnull"]:
+                raise SchemaError(
+                    "o banco foi criado com um esquema antigo (timeline.skill_order "
+                    "NOT NULL): timelines de partidas curtas seriam descartadas em "
+                    "silencio e pedidas de novo a cada execucao. Nao ha migracao; "
+                    "apague o arquivo do banco e recomece a coleta."
+                )
 
     def table_names(self) -> list[str]:
         rows = self._conn.execute(
@@ -288,17 +316,42 @@ class Database:
             ),
         )
 
-    def matches_awaiting_timeline(self) -> list[tuple[str, str, str]]:
-        """(match_id, puuid, opponent_puuid) for confirmed players, no timeline yet."""
-        rows = self._conn.execute(
+    def mark_timeline_missing(self, match_id: str, puuid: str, reason: str) -> None:
+        """Remember that this pair's timeline must not be requested again.
+
+        Deliberately not a TimelineRow: no numbers are invented for aggregation.
+        """
+        self._conn.execute(
+            "INSERT OR IGNORE INTO timeline_missing (match_id, puuid, reason) "
+            "VALUES (?, ?, ?)",
+            (match_id, puuid, reason),
+        )
+
+    def matches_awaiting_timeline(
+        self, platform: str | None = None
+    ) -> list[tuple[str, str, str]]:
+        """(match_id, puuid, opponent_puuid) for confirmed players still to fetch.
+
+        Excludes pairs that already have a timeline and pairs marked missing, so a
+        404 or an unreadable payload is never paid for twice. With ``platform``,
+        only that platform's matches: a client talks to one regional host and
+        would 404 another region's matches.
+        """
+        query = (
             'SELECT m.match_id, m.puuid, m.opponent_puuid FROM "match" m '
             "JOIN player p ON p.platform = m.platform AND p.puuid = m.puuid "
             "WHERE p.confirmed = 1 AND p.champion_id = m.champion_id "
             "AND p.role = m.role "
             "AND NOT EXISTS (SELECT 1 FROM timeline t "
             "WHERE t.match_id = m.match_id AND t.puuid = m.puuid) "
-            "ORDER BY m.match_id, m.puuid"
+            "AND NOT EXISTS (SELECT 1 FROM timeline_missing x "
+            "WHERE x.match_id = m.match_id AND x.puuid = m.puuid) "
         )
+        params: tuple = ()
+        if platform is not None:
+            query += "AND m.platform = ? "
+            params = (platform,)
+        rows = self._conn.execute(query + "ORDER BY m.match_id, m.puuid", params)
         return [(r[0], r[1], r[2]) for r in rows]
 
     def timelines_for(

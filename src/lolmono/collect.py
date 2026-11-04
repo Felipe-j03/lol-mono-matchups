@@ -1,19 +1,25 @@
-"""Estagios do coletor: escada (todas as contas do elo), peneira e partidas.
+"""Estagios do coletor: escada (todas as contas do elo), peneira, partidas e timelines.
 
 A peneira gasta uma unica requisicao de maestria por conta e descarta quase
 todas; so os suspeitos seguem para o estagio caro de partidas, onde o criterio
 de mono decide de verdade. Todos os estagios sao retomaveis: o progresso fica no
-banco e e confirmado por lote (peneira) ou por jogador (partidas).
+banco e e confirmado por lote (peneira), por jogador (partidas) ou por lote de
+partidas (timelines).
 """
 
+import gzip
+import json
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 
 from lolmono.matchparse import DiscardMatch, extract_match
 from lolmono.mono import qualify
 from lolmono.screen import is_suspect
+from lolmono.timelineparse import extract_timeline
 
 BATCH_SIZE = 50
+RAW_SAMPLE_LIMIT = 200  # timelines cruas guardadas para auditar a extracao
 
 
 @dataclass(frozen=True)
@@ -36,6 +42,23 @@ class MatchReport:
     discarded: dict[str, int]
     # Confirmados cujo nome nao pode ser obtido (gravados com nome vazio).
     unnamed: int = 0
+
+
+@dataclass(frozen=True)
+class TimelineReport:
+    """Resultado de uma execucao do estagio 4.
+
+    ``requested`` conta requisicoes de timeline (a unidade de custo). As demais
+    contam pares (partida, jogador): uma partida com dois monos rastreados custa
+    uma requisicao e rende dois pares. ``missing`` e a Riot nao ter timeline (404,
+    normal); ``failed`` e a timeline existir e a nossa extracao nao a entender, o
+    que e defeito nosso e fica separado para nao se esconder em ``missing``.
+    """
+
+    requested: int
+    extracted: int
+    missing: int
+    failed: int
 
 
 def collect_ladder(client, db, cfg, platform: str) -> int:
@@ -157,4 +180,104 @@ def collect_matches(client, db, cfg, platform: str) -> MatchReport:
         matches=stored,
         discarded=dict(discarded),
         unnamed=unnamed,
+    )
+
+
+def _save_raw_sample(directory: Path, match_id: str, payload) -> None:
+    directory.mkdir(parents=True, exist_ok=True)
+    final = directory / f"{match_id}.json.gz"
+    partial = directory / f"{match_id}.json.gz.tmp"  # nao casa com *.json.gz
+    with gzip.open(partial, "wt", encoding="utf-8") as handle:
+        json.dump(payload, handle)
+    partial.replace(final)
+
+
+def collect_timelines(
+    client, db, platform: str, raw_sample_dir: Path | None = None
+) -> TimelineReport:
+    """Baixa a timeline de cada partida de confirmado, extrai e descarta o cru.
+
+    E a requisicao mais cara do projeto, entao nenhuma e repetida: o que foi
+    extraido vira linha de ``timeline``; 404 e payload ilegivel viram marca em
+    ``timeline_missing`` (motivos ``not_found`` e ``parse_error``) e saem da fila.
+    Uma partida com dois pares rastreados e pedida uma vez so.
+
+    Rede e extracao acontecem em memoria; a escrita e uma transacao curta a cada
+    ``BATCH_SIZE`` partidas, nunca aberta durante uma requisicao. Se a coleta
+    morre no meio (chave expirada, rede), o que ja foi pago e gravado antes de
+    a excecao subir.
+
+    Com ``raw_sample_dir``, o JSON cru comprimido das primeiras
+    ``RAW_SAMPLE_LIMIT`` timelines (contando as de execucoes anteriores) fica
+    em disco para auditoria, inclusive as que a extracao nao entendeu. O resto
+    e descartado.
+    """
+    by_match: dict[str, list[tuple[str, str]]] = {}
+    for match_id, puuid, opponent_puuid in db.matches_awaiting_timeline(platform):
+        by_match.setdefault(match_id, []).append((puuid, opponent_puuid))
+
+    sampled = 0
+    if raw_sample_dir is not None and raw_sample_dir.is_dir():
+        sampled = len(list(raw_sample_dir.glob("*.json.gz")))
+
+    requested = extracted = missing = failed = 0
+    # Por partida: (match_id, linhas extraidas, puuids ausentes, puuids com falha).
+    pending: list[tuple[str, list, list[str], list[str]]] = []
+
+    def flush() -> None:
+        nonlocal extracted, missing, failed
+        if not pending:
+            return
+        with db.batch():
+            for match_id, rows, absent, unreadable in pending:
+                for row in rows:
+                    db.insert_timeline(row)
+                for puuid in absent:
+                    db.mark_timeline_missing(match_id, puuid, "not_found")
+                for puuid in unreadable:
+                    db.mark_timeline_missing(match_id, puuid, "parse_error")
+        for _, rows, absent, unreadable in pending:
+            extracted += len(rows)
+            missing += len(absent)
+            failed += len(unreadable)
+        pending.clear()
+
+    try:
+        for match_id, pairs in by_match.items():
+            payload = client.timeline(match_id)
+            requested += 1
+
+            if payload is not None and raw_sample_dir is not None and sampled < RAW_SAMPLE_LIMIT:
+                _save_raw_sample(raw_sample_dir, match_id, payload)
+                sampled += 1
+
+            rows, absent, unreadable = [], [], []
+            for puuid, opponent_puuid in pairs:
+                if payload is None:
+                    absent.append(puuid)
+                    continue
+                try:
+                    rows.append(extract_timeline(payload, puuid, opponent_puuid))
+                except Exception:
+                    # Captura larga de proposito: um payload estranho nao pode
+                    # matar uma coleta de horas. Mas aqui a contagem e a
+                    # evidencia: vai para ``failed`` (nunca para ``missing``) e
+                    # para a tabela com motivo ``parse_error``, e o CLI avisa.
+                    unreadable.append(puuid)
+            pending.append((match_id, rows, absent, unreadable))
+
+            if len(pending) >= BATCH_SIZE:
+                flush()
+    except BaseException:
+        # Nao perde o que ja foi pago. Se a propria gravacao falhar, a excecao
+        # original (a que importa) continua sendo a que sobe.
+        try:
+            flush()
+        except Exception:
+            pass
+        raise
+    flush()
+
+    return TimelineReport(
+        requested=requested, extracted=extracted, missing=missing, failed=failed
     )

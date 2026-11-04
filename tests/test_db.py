@@ -1,8 +1,9 @@
 import dataclasses
+import sqlite3
 
 import pytest
 
-from lolmono.db import Database
+from lolmono.db import Database, SchemaError
 from lolmono.rows import MatchRow, RunePage, TimelineRow
 
 
@@ -363,3 +364,74 @@ def test_timelines_for_crosses_chunk_boundary(db):
     result = db.timelines_for(ids)
     assert len(result) == 1203
     assert result[("BR1_1202", "P1")].match_id == "BR1_1202"
+
+
+# --- timelines Riot has none of, or that we could not parse ------------------
+
+
+def test_marked_missing_timeline_is_no_longer_awaiting(db):
+    for mid in ("BR1_1", "BR1_2"):
+        db.insert_match(make_row(match_id=mid, puuid="P1"))
+    db.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    db.mark_timeline_missing("BR1_1", "P1", "not_found")
+    assert db.matches_awaiting_timeline() == [("BR1_2", "P1", "OPP-P1")]
+
+
+def test_marking_missing_is_per_puuid_and_idempotent(db):
+    db.insert_match(make_row(match_id="BR1_1", puuid="P1"))
+    db.insert_match(make_row(match_id="BR1_1", puuid="P2"))
+    db.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    db.confirm_player("br1", "P2", "B#BR1", 79, "TOP", 30, 0.6)
+    db.mark_timeline_missing("BR1_1", "P1", "not_found")
+    db.mark_timeline_missing("BR1_1", "P1", "parse_error")  # no error, no duplicate
+    assert db.matches_awaiting_timeline() == [("BR1_1", "P2", "OPP-P2")]
+
+
+def test_missing_marker_does_not_create_a_timeline_row(db):
+    db.insert_match(make_row(match_id="BR1_1", puuid="P1"))
+    db.mark_timeline_missing("BR1_1", "P1", "not_found")
+    assert db.timelines_for(["BR1_1"]) == {}
+
+
+def test_missing_marker_survives_a_new_connection(tmp_path):
+    first = Database(tmp_path / "a.db")
+    first.init_schema()
+    first.insert_match(make_row(match_id="BR1_1", puuid="P1"))
+    first.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    first.mark_timeline_missing("BR1_1", "P1", "not_found")
+    first.commit()
+    first.close()
+    second = Database(tmp_path / "a.db")
+    try:
+        assert second.matches_awaiting_timeline() == []
+    finally:
+        second.close()
+
+
+def test_matches_awaiting_timeline_can_be_limited_to_a_platform(db):
+    db.insert_match(make_row(match_id="BR1_1", puuid="P1"))
+    db.insert_match(dataclasses.replace(make_row(match_id="KR_1", puuid="P2"), platform="kr"))
+    db.confirm_player("br1", "P1", "A#BR1", 79, "TOP", 30, 0.6)
+    db.confirm_player("kr", "P2", "B#KR", 79, "TOP", 30, 0.6)
+    assert db.matches_awaiting_timeline("br1") == [("BR1_1", "P1", "OPP-P1")]
+    assert db.matches_awaiting_timeline("kr") == [("KR_1", "P2", "OPP-P2")]
+    assert len(db.matches_awaiting_timeline()) == 2
+
+
+def test_init_schema_refuses_a_timeline_table_from_before_the_skill_order_fix(tmp_path):
+    path = tmp_path / "old.db"
+    old = sqlite3.connect(path)
+    old.executescript(
+        "CREATE TABLE timeline (match_id TEXT NOT NULL, puuid TEXT NOT NULL, "
+        "gold_at_14 INTEGER, cs_diff_at_14 INTEGER, starting_items TEXT NOT NULL, "
+        "item_order TEXT NOT NULL, skill_order TEXT NOT NULL, "
+        "deaths_before_10 INTEGER NOT NULL, kills_before_10 INTEGER NOT NULL, "
+        "PRIMARY KEY (match_id, puuid));"
+    )
+    old.close()
+    stale = Database(path)
+    try:
+        with pytest.raises(SchemaError, match="skill_order"):
+            stale.init_schema()
+    finally:
+        stale.close()
