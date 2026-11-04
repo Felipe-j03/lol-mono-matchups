@@ -167,10 +167,11 @@ que `divergences` não consegue dizer, e pode juntar até três frases:
 2. **Campos sem timeline suficiente**: "Sem partidas suficientes com timeline
    para comparar: itens iniciais e ordem de habilidades." Só os saltados são
    nomeados.
-3. **Botas não reconhecidas**: "Nenhuma partida dos dois lados terminou com um
-   item de botas reconhecido, então as botas não foram comparadas." Acontece
-   quando o patch trouxe um id de botas que `BOOT_ITEM_IDS` não conhece, e os
-   dois lados ficaram com lista vazia.
+3. **Botas não reconhecidas**: "Poucas partidas terminaram com um item de botas
+   reconhecido, então as botas não foram comparadas." Acontece quando o patch
+   trouxe um id de botas que `BOOT_ITEM_IDS` não conhece e metade ou menos das
+   partidas de algum dos lados terminou com botas reconhecidas (ver
+   `games_without_boots` abaixo).
 
 `headline` é `null` quando o confronto não é comparável, e também quando há
 divergências e todos os campos foram comparados — nesse caso não há nada a
@@ -194,9 +195,16 @@ como nota ao lado das divergências, não em lugar delas.
   mede a partida inteira: ela e o ouro aos 14 são o que distingue derrota na rota
   de derrota no jogo tardio.
 - `games_without_boots` são as partidas de cada lado cuja build final não tinha
-  nenhum item de botas reconhecido. **Quando um desses números é igual à
-  contagem daquele lado, a comparação de botas não viu nada naquele lado** e a
-  ausência de divergência de botas não significa concordância.
+  nenhum item de botas reconhecido — normalmente um id de botas mais novo que o
+  `BOOT_ITEM_IDS` do coletor. **As botas só são comparadas quando MAIS DA METADE
+  das partidas de CADA lado terminou com botas reconhecidas**; abaixo disso o
+  campo não é comparado, nenhuma divergência de botas é emitida e o `headline`
+  traz a frase "Poucas partidas terminaram com um item de botas reconhecido,
+  então as botas não foram comparadas". Uma partida isolada com botas conhecidas
+  entre vinte não é evidência de que as botas do confronto foram comparadas.
+  Os dois números são exportados nos dois casos, comparação feita ou não: é por
+  eles que o site vê o tamanho do ponto cego. Se um deles for alto, a ausência
+  de divergência de botas não significa concordância.
 
 ## Texto das telas
 

@@ -50,3 +50,37 @@ def test_cli_status_without_a_database_exits_2(tmp_path, capsys):
     assert code == 2
     assert "banco nao encontrado" in capsys.readouterr().err
     assert not (tmp_path / "nope.sqlite").exists()
+
+
+def test_cli_status_on_a_file_that_is_not_a_database_exits_2(tmp_path, capsys):
+    # The spec runs four regions in parallel against one database, so a locked
+    # or unreadable file is plausible at exactly the moment an operator reaches
+    # for status. Neither may surface as a bare traceback.
+    path = tmp_path / "notadb.sqlite"
+    path.write_bytes(b"this is not a sqlite file at all, not even close\n" * 40)
+    code = main(
+        ["status", "--config", str(CONFIG_PATH), "--db", str(path)],
+        environ={},
+    )
+    err = capsys.readouterr().err
+    assert code == 2
+    assert "banco ilegivel" in err
+    assert "notadb.sqlite" in err  # the message names the file
+
+
+def test_cli_export_on_a_file_that_is_not_a_database_exits_2(tmp_path, capsys):
+    # export shares _open_readonly, so it is covered by the same guard.
+    path = tmp_path / "notadb.sqlite"
+    path.write_bytes(b"not sqlite\n" * 200)
+    code = main(
+        [
+            "export",
+            "--config", str(CONFIG_PATH),
+            "--db", str(path),
+            "--out", str(tmp_path / "out"),
+        ],
+        environ={},
+    )
+    assert code == 2
+    assert "banco ilegivel" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()

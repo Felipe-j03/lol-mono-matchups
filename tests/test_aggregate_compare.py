@@ -4,6 +4,7 @@ import pytest
 
 from lolmono.aggregate import (
     BOOT_ITEM_IDS,
+    MIN_BOOTS_SHARE,
     MIN_GAP,
     Divergence,
     MatchupDetail,
@@ -501,14 +502,27 @@ TIER_THREE = 3170  # Swiftmarch, a tier-3 upgrade; absent from the hand-made set
 def test_tier_three_boots_are_recognised():
     # The hand-written predecessor of BOOT_ITEM_IDS stopped at 3158 and knew no
     # tier-3 upgrade. A tier-3 consumes the tier-2 boots, so in most Master+
-    # games the final build held exactly the id the set did not have.
-    assert TIER_THREE in BOOT_ITEM_IDS
-    for upgrade in (3005, 3008, 3010, 3013, 3168, 3171, 3173, 3174, 3175, 3176):
-        assert upgrade in BOOT_ITEM_IDS
+    # games the final build held exactly an id the set did not have.
+    for upgrade in (3168, 3170, 3171, 3172, 3173, 3174, 3175, 3176):
+        assert upgrade in BOOT_ITEM_IDS, upgrade
+    # 3172 Gunmetal Greaves is the one upgrade Riot does not tag as boots at
+    # all: its tags are ["AttackSpeed", "LifeSteal", "NonbootsMovement"] and only
+    # its build tree (out of 3006) gives it away. It is the attack-speed
+    # upgrade, so it is where a Jax top main's boots end up, and Jax top is a
+    # configured target. Narrowing the derivation back to the tag drops it and
+    # brings the whole silent failure back for that target.
+    assert 3172 in BOOT_ITEM_IDS
+    # The depth-2 boots, which are not upgrades of anything.
+    for tier_two in (3006, 3008, 3009, 3010, 3013, 3020, 3047, 3111, 3117, 3158):
+        assert tier_two in BOOT_ITEM_IDS, tier_two
     # Derived from the whole item list, not a handful of remembered ids.
     assert len(BOOT_ITEM_IDS) >= 20
     # Alternate-mode ids (Arena and friends) never reach a ranked solo payload.
     assert not any(220_000 <= i < 230_000 or 770_000 <= i < 780_000 for i in BOOT_ITEM_IDS)
+    # Items that carry the Boots tag but are not on Summoner's Rift, the only
+    # map this project collects from: 1111 Jarvan I's and 3005 Ghostcrawlers.
+    assert 1111 not in BOOT_ITEM_IDS
+    assert 3005 not in BOOT_ITEM_IDS
 
 
 def test_tier_three_boots_produce_a_divergence():
@@ -610,3 +624,74 @@ def test_cs_diff_averages_need_the_floor_on_both_sides():
     assert detail.winner_cs_diff_at_14 is None
     assert detail.loser_cs_diff_at_14 is None
     assert detail.winner_cs_diff_games == 20 and detail.loser_cs_diff_games == 14
+
+
+# --- the boots guard is proportional, not "at least one game" ---------------
+
+UNKNOWN_BOOT = 9_990_001  # a boot id newer than BOOT_ITEM_IDS
+
+
+def boots_split(recognised_per_side, per_side=20):
+    """Rows where `recognised_per_side` games a side end with known boots."""
+    unknown = per_side - recognised_per_side
+    wins = group(
+        True, (recognised_per_side, {"boots": SERAPHINE}), (unknown, {"boots": UNKNOWN_BOOT})
+    )
+    losses = group(
+        False, (recognised_per_side, {"boots": STEELCAPS}), (unknown, {"boots": UNKNOWN_BOOT})
+    )
+    return wins + losses
+
+
+def test_one_recognised_game_does_not_make_boots_a_compared_field():
+    # 19 of 20 games a side bought a boot this build cannot see. Under an
+    # "at least one game" guard that single leftover game would flip boots back
+    # to compared and restore "fizeram as escolhas de forma igual em botas e
+    # runas" for a matchup whose boots were never actually looked at.
+    detail = compare_matchup(boots_split(1), {}, EKKO, min_per_side=15)
+    assert detail.winner_games_without_boots == 19
+    assert detail.loser_games_without_boots == 19
+    assert not [d for d in detail.divergences if d.field == "boots"]
+    assert "botas não foram comparadas" in detail.headline
+    assert "em botas" not in detail.headline  # never claimed as compared
+    assert "igual em runas" in detail.headline
+
+
+def test_a_healthy_majority_still_compares_boots():
+    # 18 of 20 a side on recognised boots: the comparison rests on the games it
+    # can see and the sentence may speak for boots.
+    detail = compare_matchup(boots_split(18), {}, EKKO, min_per_side=15)
+    assert detail.winner_games_without_boots == 2
+    assert detail.loser_games_without_boots == 2
+    boots = {d.label for d in detail.divergences if d.field == "boots"}
+    assert boots == {str(SERAPHINE), str(STEELCAPS)}
+    # The counts are exported either way; here the field was compared, so the
+    # not-compared sentence must be absent.
+    assert detail.headline is None or "botas não foram comparadas" not in detail.headline
+
+
+def test_the_boots_majority_is_required_on_both_sides():
+    # The winners can see their boots, the losers cannot. One-sided evidence is
+    # not a comparison: a 90%-against-5% "difference" would be an artefact of
+    # which side's ids we happen to know.
+    wins = group(True, (18, {"boots": SERAPHINE}), (2, {"boots": UNKNOWN_BOOT}))
+    losses = group(False, (2, {"boots": STEELCAPS}), (18, {"boots": UNKNOWN_BOOT}))
+    detail = compare_matchup(wins + losses, {}, EKKO, min_per_side=15)
+    assert (detail.winner_games_without_boots, detail.loser_games_without_boots) == (2, 18)
+    assert not [d for d in detail.divergences if d.field == "boots"]
+    assert "botas não foram comparadas" in detail.headline
+
+
+def test_an_even_split_is_not_a_majority():
+    # Strictly greater than MIN_BOOTS_SHARE, like MIN_GAP: exactly half the
+    # games seen is not enough to speak for the matchup's boots.
+    detail = compare_matchup(boots_split(10), {}, EKKO, min_per_side=15)
+    assert not [d for d in detail.divergences if d.field == "boots"]
+    assert "botas não foram comparadas" in detail.headline
+    # One game more and it is a majority.
+    detail = compare_matchup(boots_split(11), {}, EKKO, min_per_side=15)
+    assert [d for d in detail.divergences if d.field == "boots"]
+
+
+def test_the_boots_share_threshold_is_pinned():
+    assert MIN_BOOTS_SHARE == 0.5

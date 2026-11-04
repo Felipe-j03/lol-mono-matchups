@@ -105,12 +105,23 @@ def _open_readonly(args: argparse.Namespace):
         # Database() would create an empty file and the command would "succeed".
         print(f"banco nao encontrado: {args.db}", file=sys.stderr)
         return 2
-    db = Database(args.db)
+    db = None
     try:
+        db = Database(args.db)
         db.init_schema()
     except SchemaError as exc:
         db.close()
         print(f"banco incompativel ({args.db}): {exc}", file=sys.stderr)
+        return 2
+    except sqlite3.Error as exc:
+        # A spec roda as quatro regioes em paralelo contra um arquivo so, entao
+        # um banco travado e plausivel exatamente no instante em que o operador
+        # chama ``status``. Vale tambem para um arquivo que nao e SQLite ("file
+        # is not a database"): nenhum dos dois pode virar traceback cru. A
+        # conexao pode ou nao ter sido aberta antes do erro.
+        if db is not None:
+            db.close()
+        print(f"banco ilegivel ({args.db}): {exc}", file=sys.stderr)
         return 2
     return cfg, db
 

@@ -60,7 +60,19 @@ python tools/derive_boot_items.py 16.21.1
 ```
 
 e cole a saída em `BOOT_ITEM_IDS`, em `src/lolmono/aggregate.py`. Uma lista de
-botas velha não dá erro: ela faz a comparação de botas não ver nada.
+botas velha não dá erro: ela faz a comparação de botas não ver nada. O que
+protege nesse meio-tempo é o campo `games_without_boots` de cada arquivo de
+confronto, que conta as partidas cuja build final não tinha botas reconhecidas —
+e, quando metade ou menos das partidas de algum dos lados tem botas
+reconhecidas, as botas deixam de contar como campo comparado e a tela diz isso
+em vez de afirmar que os dois grupos escolheram igual.
+
+A regra da derivação não é só a tag `"Boots"`: ela inclui também os itens cuja
+árvore de construção chega em 1001 ou 2422, e exige `maps["11"]` (Summoner's
+Rift). Sem a parte da árvore, 3172 (Gunmetal Greaves) fica de fora — é uma
+melhoria de nível 3 feita a partir das Berserker's Greaves que a Riot **não**
+marca como botas, e é onde as botas de um main de Jax top terminam. Não estreite
+a regra de volta para a tag.
 
 ## Os quatro comandos, nesta ordem
 

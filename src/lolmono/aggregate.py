@@ -36,23 +36,29 @@ from lolmono.rows import MatchRow, RunePage, TimelineRow
 MIN_GAP = 0.15
 
 # Boots, DERIVED from the Data Dragon item list of 16.21.1 (the version
-# config.example.toml pins): every item whose tags contain "Boots", minus the
-# alternate-mode (22xxxx, 77xxxx) ids, which never appear in a ranked solo queue
-# payload. Regenerate after bumping ddragon_version and paste the output here:
+# config.example.toml pins): every Summoner's Rift item (maps["11"]) whose tags
+# contain "Boots" OR whose build tree reaches 1001/2422, minus the alternate-mode
+# (22xxxx, 77xxxx) ids, which never appear in a ranked solo queue payload.
+# Regenerate after bumping ddragon_version and paste the output here:
 #
 #     python tools/derive_boot_items.py <version>
 #
-# Do NOT hand-edit. The hand-written predecessor of this set held no tier-3
-# upgrade, and a tier-3 consumes the tier-2 boots it was bought over: in most
-# Master+ games the final build held an id this set did not know, the boots
-# lookup returned an empty list for BOTH groups, and the first field of the
-# matchup screen silently reported nothing.
+# Do NOT hand-edit, and do NOT narrow the rule back to the tag: 3172 Gunmetal
+# Greaves is a tier-3 upgrade built straight out of Berserker's Greaves that Riot
+# tags ["AttackSpeed", "LifeSteal", "NonbootsMovement"], with no "Boots" at all.
+# It is the attack-speed upgrade, so it is where a Jax top main's boots end up,
+# and Jax top is one of the five configured targets. It is the only id here that
+# the tag misses.
+#
+# The hand-written predecessor of this set held no tier-3 upgrade, and a tier-3
+# consumes the tier-2 boots it was bought over: in most Master+ games the final
+# build held an id the set did not know, the boots lookup returned an empty list
+# for BOTH groups, and the first field of the matchup screen silently reported
+# nothing.
 BOOT_ITEM_IDS = frozenset(
     {
         1001,  # Boots
-        1111,  # Jarvan I's
         2422,  # Slightly Magical Footwear
-        3005,  # Ghostcrawlers
         3006,  # Berserker's Greaves
         3008,  # Gluttonous Greaves
         3009,  # Boots of Swiftness
@@ -66,12 +72,21 @@ BOOT_ITEM_IDS = frozenset(
         3168,  # Immortal Path
         3170,  # Swiftmarch
         3171,  # Crimson Lucidity
+        3172,  # Gunmetal Greaves  (no Boots tag; caught by the build tree)
         3173,  # Chainlaced Crushers
         3174,  # Armored Advance
         3175,  # Spellslinger's Shoes
         3176,  # Forever Forward
     }
 )
+
+# Share of a side's games that must have ended with a recognised boot item for
+# "boots" to count as a compared field. A single leftover tier-2 game is NOT
+# evidence that the boots of a matchup were compared: with 19 of 20 games on a
+# boot id this build does not know, the one game that it does know would restore
+# the "they chose alike on boots" sentence for a matchup whose boots were never
+# seen. Strictly greater, like MIN_GAP, so an even split is not a majority.
+MIN_BOOTS_SHARE = 0.5
 
 _SKILL_KEYS = {1: "Q", 2: "W", 3: "E", 4: "R"}
 
@@ -342,11 +357,13 @@ def compare_matchup(
     every figure are always reported.
 
     The headline's "they chose alike" sentence names the fields that were in fact
-    compared. Boots count as compared only when at least one game on either side
-    ended with a recognised boot item: an unknown boot id (a patch newer than
-    BOOT_ITEM_IDS) leaves both groups with an empty list, which must not read as
-    agreement. `winner_games_without_boots`/`loser_games_without_boots` report it
-    in numbers.
+    compared. Boots count as compared only when more than `MIN_BOOTS_SHARE` of
+    EACH side's games ended with a recognised boot item: an unknown boot id (a
+    patch newer than BOOT_ITEM_IDS) leaves those games with an empty list, which
+    must not read as agreement, and a handful of games that happen to use a known
+    id is not evidence that the matchup's boots were compared.
+    `winner_games_without_boots`/`loser_games_without_boots` report it in numbers
+    whether or not the comparison happened.
     """
     games = [r for r in rows if r.opponent_champion_id == opponent_champion_id]
     winners = [r for r in games if r.win]
@@ -411,10 +428,16 @@ def compare_matchup(
         )
 
     found: list[Divergence] = []
-    # Boots are compared only when at least one game actually ended with an id
-    # this build recognises. With none, the two empty lists would agree by
-    # construction and the comparison would report silence as sameness.
-    boots_seen = any(boots_w) or any(boots_l)
+    # Boots are compared only when a clear majority of the games on EACH side
+    # ended with an id this build recognises. One leftover tier-2 game among
+    # twenty on a boot the set does not know is not evidence that the boots were
+    # compared: the empty lists would mostly agree by construction and the
+    # comparison would report silence as sameness. The counts are exported
+    # either way, so the site can see this for itself.
+    boots_seen = (
+        sum(1 for b in boots_w if b) / wins > MIN_BOOTS_SHARE
+        and sum(1 for b in boots_l if b) / losses > MIN_BOOTS_SHARE
+    )
     compared: list[str] = []
     not_compared_timeline: list[str] = []
     if boots_seen:
@@ -480,8 +503,8 @@ def compare_matchup(
         )
     if not boots_seen:
         parts.append(
-            "Nenhuma partida dos dois lados terminou com um item de botas "
-            "reconhecido, então as botas não foram comparadas."
+            "Poucas partidas terminaram com um item de botas reconhecido, "
+            "então as botas não foram comparadas."
         )
     headline = " ".join(parts) or None
 
