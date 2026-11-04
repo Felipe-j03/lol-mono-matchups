@@ -36,13 +36,23 @@ def screen_candidates(client, db, cfg, platform: str, now_ms: int) -> ScreenRepo
     screened = 0
     suspects = 0
     for start in range(0, len(pending), BATCH_SIZE):
-        with db.batch():
-            for puuid in pending[start : start + BATCH_SIZE]:
-                masteries = client.top_masteries(puuid, cfg.mastery_top_n)
-                suspect = is_suspect(
-                    masteries, cfg.targets, cfg.mastery_top_n, cfg.mastery_max_days, now_ms
+        # A rede (e o limitador) fica fora da transacao: so a escrita do lote
+        # abre uma, e curta, para que regioes em paralelo no mesmo banco nao
+        # esbarrem em "database is locked".
+        verdicts = []
+        for puuid in pending[start : start + BATCH_SIZE]:
+            masteries = client.top_masteries(puuid, cfg.mastery_top_n)
+            verdicts.append(
+                (
+                    puuid,
+                    is_suspect(
+                        masteries, cfg.targets, cfg.mastery_top_n, cfg.mastery_max_days, now_ms
+                    ),
                 )
+            )
+        with db.batch():
+            for puuid, suspect in verdicts:
                 db.mark_screened(platform, puuid, suspect)
-                screened += 1
-                suspects += suspect
+        screened += len(verdicts)
+        suspects += sum(suspect for _, suspect in verdicts)
     return ScreenReport(screened=screened, suspects=suspects)

@@ -9,7 +9,7 @@ from lolmono.__main__ import main
 from lolmono.collect import BATCH_SIZE, ScreenReport, collect_ladder, screen_candidates
 from lolmono.config import load_config
 from lolmono.db import Database
-from lolmono.riot import Mastery
+from lolmono.riot import Mastery, RiotError
 
 ROOT = Path(__file__).resolve().parent.parent
 TALON = 91
@@ -29,16 +29,26 @@ class FakeClient:
         self._fail_on_call = fail_on_call
         self.ladder_calls = []
         self.mastery_requests = []
+        self.watch_db = None
+        self.open_transaction_seen = False
 
     @property
     def mastery_calls(self):
         return len(self.mastery_requests)
 
+    def _watch(self):
+        # Le o estado da conexao do banco no instante da requisicao (atributo
+        # privado: nao ha API publica para isso).
+        if self.watch_db is not None and self.watch_db._conn.in_transaction:
+            self.open_transaction_seen = True
+
     def ladder_puuids(self, tiers):
+        self._watch()
         self.ladder_calls.append(tuple(tiers))
         return list(self._puuids)
 
     def top_masteries(self, puuid, count):
+        self._watch()
         self.mastery_requests.append((puuid, count))
         if self._fail_on_call == len(self.mastery_requests):
             raise RuntimeError("rede caiu")
@@ -183,6 +193,19 @@ def test_interrupted_screening_keeps_every_completed_batch(db, tmp_path):
     assert db.pending_candidates("br1") == []
 
 
+def test_no_write_transaction_is_open_during_network_calls(db):
+    # Regioes rodam em paralelo no mesmo banco: uma transacao de escrita aberta
+    # enquanto o limitador espera travaria a outra ("database is locked").
+    puuids, masteries = many_players(BATCH_SIZE * 2 + 5)
+    fake = FakeClient(puuids, masteries)
+    fake.watch_db = db
+    collect_ladder(fake, db, cfg, "br1")
+    screen_candidates(fake, db, cfg, "br1", now_ms)
+    assert fake.mastery_calls == len(puuids)
+    assert not fake.open_transaction_seen
+    assert not db._conn.in_transaction
+
+
 def test_report_counts_span_all_batches(db):
     puuids, masteries = many_players(BATCH_SIZE + 5)
     fake = FakeClient(puuids, masteries)
@@ -271,3 +294,36 @@ def test_cli_reports_a_missing_config_instead_of_a_traceback(tmp_path, capsys):
     )
     assert code == 2
     assert "nope.toml" in capsys.readouterr().err
+
+
+def test_cli_riot_error_exits_1_with_a_message_and_no_key(tmp_path, capsys):
+    class ExpiredKey(FakeClient):
+        def ladder_puuids(self, tiers):
+            raise RiotError("HTTP 403 for /lol/league/v4/masterleagues/by-queue/RANKED_SOLO_5x5")
+
+    code, keys = cli(["ladder", "--platform", "br1"], tmp_path, client=ExpiredKey([], {}))
+    captured = capsys.readouterr()
+    assert code == 1
+    assert keys == ["chave-de-teste"]
+    assert "HTTP 403" in captured.err
+    assert "chave-de-teste" not in captured.out + captured.err
+
+
+def test_cli_riot_error_mid_screening_keeps_committed_batches(tmp_path, capsys):
+    class ExpiresMidRun(FakeClient):
+        def top_masteries(self, puuid, count):
+            if len(self.mastery_requests) == BATCH_SIZE + 3:
+                raise RiotError("HTTP 403 for /lol/champion-mastery/v4/x")
+            return super().top_masteries(puuid, count)
+
+    puuids, masteries = many_players(BATCH_SIZE * 2)
+    fake = ExpiresMidRun(puuids, masteries)
+    assert cli(["ladder", "--platform", "br1"], tmp_path, client=fake)[0] == 0
+    code, _ = cli(["screen", "--platform", "br1"], tmp_path, client=fake)
+    assert code == 1
+    assert "chave-de-teste" not in capsys.readouterr().err
+    other = reopened(tmp_path / "cli.db")
+    try:
+        assert other.pending_candidates("br1") == puuids[BATCH_SIZE:]
+    finally:
+        other.close()

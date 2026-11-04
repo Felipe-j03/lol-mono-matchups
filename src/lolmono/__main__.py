@@ -11,7 +11,7 @@ from lolmono.collect import collect_ladder, screen_candidates
 from lolmono.config import ConfigError, load_config
 from lolmono.db import Database
 from lolmono.ratelimit import riot_limiter
-from lolmono.riot import PLATFORM_TO_REGIONAL, RiotClient, httpx_sender
+from lolmono.riot import PLATFORM_TO_REGIONAL, RiotClient, RiotError, httpx_sender
 
 API_KEY_VAR = "RIOT_API_KEY"
 
@@ -58,15 +58,27 @@ def main(
     try:
         db.init_schema()
         client = client_factory(args.platform, api_key)
-        if args.command == "ladder":
-            added = collect_ladder(client, db, cfg, args.platform)
-            print(f"ladder {args.platform}: candidatos novos: {added}")
-        else:
-            report = screen_candidates(client, db, cfg, args.platform, int(time.time() * 1000))
+        try:
+            if args.command == "ladder":
+                added = collect_ladder(client, db, cfg, args.platform)
+                print(f"ladder {args.platform}: candidatos novos: {added}")
+            else:
+                report = screen_candidates(
+                    client, db, cfg, args.platform, int(time.time() * 1000)
+                )
+                print(
+                    f"screen {args.platform}: triados: {report.screened}, "
+                    f"suspeitos: {report.suspects}"
+                )
+        except RiotError as exc:
+            # Chave de desenvolvimento expira em 24h: o lote em andamento foi
+            # descartado, os anteriores estao gravados; basta reexecutar.
             print(
-                f"screen {args.platform}: triados: {report.screened}, "
-                f"suspeitos: {report.suspects}"
+                f"{args.command} {args.platform}: falha na API da Riot ({exc}). "
+                "O progresso ja gravado foi mantido; confira a chave e reexecute.",
+                file=sys.stderr,
             )
+            return 1
     finally:
         db.close()
     return 0
