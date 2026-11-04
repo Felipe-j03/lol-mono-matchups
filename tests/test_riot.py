@@ -1,6 +1,12 @@
 import pytest
 
-from lolmono.riot import PLATFORM_TO_REGIONAL, Mastery, RiotClient, RiotError
+from lolmono.riot import (
+    PLATFORM_TO_REGIONAL,
+    TRANSIENT_BACKOFF,
+    Mastery,
+    RiotClient,
+    RiotError,
+)
 
 KEY = "SECRET-KEY"
 
@@ -276,3 +282,155 @@ def test_diamond_with_no_entries_in_any_division_raises():
     )
     with pytest.raises(RiotError, match="DIAMOND"):
         client.ladder_puuids(["DIAMOND"])
+
+
+# --- transient failures are retried; 4xx is not ------------------------------
+
+
+def test_a_503_is_retried_and_then_succeeds():
+    # A routine 503 over a run that lasts hours must not end the night.
+    routes = {
+        MATCH + "BR1_1": [
+            FakeResponse(503),
+            FakeResponse(200, {"ok": True}),
+        ]
+    }
+    client, send, limiter = make(routes)
+    assert client.match("BR1_1") == {"ok": True}
+    assert len(send.urls) == 2
+    assert limiter.penalties == [TRANSIENT_BACKOFF[0]]  # it backed off first
+
+
+def test_5xx_retries_back_off_and_then_give_up_naming_the_status():
+    routes = {MATCH + "BR1_1": [FakeResponse(502)]}
+    client, send, limiter = make(routes)
+    with pytest.raises(RiotError, match="502"):
+        client.match("BR1_1")
+    assert len(send.urls) == 1 + len(TRANSIENT_BACKOFF)
+    assert limiter.penalties == list(TRANSIENT_BACKOFF)
+
+
+def test_a_transport_failure_is_retried_before_giving_up():
+    calls = []
+
+    def send(url):
+        calls.append(url)
+        if len(calls) < 3:
+            raise OSError("connection reset by peer")
+        return FakeResponse(200, {"ok": True})
+
+    limiter = FakeLimiter()
+    client = RiotClient("br1", limiter, send)
+    assert client.match("BR1_1") == {"ok": True}
+    assert len(calls) == 3
+    assert limiter.penalties == list(TRANSIENT_BACKOFF)
+
+
+def test_a_permanent_transport_failure_still_raises_without_leaking():
+    def send(url):
+        raise RuntimeError(f"boom {url} header X-Riot-Token={KEY}")
+
+    client = RiotClient("br1", FakeLimiter(), send)
+    with pytest.raises(RiotError) as info:
+        client.match("BR1_1")
+    assert KEY not in str(info.value)
+    assert "riotgames.com" not in str(info.value)
+
+
+def test_a_403_is_never_retried():
+    # An expired key is not weather: retrying it only burns the rate budget.
+    routes = {MATCH + "BR1_1": [FakeResponse(403)]}
+    client, send, limiter = make(routes)
+    with pytest.raises(RiotError, match="403"):
+        client.match("BR1_1")
+    assert len(send.urls) == 1
+    assert limiter.penalties == []
+
+
+def test_a_404_is_never_retried():
+    client, send, _ = make({})
+    with pytest.raises(RiotError, match="404"):
+        client.match("BR1_missing")
+    assert len(send.urls) == 1
+
+
+def test_a_404_with_none_on_404_is_not_a_transient_failure():
+    client, send, _ = make({})
+    assert client.timeline("BR1_missing") is None
+    assert len(send.urls) == 1
+
+
+# --- the puuid never reaches an error message --------------------------------
+
+PUUID = "k" * 78  # a real Riot puuid is 78 characters
+
+
+def test_error_message_redacts_the_puuid_from_the_path():
+    # mastery, match-ids and account paths embed the puuid, and the CLI prints
+    # these messages.
+    url = (
+        "https://br1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries"
+        f"/by-puuid/{PUUID}/top?count=7"
+    )
+    client, _, _ = make({url: [FakeResponse(403)]})
+    with pytest.raises(RiotError) as info:
+        client.top_masteries(PUUID, 7)
+    text = str(info.value)
+    assert PUUID not in text
+    assert "<puuid>" in text
+    assert "/lol/champion-mastery/v4/champion-masteries" in text  # still useful
+
+
+def test_error_message_redacts_the_puuid_from_the_account_path():
+    url = f"https://americas.api.riotgames.com/riot/account/v1/accounts/by-puuid/{PUUID}"
+    client, _, _ = make({url: [FakeResponse(403)]})
+    with pytest.raises(RiotError) as info:
+        client.riot_id(PUUID)
+    assert PUUID not in str(info.value)
+
+
+def test_the_match_id_is_not_redacted():
+    # It is the one identifier worth printing: it names the payload to inspect.
+    routes = {MATCH + "BR1_4712093": [FakeResponse(403)]}
+    client, _, _ = make(routes)
+    with pytest.raises(RiotError) as info:
+        client.match("BR1_4712093")
+    assert "BR1_4712093" in str(info.value)
+
+
+# --- a body of the wrong shape raises RiotError, not KeyError/TypeError ------
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {},  # no "entries"
+        {"entries": None},
+        {"entries": {"a": 1}},  # an object where a list is expected
+        [],  # a list where an object is expected
+        "not json at all",
+        None,
+    ],
+)
+def test_an_apex_body_of_the_wrong_shape_raises_the_named_error(body):
+    # This is the call that opens the collection: a bare KeyError or TypeError
+    # here would be an unexplained traceback on the go/no-go path.
+    url = LADDER + "masterleagues/by-queue/RANKED_SOLO_5x5"
+    client, _, _ = make({url: [FakeResponse(200, body)]})
+    with pytest.raises(RiotError, match="MASTER"):
+        client.ladder_puuids(["MASTER"])
+
+
+def test_a_diamond_page_that_is_not_a_list_raises_the_named_error():
+    base = LADDER + "entries/RANKED_SOLO_5x5/DIAMOND/"
+    routes = {base + "I?page=1": [FakeResponse(200, {"unexpected": "object"})]}
+    client, _, _ = make(routes)
+    with pytest.raises(RiotError, match="DIAMOND"):
+        client.ladder_puuids(["DIAMOND"])
+
+
+def test_a_ladder_entry_that_is_not_an_object_raises_the_named_error():
+    url = LADDER + "masterleagues/by-queue/RANKED_SOLO_5x5"
+    client, _, _ = make({url: [FakeResponse(200, {"entries": ["just a string"]})]})
+    with pytest.raises(RiotError, match="MASTER"):
+        client.ladder_puuids(["MASTER"])

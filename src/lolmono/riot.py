@@ -19,12 +19,20 @@ PLATFORM_TO_REGIONAL: dict[str, str] = {
 QUEUE = "RANKED_SOLO_5x5"
 MAX_ATTEMPTS = 3
 DEFAULT_RETRY_AFTER = 1.0
+# Backoff before retrying a 5xx or a transport failure, in seconds, one entry per
+# retry. A 503 or a reset connection is routine over a collection that runs for
+# hours; without a retry it would end an unattended overnight run on the spot.
+# Resumability protects the data, not the night.
+TRANSIENT_BACKOFF = (1.0, 4.0)
 _LEAGUE_TIERS = {
     "CHALLENGER": "challengerleagues",
     "GRANDMASTER": "grandmasterleagues",
     "MASTER": "masterleagues",
 }
 _DIVISIONS = ("I", "II", "III", "IV")
+# A Riot puuid is 78 characters; no other path segment this project builds comes
+# close (the longest is "champion-masteries", 18, and a match id is about 15).
+_PUUID_MIN_LENGTH = 40
 
 
 class RiotError(Exception):
@@ -46,7 +54,17 @@ class Mastery:
 
 
 def _path(url: str) -> str:
-    return urlsplit(url).path
+    """The URL's path, with any puuid segment redacted.
+
+    The host carries the API key's header and the query carries nothing useful,
+    so an error message quotes the path only. The mastery, match-ids and account
+    paths embed a puuid, which is a permanent account identifier, and the CLI
+    prints these messages: a long opaque segment is replaced by a marker.
+    """
+    return "/".join(
+        "<puuid>" if len(segment) >= _PUUID_MIN_LENGTH else segment
+        for segment in urlsplit(url).path.split("/")
+    )
 
 
 def _retry_after(response: HttpResponse) -> float:
@@ -69,22 +87,57 @@ class RiotClient:
         self._send = send
 
     def _get(self, url: str, *, none_on_404: bool = False) -> object:
-        for attempt in range(MAX_ATTEMPTS):
+        """GET with retries. 429 and transient failures are retried; 4xx is not.
+
+        A 429 waits the server's Retry-After, up to ``MAX_ATTEMPTS`` tries. A 5xx
+        and a transport failure (reset connection, timeout, DNS) each wait
+        ``TRANSIENT_BACKOFF`` and are retried once per entry: they are the
+        routine weather of a run that lasts hours, and the limiter's penalty is
+        reused as the sleep, so the backoff also protects the rate budget. Any
+        other non-2xx is our bug or an expired key and is raised at once.
+        """
+        throttled = 0
+        transient = 0
+
+        def wait_or_stop() -> bool:
+            """Back off for one more try, or say that the retries are spent."""
+            nonlocal transient
+            if transient >= len(TRANSIENT_BACKOFF):
+                return False
+            self._limiter.penalize(TRANSIENT_BACKOFF[transient])
+            transient += 1
+            return True
+
+        while True:
             self._limiter.acquire()
             try:
                 response = self._send(url)
             except Exception as exc:
-                raise RiotError(f"transport failure ({type(exc).__name__}) for {_path(url)}") from None
+                # The exception is never chained: its message can carry the URL
+                # and therefore the API key's header.
+                trouble = f"transport failure ({type(exc).__name__})"
+                if wait_or_stop():
+                    continue
+                raise RiotError(f"{trouble} for {_path(url)}") from None
             status = response.status_code
             if status == 429:
+                throttled += 1
+                if throttled >= MAX_ATTEMPTS:
+                    raise RiotError(
+                        f"HTTP 429 after {MAX_ATTEMPTS} attempts for {_path(url)}"
+                    )
                 self._limiter.penalize(_retry_after(response))
                 continue
             if status == 404 and none_on_404:
                 return None
+            if 500 <= status < 600:
+                trouble = f"HTTP {status}"
+                if wait_or_stop():
+                    continue
+                raise RiotError(f"{trouble} for {_path(url)}")
             if not 200 <= status < 300:
                 raise RiotError(f"HTTP {status} for {_path(url)}")
             return response.json()
-        raise RiotError(f"HTTP 429 after {MAX_ATTEMPTS} attempts for {_path(url)}")
 
     def ladder_puuids(self, tiers: Sequence[str]) -> list[str]:
         seen: dict[str, None] = {}
@@ -96,17 +149,31 @@ class RiotClient:
     def _tier_puuids(self, tier: str) -> list[str]:
         base = f"{self._platform_host}/lol/league/v4"
         if tier in _LEAGUE_TIERS:
-            # Apex: uma liga unica, sem paginacao.
-            body = self._get(f"{base}/{_LEAGUE_TIERS[tier]}/by-queue/{QUEUE}")
+            # Apex: uma liga unica, sem paginacao. O corpo tem que ser um objeto
+            # com "entries": sem a checagem, uma mudanca de esquema subiria como
+            # KeyError ou TypeError cru -- e esta e a chamada que abre a coleta.
+            url = f"{base}/{_LEAGUE_TIERS[tier]}/by-queue/{QUEUE}"
+            body = self._get(url)
+            if not isinstance(body, dict) or not isinstance(body.get("entries"), list):
+                raise RiotError(
+                    f"tier {tier}: body is not an object with a list 'entries' "
+                    f"(got {type(body).__name__}) for {_path(url)}"
+                )
             entries = body["entries"]
         elif tier == "DIAMOND":
             entries = []
             for division in _DIVISIONS:
                 page = 1
                 while True:
-                    batch = self._get(f"{base}/entries/{QUEUE}/DIAMOND/{division}?page={page}")
+                    url = f"{base}/entries/{QUEUE}/DIAMOND/{division}?page={page}"
+                    batch = self._get(url)
                     if not batch:
                         break
+                    if not isinstance(batch, list):
+                        raise RiotError(
+                            f"tier {tier}: page is not a list "
+                            f"(got {type(batch).__name__}) for {_path(url)}"
+                        )
                     entries.extend(batch)
                     page += 1
         else:
@@ -118,6 +185,11 @@ class RiotClient:
 
     @staticmethod
     def _entry_puuid(entry: dict, tier: str) -> str:
+        if not isinstance(entry, dict):
+            raise RiotError(
+                f"ladder entry in tier {tier} is not an object "
+                f"(got {type(entry).__name__})"
+            )
         try:
             return entry["puuid"]
         except KeyError:

@@ -60,7 +60,14 @@ def extract_timeline(timeline_json: dict, puuid: str, opponent_puuid: str) -> Ti
 
     info = timeline_json["info"]
     frames = info["frames"]
+    # A zero or negative interval is nonsense Riot has never sent, but it would
+    # be a ZeroDivisionError here, and the caller's broad catch would turn it
+    # into parse_error on every single payload: a systematic abort with a
+    # confusing cause. The default is the real interval in every timeline seen.
+    # A bool is an int in Python and True would make the index 840000.
     interval = info.get("frameInterval", DEFAULT_FRAME_INTERVAL_MS)
+    if isinstance(interval, bool) or not isinstance(interval, int) or interval <= 0:
+        interval = DEFAULT_FRAME_INTERVAL_MS
     snapshot_idx = SNAPSHOT_MS // interval
 
     starting_items: list[int] = []

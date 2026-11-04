@@ -310,3 +310,26 @@ def test_assists_and_other_players_kills_do_not_count():
     events = [kill(1, THEM, 1000, assists=(ME,)), kill(1, 2, 2000)]
     row = run(events={1: events})
     assert (row.kills_before_10, row.deaths_before_10) == (0, 0)
+
+
+# --- a frame interval that cannot be used falls back to the default ---------
+
+
+@pytest.mark.parametrize("bad", [0, -60_000, "60000", 1.5, True])
+def test_a_frame_interval_that_cannot_be_used_falls_back_to_the_default(bad):
+    # Zero would be a ZeroDivisionError and, under the caller's broad catch,
+    # parse_error on every payload: a systematic abort with a confusing cause.
+    # A string or a float would be a TypeError in the same place. The default
+    # (one frame per minute) is the interval of every timeline ever seen.
+    payload = series(16)
+    payload["info"]["frameInterval"] = bad
+    row = extract_timeline(payload, "ME", "THEM")
+    assert row == run(16)
+
+
+def test_a_usable_frame_interval_is_still_honoured():
+    # The clamp must not flatten a real non-default interval: at 30s a frame,
+    # minute 14 is index 28, not index 14.
+    half = series(32, interval=30_000)
+    row = extract_timeline(half, "ME", "THEM")
+    assert row.gold_at_14 == 1000 * 28
