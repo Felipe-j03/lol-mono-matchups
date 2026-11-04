@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "matchId": "BR1_1002",
+    "participants": ["P1", "P2", "ME", "P4", "P5", "P6", "P7", "THEM", "P9", "P10"]
+  },
+  "info": {
+    "frames": [
+      {"timestamp": 0, "participantFrames": {}, "events": [
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 3, "itemId": 1055},
+        {"type": "ITEM_PURCHASED", "timestamp": 0, "participantId": 3, "itemId": 2003}
+      ]},
+      {"timestamp": 60000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 20000, "participantId": 3, "skillSlot": 1, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 120000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 100000, "participantId": 3, "skillSlot": 3, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 180000, "participantFrames": {}, "events": [
+        {"type": "SKILL_LEVEL_UP", "timestamp": 170000, "participantId": 3, "skillSlot": 1, "levelUpType": "NORMAL"}
+      ]},
+      {"timestamp": 240000, "participantFrames": {
+        "3": {"totalGold": 1500, "minionsKilled": 20, "jungleMinionsKilled": 0},
+        "8": {"totalGold": 1400, "minionsKilled": 18, "jungleMinionsKilled": 0}
+      }, "events": []}
+    ]
+  }
+}
