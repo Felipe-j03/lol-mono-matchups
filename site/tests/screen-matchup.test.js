@@ -169,7 +169,7 @@ Deno.test("ouro presente com farm nulo renderiza o ouro e declara a ausencia do 
   assert(html.includes("5200"));
   assert(html.includes("4000"));
   assert(html.includes(
-    "Diferença média de farm aos 14 min: sem dado suficiente de timeline, ao menos um dos lados está abaixo do piso (vencedores em 14 partidas, perdedores em 3 partidas)",
+    "Diferença média de farm aos 14 min: sem dado suficiente de timeline, ao menos um dos lados tem menos de 15 partidas com esse valor (vencedores em 14 partidas, perdedores em 3 partidas)",
   ));
   assert(!html.includes("Ouro médio aos 14 min: sem dado"));
   assert(!html.includes("null") && !html.includes("NaN"));
@@ -181,7 +181,7 @@ Deno.test("farm presente com ouro nulo renderiza o farm e declara a ausencia do 
   const html = renderMatchup(m, DICT);
   assert(html.includes("+8") && html.includes("-6"));
   assert(html.includes(
-    "Ouro médio aos 14 min: sem dado suficiente de timeline, ao menos um dos lados está abaixo do piso (vencedores em 9 partidas, perdedores em 1 partida)",
+    "Ouro médio aos 14 min: sem dado suficiente de timeline, ao menos um dos lados tem menos de 15 partidas com esse valor (vencedores em 9 partidas, perdedores em 1 partida)",
   ));
   assert(!html.includes("Diferença média de farm aos 14 min: sem dado"));
   assert(!html.includes("null") && !html.includes("NaN"));
@@ -210,6 +210,9 @@ Deno.test("ouro aos 14 nulo nao imprime numero nem zero", () => {
   assert(!html.includes("5200"));
   assert(html.includes("Ouro médio aos 14 min: sem dado suficiente de timeline"));
   assert(html.includes("Diferença média de farm aos 14 min: sem dado suficiente de timeline"));
+  // o piso citado vem de min_per_side, nao de um valor fixo
+  const h17 = renderMatchup({ ...m, min_per_side: 17 }, DICT);
+  assert(h17.split("tem menos de 17 partidas com esse valor").length - 1 === 2);
 });
 
 Deno.test("texto fala de diferenca observada, nunca de recomendacao", () => {

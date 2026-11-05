@@ -111,7 +111,9 @@ function numerosAos14(m) {
   const ouro = m.winner_gold_at_14 != null && m.loser_gold_at_14 != null;
   const farm = m.winner_cs_diff_at_14 != null && m.loser_cs_diff_at_14 != null;
   const semDado = (rotulo, c) =>
-    `<li class="sem-dado">${rotulo}: sem dado suficiente de timeline, ao menos um dos lados está abaixo do piso (vencedores ${
+    `<li class="sem-dado">${rotulo}: sem dado suficiente de timeline, ao menos um dos lados tem menos de ${m.min_per_side} ${
+      partidas(m.min_per_side)
+    } com esse valor (vencedores ${
       sample(c.winners)
     }, perdedores ${sample(c.losers)})</li>`;
   const linhas = [
