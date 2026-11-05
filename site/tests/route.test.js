@@ -12,8 +12,26 @@ Deno.test("rota de campeao e de confronto", () => {
 });
 
 Deno.test("rota malformada e notfound, nunca excecao nem tela vazia", () => {
-  for (const h of ["#/talon-middle/vs/abc", "#/a/b/c/d", "#/talon-middle/vs/"]) {
+  for (const h of [
+    "#/talon-middle/vs/abc",
+    "#/a/b/c/d",
+    "#/talon-middle/vs/",
+    "#/talon-middle/foo/245",
+    "#//vs/245",
+  ]) {
     assertEquals(parseRoute(h).screen, "notfound");
+  }
+});
+
+Deno.test("notfound carrega o hash recebido", () => {
+  assertEquals(parseRoute("#/a/b/c/d"), { screen: "notfound", hash: "#/a/b/c/d" });
+});
+
+Deno.test("entrada nao textual vira notfound com hash textual, sem excecao", () => {
+  for (const h of [undefined, null, 42]) {
+    const r = parseRoute(h);
+    assertEquals(r.screen, "notfound");
+    assertEquals(typeof r.hash, "string");
   }
 });
 

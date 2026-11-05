@@ -8,7 +8,7 @@
 // Qualquer outra forma vira "notfound", nunca excecao nem tela vazia.
 
 export function parseRoute(hash) {
-  if (typeof hash !== "string") return { screen: "notfound", hash };
+  if (typeof hash !== "string") return { screen: "notfound", hash: String(hash ?? "") };
   const path = hash.replace(/^#/, "").replace(/^\//, "");
   if (path === "") return { screen: "choose" };
 
