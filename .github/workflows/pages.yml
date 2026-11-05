@@ -1,0 +1,55 @@
+# Publica o site estatico no GitHub Pages.
+#
+# Existe porque o Pages, no modo "deploy from a branch", so serve a raiz do
+# repositorio ou /docs — e o nosso site mora em site/, enquanto /docs ja e a
+# pasta das specs e dos planos. Este workflow sobe site/ como artefato, que e
+# a forma suportada de publicar um subdiretorio.
+#
+# Nao ha passo de build: o site e HTML, CSS e ES modules puros, e os JSON de
+# site/data/ sao versionados. O que esta no repositorio e o que vai ao ar.
+name: Publicar site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicacao por vez, sem cancelar a que ja esta correndo: cancelar no meio
+# deixaria o Pages servindo uma versao parcial.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - name: Conferir que o dado exportado esta presente
+        # O site sem site/data/ carrega e mostra uma mensagem de erro honesta,
+        # mas publicar isso seria publicar um site quebrado em silencio.
+        run: |
+          test -f site/index.html
+          test -f site/data/index.json
+          echo "arquivos de dado: $(ls site/data/*.json | wc -l)"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
