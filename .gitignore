@@ -11,3 +11,6 @@ site/data/
 # config local do operador: parametros por maquina, nunca versionado
 # (o modelo versionado e config.example.toml)
 config.toml
+
+# saida das execucoes do operador
+logs/
