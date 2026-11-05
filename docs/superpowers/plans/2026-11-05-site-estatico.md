@@ -282,7 +282,9 @@ Deno.test("janela nula nao imprime null", () => {
 
 - [ ] **Step 3: Implementar `renderChoose` em `site/js/screen-choose.js`**
 
-Cartão com retrato do Data Dragon, nome do campeão, função, contagem de monos e de partidas. `has_data: false` render sem `<a>`. A janela de coleta vai no rodapé da tela, com a nota de que janela larga mistura patches.
+Cartão com retrato do Data Dragon, nome do campeão, função, contagem de monos e de partidas. `has_data: false` render sem `<a>`. O slug do link sai do campo `file` (sem o `.json`), nunca de `champion_name` — o exportador é dono dessa transformação.
+
+A janela de coleta vai no rodapé, mostrando o **vão em dias** ao lado das datas e enunciando a mistura de patches como regra geral ("quanto mais larga a janela, mais patches entram na mesma base"), nunca como veredito sobre este conjunto. A tela não afirma que a janela é larga, porque não mediu isso: medido em 05/11, o vão real é de ~112 dias mas 85% das partidas estão nos últimos 30.
 
 - [ ] **Step 4: Rodar e confirmar que passam** — Expected: PASS.
 
