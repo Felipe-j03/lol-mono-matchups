@@ -16,7 +16,17 @@ import { escapeHtml, pct, sample } from "./format.js";
 import { matchupHash } from "./route.js";
 
 // Espelha _SKILL_KEYS de src/lolmono/aggregate.py; slot desconhecido vira o proprio numero.
-const TECLAS ={ 1: "Q", 2: "W", 3: "E", 4: "R" };
+const TECLAS = { 1: "Q", 2: "W", 3: "E", 4: "R" };
+
+function partidas(n) {
+  return n === 1 ? "partida" : "partidas";
+}
+
+// Dado ausente (ex.: timelines ainda nao coletadas) e dito como ausente,
+// com o denominador ao lado, em vez de escondido ou de derrubar a tela.
+function ouSemDado(valor, formata) {
+  return valor == null ? "Sem dado" : escapeHtml(formata(valor));
+}
 
 function lista(nomes) {
   return nomes.map(escapeHtml).join(", ");
@@ -38,7 +48,7 @@ function paginaDeRunas(runas, dict) {
 
 function base(b, dict) {
   const itens = b.item_frequency.map((i) =>
-    `<li>${escapeHtml(itemName(dict, i.item_id))} <span class="n">${i.games} de ${b.games} partidas</span></li>`
+    `<li>${escapeHtml(itemName(dict, i.item_id))} <span class="n">${i.games} de ${b.games} ${partidas(b.games)}</span></li>`
   ).join("\n      ");
   return `<section class="baseline">
     <h2>O que os monos fazem por padrão</h2>
@@ -56,9 +66,9 @@ function base(b, dict) {
       ${itens}
     </ul>
     <h3>Itens iniciais <span class="n">${sample(b.starting_items_games)}</span></h3>
-    <p>${lista(b.starting_items.map((id) => itemName(dict, id)))}</p>
+    <p>${ouSemDado(b.starting_items, (ids) => ids.map((id) => itemName(dict, id)).join(", "))}</p>
     <h3>Ordem de habilidades <span class="n">${sample(b.skill_order_games)}</span></h3>
-    <p>${escapeHtml(ordemDeHabilidades(b.skill_order))}</p>
+    <p>${ouSemDado(b.skill_order, ordemDeHabilidades)}</p>
   </section>`;
 }
 
@@ -77,6 +87,9 @@ function nomeDoOponente(m, dict) {
 }
 
 function resumoDoConfronto(m) {
+  // Abaixo do piso o exportador entrega win_rate, mas a tela nao o manchete:
+  // abaixo do piso nao afirmamos taxa, so dizemos quantas partidas existem.
+  if (m.below_floor) return sample(m.games);
   return `${pct(m.win_rate)} de vitórias ${sample(m.games)}`;
 }
 
@@ -108,7 +121,7 @@ function confrontos(matchups, dict) {
 function jogadores(players) {
   const linhas = players.map((p) =>
     `<li>${escapeHtml(p.riot_id)} <span class="n">${escapeHtml(p.platform)}: ` +
-    `${p.games} partidas, ${pct(p.share)} do que jogou foi este campeão, ` +
+    `${p.games} ${partidas(p.games)}, ${pct(p.share)} do que jogou foi este campeão, ` +
     `${pct(p.win_rate)} de vitórias</span></li>`
   ).join("\n      ");
   return `<details class="reference-players">

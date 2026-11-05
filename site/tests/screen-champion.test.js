@@ -52,7 +52,8 @@ Deno.test("itens iniciais e ordem de habilidades trazem o proprio denominador", 
   const html = renderChampion(TARGET, DICT);
   assert(html.includes("em 240 partidas"));   // starting_items_games
   assert(html.includes("em 230 partidas"));   // skill_order_games
-  assert(html.includes("Doran&#39;s Blade") || html.includes("Doran's Blade"));
+  assert(html.includes("Doran&#39;s Blade"));
+  assert(!html.includes("Doran's Blade"));
   assert(html.includes("Q &gt; W &gt; E"));
 });
 
@@ -124,6 +125,45 @@ Deno.test("o slug do link vem do file do confronto, nao do nome do campeao", () 
   const m = { ...TARGET.matchups[0], file: "kaisa-bottom-vs-245.json" };
   const html = renderChampion({ ...TARGET, champion_name: "Kai'Sa", matchups: [m] }, DICT);
   assert(html.includes('href="#/kaisa-bottom/vs/245"'));
+});
+
+Deno.test("abaixo do piso fica sob o titulo da secao e so ele perde o link", () => {
+  const html = renderChampion(TARGET, DICT);
+  const ekko = html.indexOf("Ekko");
+  const titulo = html.indexOf("Dados insuficientes");
+  const zed = html.indexOf("Zed");
+  assert(ekko !== -1 && ekko < titulo && titulo < zed);
+  assert(html.includes('href="#/talon-middle/vs/245"'));
+  assert(!html.includes("/vs/238"));
+  assert((html.match(/href="#\//g) ?? []).length === 1);
+});
+
+Deno.test("abaixo do piso mostra so a contagem, sem taxa de vitoria", () => {
+  const t = { ...TARGET, matchups: [TARGET.matchups[1]] };  // Zed, win_rate 0.6
+  const html = renderChampion(t, DICT);
+  assert(html.includes("em 5 partidas"));
+  assert(!html.includes("60%"));
+});
+
+Deno.test("itens iniciais e habilidades nulos (timeline nao coletada) nao derrubam a tela", () => {
+  for (const [campo, jogos] of [["starting_items", "starting_items_games"],
+                                ["skill_order", "skill_order_games"]]) {
+    const t = { ...TARGET, baseline: { ...TARGET.baseline, [campo]: null, [jogos]: 0 } };
+    const html = renderChampion(t, DICT);
+    assert(html.includes("Sem dado"), campo);
+    assert(html.includes("em 0 partidas"), campo);
+    assert(!html.includes("null"), campo);
+    assert(!html.includes("undefined"), campo);
+  }
+});
+
+Deno.test("uma partida aparece no singular", () => {
+  const b = { ...TARGET.baseline, games: 1, item_frequency: [{ item_id: 3142, games: 1 }] };
+  const players = [{ ...TARGET.reference_players[0], games: 1 }];
+  const html = renderChampion({ ...TARGET, baseline: b, reference_players: players }, DICT);
+  assert(html.includes("1 de 1 partida<"));
+  assert(html.includes("1 partida,"));
+  assert(!html.includes("1 partidas"));
 });
 
 Deno.test("sem matchup abaixo do piso nao ha secao de dados insuficientes", () => {
