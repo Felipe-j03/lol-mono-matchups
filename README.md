@@ -98,8 +98,10 @@ python -m lolmono screen --platform br1 --limit 500
 ```
 
 O estágio 2 gasta uma requisição por candidato, e uma região grande tem
-milhares: BR1 deu 10.700 candidatos, o que a 100 requisições por 2 minutos leva
-cerca de 3h35. Varrer tudo antes de conhecer a taxa de suspeitos pode revelar
+milhares: BR1 em Mestre+ deu 10.700 candidatos, o que a 100 requisições por 2
+minutos leva cerca de 3h35. Com `min_tier = "DIAMOND"`, que é o padrão atual, a
+escada de uma região é bem maior — rode `ladder` e leia o número antes de
+supor. Varrer tudo antes de conhecer a taxa de suspeitos pode revelar
 uma peneira frouxa tarde demais — e aí o estágio 3, o caro, baixa 60 partidas de
 cada pessoa que não é mono.
 
@@ -147,6 +149,40 @@ Os quatro processos escrevem no mesmo arquivo SQLite. As transações são curta
 e por lote, e a conexão espera até 30s por um lock, mas se mesmo assim aparecer
 `database is locked` o comando sai com código 1 explicando o que fazer: o
 progresso já gravado ficou, basta reexecutar aquela região.
+
+## Quanto custa um mono, e quando parar
+
+Medido em BR1 na noite de 04→05/11/2026, com a coleta inteira de Mestre+:
+
+| grandeza | medida |
+|---|---|
+| triagem (estágio 2) | 1,21 s por candidato |
+| estágio 3 | 1,25 min por suspeito |
+| taxa de suspeitos | 7,25% (776 de 10.700) |
+| conversão suspeito→mono | 4,07% (5 de 123) |
+| jogos no campeão-função por mono | 39,4 |
+
+Disso sai o número que governa o planejamento: **37,6 minutos de coleta por mono
+encontrado** (6,8 de triagem mais 30,8 de estágio 3), ou 339 candidatos triados
+por mono. Esse custo **não depende do tier** — a triagem é uma requisição por
+candidato em qualquer elo. Baixar `min_tier` não torna mono mais barato, apenas
+faz existir mais deles por região. O que compra velocidade é paralelizar
+regiões, porque o orçamento de rate é por região.
+
+Quantos monos o produto precisa: o matchup líder de um campeão-função responde
+por 8–12% dos jogos dele, e `delta_min_per_side = 15` exige 15 jogos de cada
+lado, logo uns 60 jogos no mesmo matchup. A 39,4 jogos por mono, isso é **13 a
+19 monos por campeão-função**, ou cerca de **93 no total** — umas 58 h de
+trabalho, que em quatro regiões paralelas são ~15 h de relógio.
+
+Por isso a coleta **não precisa terminar região nenhuma**. Os quatro estágios
+são retomáveis e `status` imprime os confirmados por par campeão/função: rode,
+leia, e pare quando o par mais pobre alcançar a casa dos quinze. Varrer Diamante
+inteiro de quatro regiões é trabalho jogado fora.
+
+Uma assimetria a esperar: os pares não enchem no mesmo ritmo. Em 123 suspeitos
+de BR1 saíram dois monos de Jax TOP e dois de Talon MIDDLE, mas **nenhum de
+Renekton TOP e nenhum de Gragas MIDDLE**. O par raro é que dita quando parar.
 
 ## A chave de desenvolvimento expira em 24 horas
 

@@ -47,13 +47,13 @@ def test_loads_example_config_with_spec_defaults():
     assert cfg.window_games == 60
     assert cfg.min_share == 0.50
     assert cfg.min_games == 25
-    assert cfg.min_tier == "MASTER"
+    assert cfg.min_tier == "DIAMOND"
     assert cfg.matchup_min_games == 30
     assert cfg.delta_min_per_side == 15
     assert cfg.regions == ("br1", "kr", "euw1", "na1")
     assert Target(91, "Talon", "MIDDLE") in cfg.targets
     assert len(cfg.targets) == 5
-    assert cfg.tiers == ("CHALLENGER", "GRANDMASTER", "MASTER")
+    assert cfg.tiers == ("CHALLENGER", "GRANDMASTER", "MASTER", "DIAMOND")
 
 
 def test_config_is_frozen_and_hashable():

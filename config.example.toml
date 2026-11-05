@@ -7,7 +7,24 @@ min_games = 25
 
 # Elo minimo a varrer; os tiers sao derivados na ordem
 # CHALLENGER, GRANDMASTER, MASTER, DIAMOND.
-min_tier = "MASTER"
+#
+# Baixado de MASTER para DIAMOND em 05/11/2026, por DISPONIBILIDADE, nao por
+# custo. A medicao de BR1 fixou o custo em 37,6 min por mono encontrado (6,8 de
+# triagem + 30,8 de estagio 3) e esse numero NAO depende do tier: a triagem e
+# uma requisicao por candidato em qualquer elo. Baixar o corte nao torna mono
+# mais barato, apenas faz existir mais deles por regiao.
+#
+# O motivo real: BR1 em Mestre+ projeta ~32 monos, e o produto precisa de ~93
+# (~19 por campeao-role, para que o matchup LIDER de cada um alcance 15 jogos
+# de cada lado). Pior, a distribuicao e desigual -- Renekton TOP nao teve um
+# unico mono em 123 suspeitos. Diamante da a profundidade para cavar os
+# campeao-roles raros; as quatro regioes em paralelo dao a velocidade.
+#
+# Custo se errado: mono de Diamante e um modelo mais fraco que mono de Mestre.
+# A spec escolheu Mestre de proposito. Mitigacao: a escada e inserida na ordem
+# apex->Diamante e `pending_candidates` respeita rowid, entao a triagem gasta o
+# elo alto primeiro e o Diamante e consumido so na medida da necessidade.
+min_tier = "DIAMOND"
 
 # Peneira por maestria (estagio 2). Um candidato fica como suspeito quando um
 # campeao-alvo esta entre os `mastery_top_n` de maior pontuacao de maestria dele
