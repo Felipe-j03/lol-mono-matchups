@@ -119,6 +119,13 @@ Deno.test("matchup abaixo do piso aparece em secao propria e sem link", () => {
   assert(html.includes("5 partidas"));
   assert(html.includes("Zed"));
   assert(!html.includes("/vs/"));
+  // sem confronto acima do piso, o ranking nao fica vazio: a ausencia e explicada
+  assert(!/<ul class="matchups">/.test(html));
+  assert(html.includes("Nenhum confronto atingiu o piso de partidas, então nenhum ganhou página própria."));
+});
+
+Deno.test("com confronto acima do piso nao ha aviso de ranking vazio", () => {
+  assert(!renderChampion(TARGET, DICT).includes("Nenhum confronto atingiu o piso"));
 });
 
 Deno.test("o slug do link vem do file do confronto, nao do nome do campeao", () => {

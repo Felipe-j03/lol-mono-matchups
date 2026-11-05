@@ -162,20 +162,28 @@ Deno.test("ponto cego com confronto nao comparavel traz contagens e denominadore
   assert(html.includes("1 de 1 partida de derrota"));
 });
 
-Deno.test("ouro presente com farm nulo renderiza o ouro e omite o farm", () => {
-  const m = { ...MATCHUP, winner_cs_diff_at_14: null, loser_cs_diff_at_14: null };
+Deno.test("ouro presente com farm nulo renderiza o ouro e declara a ausencia do farm", () => {
+  const m = { ...MATCHUP, winner_cs_diff_at_14: null, loser_cs_diff_at_14: null,
+    timeline_games: { ...MATCHUP.timeline_games, cs_diff_at_14: { winners: 14, losers: 3 } } };
   const html = renderMatchup(m, DICT);
   assert(html.includes("5200"));
   assert(html.includes("4000"));
-  assert(!html.includes("Diferença média de farm"));
+  assert(html.includes(
+    "Diferença média de farm aos 14 min: sem dado suficiente de timeline, ao menos um dos lados está abaixo do piso (vencedores em 14 partidas, perdedores em 3 partidas)",
+  ));
+  assert(!html.includes("Ouro médio aos 14 min: sem dado"));
   assert(!html.includes("null") && !html.includes("NaN"));
 });
 
-Deno.test("farm presente com ouro nulo renderiza o farm e omite o ouro", () => {
-  const m = { ...MATCHUP, winner_gold_at_14: null, loser_gold_at_14: null };
+Deno.test("farm presente com ouro nulo renderiza o farm e declara a ausencia do ouro", () => {
+  const m = { ...MATCHUP, winner_gold_at_14: null, loser_gold_at_14: null,
+    timeline_games: { ...MATCHUP.timeline_games, gold_at_14: { winners: 9, losers: 1 } } };
   const html = renderMatchup(m, DICT);
   assert(html.includes("+8") && html.includes("-6"));
-  assert(!html.includes("Ouro médio"));
+  assert(html.includes(
+    "Ouro médio aos 14 min: sem dado suficiente de timeline, ao menos um dos lados está abaixo do piso (vencedores em 9 partidas, perdedores em 1 partida)",
+  ));
+  assert(!html.includes("Diferença média de farm aos 14 min: sem dado"));
   assert(!html.includes("null") && !html.includes("NaN"));
 });
 
@@ -200,6 +208,8 @@ Deno.test("ouro aos 14 nulo nao imprime numero nem zero", () => {
   assert(!html.includes("null"));
   assert(!html.includes("NaN"));
   assert(!html.includes("5200"));
+  assert(html.includes("Ouro médio aos 14 min: sem dado suficiente de timeline"));
+  assert(html.includes("Diferença média de farm aos 14 min: sem dado suficiente de timeline"));
 });
 
 Deno.test("texto fala de diferenca observada, nunca de recomendacao", () => {

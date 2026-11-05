@@ -161,6 +161,7 @@ async function mostrar() {
       escapeHtml(String(erro?.message ?? erro))
     }</p>
   <p>Recarregue a página para tentar de novo.</p>
+  ${voltar("#/", "Campeões")}
 </section>`;
   }
 }

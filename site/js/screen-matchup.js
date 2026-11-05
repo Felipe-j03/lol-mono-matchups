@@ -103,32 +103,31 @@ function sinal(n) {
   return r > 0 ? `+${r}` : String(r);
 }
 
-// As quatro medias sao nulas em pares: ouro e diferenca de farm existem para
-// os dois lados ou para nenhum.
+// As quatro medias sao nulas em pares (ouro, farm), e cada par tem o seu
+// contador em timeline_games. Cada metrica declara a propria ausencia: a falta
+// de uma nao pode ser coberta pela presenca da outra.
 function numerosAos14(m) {
   const tg = m.timeline_games;
   const ouro = m.winner_gold_at_14 != null && m.loser_gold_at_14 != null;
   const farm = m.winner_cs_diff_at_14 != null && m.loser_cs_diff_at_14 != null;
-  if (!ouro && !farm) {
-    return `<p class="sem-dado">Ouro e diferença de farm aos 14 minutos: sem dado suficiente de timeline para os dois lados.</p>`;
-  }
-  const linhas = [];
-  if (ouro) {
-    linhas.push(
-      `<li>Ouro médio aos 14 min: vencedores ${Math.round(m.winner_gold_at_14)} (${
+  const semDado = (rotulo, c) =>
+    `<li class="sem-dado">${rotulo}: sem dado suficiente de timeline, ao menos um dos lados está abaixo do piso (vencedores ${
+      sample(c.winners)
+    }, perdedores ${sample(c.losers)})</li>`;
+  const linhas = [
+    ouro
+      ? `<li>Ouro médio aos 14 min: vencedores ${Math.round(m.winner_gold_at_14)} (${
         sample(tg.gold_at_14.winners)
-      }), perdedores ${Math.round(m.loser_gold_at_14)} (${sample(tg.gold_at_14.losers)})</li>`,
-    );
-  }
-  if (farm) {
-    linhas.push(
-      `<li>Diferença média de farm aos 14 min: vencedores ${
+      }), perdedores ${Math.round(m.loser_gold_at_14)} (${sample(tg.gold_at_14.losers)})</li>`
+      : semDado("Ouro médio aos 14 min", tg.gold_at_14),
+    farm
+      ? `<li>Diferença média de farm aos 14 min: vencedores ${
         sinal(m.winner_cs_diff_at_14)
       } (${sample(tg.cs_diff_at_14.winners)}), perdedores ${
         sinal(m.loser_cs_diff_at_14)
-      } (${sample(tg.cs_diff_at_14.losers)})</li>`,
-    );
-  }
+      } (${sample(tg.cs_diff_at_14.losers)})</li>`
+      : semDado("Diferença média de farm aos 14 min", tg.cs_diff_at_14),
+  ];
   return `<ul class="aos-14">${linhas.join("")}</ul>`;
 }
 

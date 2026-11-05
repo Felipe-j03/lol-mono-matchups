@@ -129,11 +129,14 @@ function confrontos(matchups, dict) {
         ${abaixo.map((m) => confronto(m, dict)).join("\n        ")}
       </ul>
     </details>`;
+  const listaAcima = acima.length === 0
+    ? `<p class="note">Nenhum confronto atingiu o piso de partidas, então nenhum ganhou página própria.</p>`
+    : `<ul class="matchups">
+      ${acima.map((m) => confronto(m, dict)).join("\n      ")}
+    </ul>`;
   return `<section class="matchups-section">
     <h2>Confrontos, do pior para o melhor</h2>
-    <ul class="matchups">
-      ${acima.map((m) => confronto(m, dict)).join("\n      ")}
-    </ul>${secaoAbaixo}
+    ${listaAcima}${secaoAbaixo}
   </section>`;
 }
 
