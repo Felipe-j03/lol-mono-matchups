@@ -89,6 +89,24 @@ python -m lolmono timelines --platform br1
    Poucas requisições.
 2. **`screen`** — uma requisição de maestria por candidato. Elimina a maioria e
    deixa uma lista curta de suspeitos. Domina em contagem de requisições.
+   **Calibre com `--limit` antes de soltar a região inteira** (abaixo).
+
+### Calibrando a peneira com `--limit`
+
+```
+python -m lolmono screen --platform br1 --limit 500
+```
+
+O estágio 2 gasta uma requisição por candidato, e uma região grande tem
+milhares: BR1 deu 10.700 candidatos, o que a 100 requisições por 2 minutos leva
+cerca de 3h35. Varrer tudo antes de conhecer a taxa de suspeitos pode revelar
+uma peneira frouxa tarde demais — e aí o estágio 3, o caro, baixa 60 partidas de
+cada pessoa que não é mono.
+
+Com `--limit 500` a taxa aparece em uns dez minutos. Se vier alta, aperte
+`mastery_top_n` ou `mastery_max_days` no `config.toml` e repita. Os candidatos
+não triados ficam pendentes e a execução seguinte continua de onde parou, então
+a amostra não se perde nem é refeita.
 3. **`matches`** — as últimas 60 partidas ranqueadas de cada suspeito, de onde
    saem campeão, função e portanto a concentração real. É o estágio caro.
 4. **`timelines`** — uma requisição por partida de confirmado. Extrai os números
