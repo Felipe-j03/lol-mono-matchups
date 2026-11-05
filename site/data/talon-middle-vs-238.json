@@ -4,37 +4,65 @@
   "champion_name": "Talon",
   "role": "MIDDLE",
   "opponent_champion_id": 238,
-  "games": 32,
+  "games": 33,
   "wins": 18,
-  "losses": 14,
+  "losses": 15,
   "min_per_side": 15,
-  "comparable": false,
+  "comparable": true,
   "headline": null,
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "winner_gold_at_14": 6218.833333333333,
+  "loser_gold_at_14": 5602.533333333334,
+  "winner_cs_diff_at_14": -1.7777777777777777,
+  "loser_cs_diff_at_14": -9.466666666666667,
   "timeline_games": {
     "gold_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 15
     },
     "cs_diff_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 15
     },
     "starting_items": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 15
     },
     "skill_order": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 15
     }
   },
   "games_without_boots": {
     "winners": 0,
     "losers": 0
   },
-  "divergences": []
+  "divergences": [
+    {
+      "field": "skill_order",
+      "label": "W > Q > W",
+      "winner_share": 0.2222222222222222,
+      "loser_share": 0.5333333333333333,
+      "gap": 0.3111111111111111,
+      "winner_games": 18,
+      "loser_games": 15
+    },
+    {
+      "field": "boots",
+      "label": "3174",
+      "winner_share": 0.5,
+      "loser_share": 0.26666666666666666,
+      "gap": 0.23333333333333334,
+      "winner_games": 18,
+      "loser_games": 15
+    },
+    {
+      "field": "skill_order",
+      "label": "W > Q > E",
+      "winner_share": 0.5555555555555556,
+      "loser_share": 0.4,
+      "gap": 0.15555555555555556,
+      "winner_games": 18,
+      "loser_games": 15
+    }
+  ]
 }

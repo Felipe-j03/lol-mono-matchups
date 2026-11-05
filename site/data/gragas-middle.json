@@ -264,10 +264,18 @@
         "games": 1
       }
     ],
-    "starting_items": null,
-    "starting_items_games": 0,
-    "skill_order": null,
-    "skill_order_games": 0
+    "starting_items": [
+      1056,
+      2003,
+      2003
+    ],
+    "starting_items_games": 136,
+    "skill_order": [
+      3,
+      2,
+      1
+    ],
+    "skill_order_games": 109
   },
   "matchups": [
     {

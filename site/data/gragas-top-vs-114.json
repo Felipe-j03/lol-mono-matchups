@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "champion_id": 79,
+  "champion_name": "Gragas",
+  "role": "TOP",
+  "opponent_champion_id": 114,
+  "games": 32,
+  "wins": 19,
+  "losses": 13,
+  "min_per_side": 15,
+  "comparable": false,
+  "headline": null,
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 19,
+      "losers": 12
+    },
+    "cs_diff_at_14": {
+      "winners": 19,
+      "losers": 12
+    },
+    "starting_items": {
+      "winners": 19,
+      "losers": 13
+    },
+    "skill_order": {
+      "winners": 19,
+      "losers": 12
+    }
+  },
+  "games_without_boots": {
+    "winners": 1,
+    "losers": 1
+  },
+  "divergences": []
+}

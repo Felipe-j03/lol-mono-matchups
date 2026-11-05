@@ -4,32 +4,32 @@
   "champion_name": "Jax",
   "role": "TOP",
   "opponent_champion_id": 897,
-  "games": 52,
-  "wins": 34,
-  "losses": 18,
+  "games": 62,
+  "wins": 43,
+  "losses": 19,
   "min_per_side": 15,
   "comparable": true,
-  "headline": "Sem partidas suficientes com timeline para comparar: itens iniciais e ordem de habilidades.",
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "headline": null,
+  "winner_gold_at_14": 5141.142857142857,
+  "loser_gold_at_14": 5057.894736842105,
+  "winner_cs_diff_at_14": -3.261904761904762,
+  "loser_cs_diff_at_14": -7.368421052631579,
   "timeline_games": {
     "gold_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 42,
+      "losers": 19
     },
     "cs_diff_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 42,
+      "losers": 19
     },
     "starting_items": {
-      "winners": 0,
-      "losers": 0
+      "winners": 43,
+      "losers": 19
     },
     "skill_order": {
-      "winners": 0,
-      "losers": 0
+      "winners": 43,
+      "losers": 19
     }
   },
   "games_without_boots": {
@@ -38,31 +38,31 @@
   },
   "divergences": [
     {
-      "field": "boots",
-      "label": "3047",
-      "winner_share": 0.5,
-      "loser_share": 0.2222222222222222,
-      "gap": 0.2777777777777778,
-      "winner_games": 34,
-      "loser_games": 18
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.4186046511627907,
+      "loser_share": 0.21052631578947367,
+      "gap": 0.20807833537331705,
+      "winner_games": 43,
+      "loser_games": 19
     },
     {
       "field": "boots",
-      "label": "3111",
-      "winner_share": 0.2647058823529412,
-      "loser_share": 0.4444444444444444,
-      "gap": 0.17973856209150324,
-      "winner_games": 34,
-      "loser_games": 18
+      "label": "3047",
+      "winner_share": 0.4418604651162791,
+      "loser_share": 0.2631578947368421,
+      "gap": 0.178702570379437,
+      "winner_games": 43,
+      "loser_games": 19
     },
     {
       "field": "rune",
       "label": "8451",
-      "winner_share": 0.38235294117647056,
-      "loser_share": 0.5555555555555556,
-      "gap": 0.17320261437908502,
-      "winner_games": 34,
-      "loser_games": 18
+      "winner_share": 0.37209302325581395,
+      "loser_share": 0.5263157894736842,
+      "gap": 0.15422276621787023,
+      "winner_games": 43,
+      "loser_games": 19
     }
   ]
 }

@@ -4,9 +4,9 @@
   "champion_name": "Gragas",
   "role": "TOP",
   "baseline": {
-    "games": 699,
-    "players": 16,
-    "group_win_rate": 0.5550786838340487,
+    "games": 866,
+    "players": 19,
+    "group_win_rate": 0.5438799076212472,
     "runes": {
       "keystone": 8230,
       "primary_style": 8200,
@@ -33,215 +33,223 @@
       4,
       12
     ],
-    "spells_games": 541,
+    "spells_games": 704,
     "item_frequency": [
       {
         "item_id": 3100,
-        "games": 399
-      },
-      {
-        "item_id": 3158,
-        "games": 375
+        "games": 508
       },
       {
         "item_id": 3020,
-        "games": 258
+        "games": 396
       },
       {
-        "item_id": 1056,
-        "games": 248
+        "item_id": 3158,
+        "games": 380
       },
       {
         "item_id": 3802,
-        "games": 247
+        "games": 321
       },
       {
-        "item_id": 3152,
-        "games": 213
+        "item_id": 1056,
+        "games": 312
       },
       {
         "item_id": 4645,
-        "games": 209
+        "games": 276
       },
       {
-        "item_id": 1052,
-        "games": 139
-      },
-      {
-        "item_id": 4005,
-        "games": 134
+        "item_id": 3152,
+        "games": 215
       },
       {
         "item_id": 1058,
-        "games": 120
+        "games": 171
       },
       {
-        "item_id": 6655,
-        "games": 115
+        "item_id": 1052,
+        "games": 166
       },
       {
-        "item_id": 1082,
-        "games": 110
-      },
-      {
-        "item_id": 2031,
-        "games": 98
-      },
-      {
-        "item_id": 3157,
-        "games": 97
+        "item_id": 4005,
+        "games": 152
       },
       {
         "item_id": 3040,
-        "games": 81
+        "games": 136
+      },
+      {
+        "item_id": 1082,
+        "games": 126
+      },
+      {
+        "item_id": 6655,
+        "games": 118
+      },
+      {
+        "item_id": 3157,
+        "games": 111
       },
       {
         "item_id": 3089,
-        "games": 79
-      },
-      {
-        "item_id": 3145,
-        "games": 72
+        "games": 104
       },
       {
         "item_id": 2522,
-        "games": 71
+        "games": 101
       },
       {
-        "item_id": 6657,
-        "games": 61
+        "item_id": 2031,
+        "games": 99
       },
       {
-        "item_id": 4629,
-        "games": 56
+        "item_id": 3145,
+        "games": 94
       },
       {
         "item_id": 4646,
-        "games": 55
+        "games": 75
+      },
+      {
+        "item_id": 6657,
+        "games": 67
       },
       {
         "item_id": 1026,
-        "games": 47
-      },
-      {
-        "item_id": 3113,
-        "games": 44
-      },
-      {
-        "item_id": 3916,
-        "games": 42
+        "games": 59
       },
       {
         "item_id": 3135,
-        "games": 41
+        "games": 58
       },
       {
-        "item_id": 2421,
-        "games": 40
+        "item_id": 4629,
+        "games": 58
       },
       {
-        "item_id": 3137,
-        "games": 32
+        "item_id": 3916,
+        "games": 56
       },
       {
-        "item_id": 4630,
-        "games": 31
-      },
-      {
-        "item_id": 2420,
-        "games": 30
-      },
-      {
-        "item_id": 3121,
-        "games": 29
+        "item_id": 3113,
+        "games": 51
       },
       {
         "item_id": 2055,
-        "games": 28
+        "games": 45
       },
       {
-        "item_id": 3108,
-        "games": 23
+        "item_id": 2421,
+        "games": 43
       },
       {
         "item_id": 1001,
-        "games": 19
+        "games": 38
+      },
+      {
+        "item_id": 3137,
+        "games": 37
+      },
+      {
+        "item_id": 4630,
+        "games": 37
+      },
+      {
+        "item_id": 2420,
+        "games": 32
+      },
+      {
+        "item_id": 3121,
+        "games": 32
+      },
+      {
+        "item_id": 3108,
+        "games": 27
       },
       {
         "item_id": 2022,
-        "games": 18
+        "games": 23
+      },
+      {
+        "item_id": 3067,
+        "games": 19
       },
       {
         "item_id": 3009,
         "games": 18
       },
       {
-        "item_id": 3067,
+        "item_id": 3057,
         "games": 18
       },
       {
-        "item_id": 3057,
+        "item_id": 3070,
         "games": 17
       },
       {
         "item_id": 3111,
-        "games": 15
+        "games": 16
       },
       {
         "item_id": 8010,
         "games": 13
       },
       {
+        "item_id": 1027,
+        "games": 12
+      },
+      {
+        "item_id": 1029,
+        "games": 12
+      },
+      {
+        "item_id": 3041,
+        "games": 12
+      },
+      {
         "item_id": 1028,
         "games": 11
       },
       {
-        "item_id": 1029,
-        "games": 11
-      },
-      {
-        "item_id": 3041,
-        "games": 10
+        "item_id": 4633,
+        "games": 8
       },
       {
         "item_id": 2503,
         "games": 7
       },
       {
-        "item_id": 3070,
-        "games": 7
+        "item_id": 1031,
+        "games": 6
+      },
+      {
+        "item_id": 3102,
+        "games": 6
+      },
+      {
+        "item_id": 2003,
+        "games": 5
+      },
+      {
+        "item_id": 3003,
+        "games": 5
       },
       {
         "item_id": 3047,
         "games": 5
       },
       {
-        "item_id": 4633,
+        "item_id": 3165,
         "games": 5
-      },
-      {
-        "item_id": 1031,
-        "games": 4
       },
       {
         "item_id": 1033,
         "games": 4
       },
       {
-        "item_id": 2003,
+        "item_id": 6662,
         "games": 4
-      },
-      {
-        "item_id": 3165,
-        "games": 4
-      },
-      {
-        "item_id": 3003,
-        "games": 3
-      },
-      {
-        "item_id": 3102,
-        "games": 3
       },
       {
         "item_id": 3119,
@@ -249,10 +257,6 @@
       },
       {
         "item_id": 6653,
-        "games": 3
-      },
-      {
-        "item_id": 6662,
         "games": 3
       },
       {
@@ -268,6 +272,10 @@
         "games": 2
       },
       {
+        "item_id": 3211,
+        "games": 2
+      },
+      {
         "item_id": 3742,
         "games": 2
       },
@@ -280,7 +288,11 @@
         "games": 2
       },
       {
-        "item_id": 1027,
+        "item_id": 6664,
+        "games": 2
+      },
+      {
+        "item_id": 1011,
         "games": 1
       },
       {
@@ -293,6 +305,10 @@
       },
       {
         "item_id": 2524,
+        "games": 1
+      },
+      {
+        "item_id": 3008,
         "games": 1
       },
       {
@@ -320,10 +336,6 @@
         "games": 1
       },
       {
-        "item_id": 3211,
-        "games": 1
-      },
-      {
         "item_id": 3803,
         "games": 1
       },
@@ -336,62 +348,103 @@
         "games": 1
       }
     ],
-    "starting_items": null,
-    "starting_items_games": 0,
-    "skill_order": null,
-    "skill_order_games": 0
+    "starting_items": [
+      1056,
+      2003,
+      2003,
+      3340
+    ],
+    "starting_items_games": 482,
+    "skill_order": [
+      3,
+      2,
+      1
+    ],
+    "skill_order_games": 554
   },
   "matchups": [
     {
+      "opponent_champion_id": 897,
+      "games": 32,
+      "wins": 13,
+      "win_rate": 0.40625,
+      "below_floor": false,
+      "file": "gragas-top-vs-897.json"
+    },
+    {
       "opponent_champion_id": 41,
-      "games": 33,
-      "wins": 15,
-      "win_rate": 0.45454545454545453,
+      "games": 41,
+      "wins": 17,
+      "win_rate": 0.4146341463414634,
       "below_floor": false,
       "file": "gragas-top-vs-41.json"
     },
     {
       "opponent_champion_id": 799,
-      "games": 32,
-      "wins": 17,
-      "win_rate": 0.53125,
+      "games": 39,
+      "wins": 20,
+      "win_rate": 0.5128205128205128,
       "below_floor": false,
       "file": "gragas-top-vs-799.json"
     },
     {
-      "opponent_champion_id": 114,
-      "games": 27,
-      "wins": 16,
-      "win_rate": 0.5925925925925926,
-      "below_floor": true,
-      "file": null
+      "opponent_champion_id": 164,
+      "games": 32,
+      "wins": 17,
+      "win_rate": 0.53125,
+      "below_floor": false,
+      "file": "gragas-top-vs-164.json"
     },
     {
       "opponent_champion_id": 266,
-      "games": 27,
-      "wins": 18,
-      "win_rate": 0.6666666666666666,
-      "below_floor": true,
-      "file": null
+      "games": 36,
+      "wins": 21,
+      "win_rate": 0.5833333333333334,
+      "below_floor": false,
+      "file": "gragas-top-vs-266.json"
     },
     {
-      "opponent_champion_id": 897,
-      "games": 27,
-      "wins": 9,
-      "win_rate": 0.3333333333333333,
+      "opponent_champion_id": 114,
+      "games": 32,
+      "wins": 19,
+      "win_rate": 0.59375,
+      "below_floor": false,
+      "file": "gragas-top-vs-114.json"
+    },
+    {
+      "opponent_champion_id": 777,
+      "games": 29,
+      "wins": 20,
+      "win_rate": 0.6896551724137931,
       "below_floor": true,
       "file": null
     },
     {
       "opponent_champion_id": 86,
-      "games": 24,
-      "wins": 11,
-      "win_rate": 0.4583333333333333,
+      "games": 27,
+      "wins": 13,
+      "win_rate": 0.48148148148148145,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 164,
+      "opponent_champion_id": 126,
+      "games": 27,
+      "wins": 17,
+      "win_rate": 0.6296296296296297,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 2,
+      "games": 25,
+      "wins": 16,
+      "win_rate": 0.64,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 122,
       "games": 24,
       "wins": 12,
       "win_rate": 0.5,
@@ -399,15 +452,23 @@
       "file": null
     },
     {
-      "opponent_champion_id": 126,
-      "games": 22,
-      "wins": 14,
-      "win_rate": 0.6363636363636364,
+      "opponent_champion_id": 516,
+      "games": 24,
+      "wins": 12,
+      "win_rate": 0.5,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 122,
+      "opponent_champion_id": 36,
+      "games": 22,
+      "wins": 11,
+      "win_rate": 0.5,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 150,
       "games": 21,
       "wins": 10,
       "win_rate": 0.47619047619047616,
@@ -415,7 +476,23 @@
       "file": null
     },
     {
-      "opponent_champion_id": 516,
+      "opponent_champion_id": 904,
+      "games": 21,
+      "wins": 12,
+      "win_rate": 0.5714285714285714,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 39,
+      "games": 20,
+      "wins": 9,
+      "win_rate": 0.45,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 98,
       "games": 20,
       "wins": 11,
       "win_rate": 0.55,
@@ -423,74 +500,50 @@
       "file": null
     },
     {
-      "opponent_champion_id": 36,
-      "games": 19,
-      "wins": 10,
-      "win_rate": 0.5263157894736842,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 98,
-      "games": 18,
-      "wins": 10,
-      "win_rate": 0.5555555555555556,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 150,
-      "games": 18,
-      "wins": 8,
-      "win_rate": 0.4444444444444444,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 777,
-      "games": 18,
-      "wins": 12,
-      "win_rate": 0.6666666666666666,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 2,
-      "games": 17,
-      "wins": 12,
-      "win_rate": 0.7058823529411765,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 39,
-      "games": 17,
-      "wins": 8,
-      "win_rate": 0.47058823529411764,
-      "below_floor": true,
-      "file": null
-    },
-    {
       "opponent_champion_id": 31,
-      "games": 15,
-      "wins": 10,
-      "win_rate": 0.6666666666666666,
+      "games": 18,
+      "wins": 11,
+      "win_rate": 0.6111111111111112,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 904,
+      "opponent_champion_id": 68,
       "games": 14,
-      "wins": 9,
-      "win_rate": 0.6428571428571429,
+      "wins": 11,
+      "win_rate": 0.7857142857142857,
       "below_floor": true,
       "file": null
     },
     {
       "opponent_champion_id": 75,
-      "games": 13,
+      "games": 14,
       "wins": 8,
-      "win_rate": 0.6153846153846154,
+      "win_rate": 0.5714285714285714,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 6,
+      "games": 13,
+      "wins": 10,
+      "win_rate": 0.7692307692307693,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 80,
+      "games": 13,
+      "wins": 5,
+      "win_rate": 0.38461538461538464,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 14,
+      "games": 12,
+      "wins": 8,
+      "win_rate": 0.6666666666666666,
       "below_floor": true,
       "file": null
     },
@@ -503,10 +556,58 @@
       "file": null
     },
     {
-      "opponent_champion_id": 80,
+      "opponent_champion_id": 23,
       "games": 12,
       "wins": 4,
       "win_rate": 0.3333333333333333,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 24,
+      "games": 12,
+      "wins": 5,
+      "win_rate": 0.4166666666666667,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 27,
+      "games": 12,
+      "wins": 8,
+      "win_rate": 0.6666666666666666,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 92,
+      "games": 12,
+      "wins": 5,
+      "win_rate": 0.4166666666666667,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 157,
+      "games": 12,
+      "wins": 5,
+      "win_rate": 0.4166666666666667,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 875,
+      "games": 12,
+      "wins": 7,
+      "win_rate": 0.5833333333333334,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 887,
+      "games": 12,
+      "wins": 7,
+      "win_rate": 0.5833333333333334,
       "below_floor": true,
       "file": null
     },
@@ -519,7 +620,7 @@
       "file": null
     },
     {
-      "opponent_champion_id": 92,
+      "opponent_champion_id": 58,
       "games": 11,
       "wins": 5,
       "win_rate": 0.45454545454545453,
@@ -527,74 +628,18 @@
       "file": null
     },
     {
-      "opponent_champion_id": 14,
-      "games": 10,
+      "opponent_champion_id": 83,
+      "games": 11,
       "wins": 6,
-      "win_rate": 0.6,
+      "win_rate": 0.5454545454545454,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 157,
-      "games": 10,
-      "wins": 5,
-      "win_rate": 0.5,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 887,
-      "games": 10,
+      "opponent_champion_id": 85,
+      "games": 9,
       "wins": 6,
-      "win_rate": 0.6,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 23,
-      "games": 9,
-      "wins": 3,
-      "win_rate": 0.3333333333333333,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 24,
-      "games": 9,
-      "wins": 4,
-      "win_rate": 0.4444444444444444,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 58,
-      "games": 9,
-      "wins": 3,
-      "win_rate": 0.3333333333333333,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 68,
-      "games": 9,
-      "wins": 7,
-      "win_rate": 0.7777777777777778,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 875,
-      "games": 9,
-      "wins": 5,
-      "win_rate": 0.5555555555555556,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 6,
-      "games": 8,
-      "wins": 5,
-      "win_rate": 0.625,
+      "win_rate": 0.6666666666666666,
       "below_floor": true,
       "file": null
     },
@@ -607,34 +652,42 @@
       "file": null
     },
     {
-      "opponent_champion_id": 27,
-      "games": 8,
-      "wins": 5,
-      "win_rate": 0.625,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 83,
-      "games": 8,
-      "wins": 5,
-      "win_rate": 0.625,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 85,
-      "games": 8,
-      "wins": 5,
-      "win_rate": 0.625,
-      "below_floor": true,
-      "file": null
-    },
-    {
       "opponent_champion_id": 19,
-      "games": 7,
+      "games": 8,
       "wins": 4,
-      "win_rate": 0.5714285714285714,
+      "win_rate": 0.5,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 82,
+      "games": 8,
+      "wins": 4,
+      "win_rate": 0.5,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 106,
+      "games": 8,
+      "wins": 3,
+      "win_rate": 0.375,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 34,
+      "games": 7,
+      "wins": 2,
+      "win_rate": 0.2857142857142857,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 240,
+      "games": 7,
+      "wins": 2,
+      "win_rate": 0.2857142857142857,
       "below_floor": true,
       "file": null
     },
@@ -647,23 +700,15 @@
       "file": null
     },
     {
-      "opponent_champion_id": 34,
-      "games": 6,
-      "wins": 2,
-      "win_rate": 0.3333333333333333,
+      "opponent_champion_id": 517,
+      "games": 7,
+      "wins": 5,
+      "win_rate": 0.7142857142857143,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 82,
-      "games": 6,
-      "wins": 4,
-      "win_rate": 0.6666666666666666,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 106,
+      "opponent_champion_id": 10,
       "games": 6,
       "wins": 3,
       "win_rate": 0.5,
@@ -671,18 +716,34 @@
       "file": null
     },
     {
-      "opponent_champion_id": 517,
+      "opponent_champion_id": 893,
       "games": 6,
-      "wins": 5,
-      "win_rate": 0.8333333333333334,
+      "wins": 4,
+      "win_rate": 0.6666666666666666,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 10,
+      "opponent_champion_id": 48,
+      "games": 5,
+      "wins": 3,
+      "win_rate": 0.6,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 57,
       "games": 5,
       "wins": 2,
       "win_rate": 0.4,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 69,
+      "games": 5,
+      "wins": 3,
+      "win_rate": 0.6,
       "below_floor": true,
       "file": null
     },
@@ -695,34 +756,42 @@
       "file": null
     },
     {
-      "opponent_champion_id": 240,
-      "games": 5,
-      "wins": 2,
-      "win_rate": 0.4,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 893,
-      "games": 5,
-      "wins": 4,
-      "win_rate": 0.8,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 48,
-      "games": 4,
-      "wins": 3,
-      "win_rate": 0.75,
-      "below_floor": true,
-      "file": null
-    },
-    {
       "opponent_champion_id": 133,
-      "games": 4,
+      "games": 5,
       "wins": 3,
-      "win_rate": 0.75,
+      "win_rate": 0.6,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 103,
+      "games": 4,
+      "wins": 2,
+      "win_rate": 0.5,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 805,
+      "games": 4,
+      "wins": 1,
+      "win_rate": 0.25,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 13,
+      "games": 3,
+      "wins": 1,
+      "win_rate": 0.3333333333333333,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 26,
+      "games": 3,
+      "wins": 2,
+      "win_rate": 0.6666666666666666,
       "below_floor": true,
       "file": null
     },
@@ -735,15 +804,15 @@
       "file": null
     },
     {
-      "opponent_champion_id": 57,
+      "opponent_champion_id": 67,
       "games": 3,
-      "wins": 1,
-      "win_rate": 0.3333333333333333,
+      "wins": 2,
+      "win_rate": 0.6666666666666666,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 69,
+      "opponent_champion_id": 74,
       "games": 3,
       "wins": 2,
       "win_rate": 0.6666666666666666,
@@ -759,18 +828,10 @@
       "file": null
     },
     {
-      "opponent_champion_id": 103,
+      "opponent_champion_id": 110,
       "games": 3,
-      "wins": 1,
-      "win_rate": 0.3333333333333333,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 805,
-      "games": 3,
-      "wins": 1,
-      "win_rate": 0.3333333333333333,
+      "wins": 2,
+      "win_rate": 0.6666666666666666,
       "below_floor": true,
       "file": null
     },
@@ -791,10 +852,10 @@
       "file": null
     },
     {
-      "opponent_champion_id": 13,
+      "opponent_champion_id": 62,
       "games": 2,
-      "wins": 1,
-      "win_rate": 0.5,
+      "wins": 2,
+      "win_rate": 1.0,
       "below_floor": true,
       "file": null
     },
@@ -823,10 +884,10 @@
       "file": null
     },
     {
-      "opponent_champion_id": 110,
+      "opponent_champion_id": 107,
       "games": 2,
-      "wins": 2,
-      "win_rate": 1.0,
+      "wins": 1,
+      "win_rate": 0.5,
       "below_floor": true,
       "file": null
     },
@@ -887,15 +948,15 @@
       "file": null
     },
     {
-      "opponent_champion_id": 18,
+      "opponent_champion_id": 9,
       "games": 1,
-      "wins": 1,
-      "win_rate": 1.0,
+      "wins": 0,
+      "win_rate": 0.0,
       "below_floor": true,
       "file": null
     },
     {
-      "opponent_champion_id": 26,
+      "opponent_champion_id": 18,
       "games": 1,
       "wins": 1,
       "win_rate": 1.0,
@@ -927,39 +988,7 @@
       "file": null
     },
     {
-      "opponent_champion_id": 62,
-      "games": 1,
-      "wins": 1,
-      "win_rate": 1.0,
-      "below_floor": true,
-      "file": null
-    },
-    {
       "opponent_champion_id": 64,
-      "games": 1,
-      "wins": 1,
-      "win_rate": 1.0,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 67,
-      "games": 1,
-      "wins": 1,
-      "win_rate": 1.0,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 74,
-      "games": 1,
-      "wins": 1,
-      "win_rate": 1.0,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 107,
       "games": 1,
       "wins": 1,
       "win_rate": 1.0,
@@ -971,6 +1000,14 @@
       "games": 1,
       "wins": 0,
       "win_rate": 0.0,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 112,
+      "games": 1,
+      "wins": 1,
+      "win_rate": 1.0,
       "below_floor": true,
       "file": null
     },
@@ -992,6 +1029,14 @@
     },
     {
       "opponent_champion_id": 131,
+      "games": 1,
+      "wins": 1,
+      "win_rate": 1.0,
+      "below_floor": true,
+      "file": null
+    },
+    {
+      "opponent_champion_id": 142,
       "games": 1,
       "wins": 1,
       "win_rate": 1.0,
@@ -1140,6 +1185,13 @@
       "win_rate": 0.48484848484848486
     },
     {
+      "riot_id": "kmnt#4243",
+      "platform": "euw1",
+      "games": 55,
+      "share": 0.9166666666666666,
+      "win_rate": 0.5272727272727272
+    },
+    {
       "riot_id": "ta mad pq paizao#VASCO",
       "platform": "br1",
       "games": 39,
@@ -1152,6 +1204,20 @@
       "games": 37,
       "share": 0.6166666666666667,
       "win_rate": 0.5945945945945946
+    },
+    {
+      "riot_id": "yummers#m1lk",
+      "platform": "euw1",
+      "games": 56,
+      "share": 0.9333333333333333,
+      "win_rate": 0.4107142857142857
+    },
+    {
+      "riot_id": "라이너골통분쇄기#골통분쇄기",
+      "platform": "kr",
+      "games": 56,
+      "share": 0.9333333333333333,
+      "win_rate": 0.5535714285714286
     },
     {
       "riot_id": "좀만사려봐요#KR1",

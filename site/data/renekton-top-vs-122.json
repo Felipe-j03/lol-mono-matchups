@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "champion_id": 58,
+  "champion_name": "Renekton",
+  "role": "TOP",
+  "opponent_champion_id": 122,
+  "games": 35,
+  "wins": 20,
+  "losses": 15,
+  "min_per_side": 15,
+  "comparable": true,
+  "headline": "Sem partidas suficientes com timeline para comparar: ordem de habilidades.",
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 19,
+      "losers": 14
+    },
+    "cs_diff_at_14": {
+      "winners": 19,
+      "losers": 14
+    },
+    "starting_items": {
+      "winners": 20,
+      "losers": 15
+    },
+    "skill_order": {
+      "winners": 20,
+      "losers": 14
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 1
+  },
+  "divergences": [
+    {
+      "field": "rune",
+      "label": "8242",
+      "winner_share": 0.6,
+      "loser_share": 0.2,
+      "gap": 0.39999999999999997,
+      "winner_games": 20,
+      "loser_games": 15
+    },
+    {
+      "field": "starting_items",
+      "label": "1054",
+      "winner_share": 0.35,
+      "loser_share": 0.06666666666666667,
+      "gap": 0.2833333333333333,
+      "winner_games": 20,
+      "loser_games": 15
+    },
+    {
+      "field": "starting_items",
+      "label": "1055",
+      "winner_share": 0.6,
+      "loser_share": 0.8666666666666667,
+      "gap": 0.2666666666666667,
+      "winner_games": 20,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.55,
+      "loser_share": 0.8,
+      "gap": 0.25,
+      "winner_games": 20,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8453",
+      "winner_share": 0.15,
+      "loser_share": 0.4,
+      "gap": 0.25,
+      "winner_games": 20,
+      "loser_games": 15
+    }
+  ]
+}

@@ -4,32 +4,32 @@
   "champion_name": "Talon",
   "role": "MIDDLE",
   "opponent_champion_id": 805,
-  "games": 52,
-  "wins": 31,
-  "losses": 21,
+  "games": 55,
+  "wins": 33,
+  "losses": 22,
   "min_per_side": 15,
   "comparable": true,
-  "headline": "Sem partidas suficientes com timeline para comparar: itens iniciais e ordem de habilidades.",
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "headline": null,
+  "winner_gold_at_14": 6369.3125,
+  "loser_gold_at_14": 5688.590909090909,
+  "winner_cs_diff_at_14": 8.375,
+  "loser_cs_diff_at_14": -8.545454545454545,
   "timeline_games": {
     "gold_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 32,
+      "losers": 22
     },
     "cs_diff_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 32,
+      "losers": 22
     },
     "starting_items": {
-      "winners": 0,
-      "losers": 0
+      "winners": 33,
+      "losers": 22
     },
     "skill_order": {
-      "winners": 0,
-      "losers": 0
+      "winners": 33,
+      "losers": 22
     }
   },
   "games_without_boots": {
@@ -40,11 +40,29 @@
     {
       "field": "rune",
       "label": "9111",
-      "winner_share": 0.6451612903225806,
-      "loser_share": 0.8571428571428571,
-      "gap": 0.21198156682027647,
-      "winner_games": 31,
-      "loser_games": 21
+      "winner_share": 0.6666666666666666,
+      "loser_share": 0.8636363636363636,
+      "gap": 0.19696969696969702,
+      "winner_games": 33,
+      "loser_games": 22
+    },
+    {
+      "field": "skill_order",
+      "label": "W > Q > E",
+      "winner_share": 0.5454545454545454,
+      "loser_share": 0.36363636363636365,
+      "gap": 0.18181818181818177,
+      "winner_games": 33,
+      "loser_games": 22
+    },
+    {
+      "field": "skill_order",
+      "label": "W > Q > W",
+      "winner_share": 0.36363636363636365,
+      "loser_share": 0.5454545454545454,
+      "gap": 0.18181818181818177,
+      "winner_games": 33,
+      "loser_games": 22
     }
   ]
 }

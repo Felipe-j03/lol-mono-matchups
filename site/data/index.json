@@ -10,8 +10,8 @@
       "role": "MIDDLE",
       "has_data": true,
       "file": "talon-middle.json",
-      "players": 25,
-      "games": 910
+      "players": 26,
+      "games": 952
     },
     {
       "champion_id": 79,
@@ -28,8 +28,8 @@
       "role": "TOP",
       "has_data": true,
       "file": "gragas-top.json",
-      "players": 16,
-      "games": 699
+      "players": 19,
+      "games": 866
     },
     {
       "champion_id": 24,
@@ -37,8 +37,8 @@
       "role": "TOP",
       "has_data": true,
       "file": "jax-top.json",
-      "players": 26,
-      "games": 1087
+      "players": 30,
+      "games": 1249
     },
     {
       "champion_id": 58,
@@ -46,8 +46,8 @@
       "role": "TOP",
       "has_data": true,
       "file": "renekton-top.json",
-      "players": 14,
-      "games": 655
+      "players": 18,
+      "games": 846
     }
   ]
 }

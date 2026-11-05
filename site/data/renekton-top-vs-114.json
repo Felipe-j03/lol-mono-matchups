@@ -4,37 +4,74 @@
   "champion_name": "Renekton",
   "role": "TOP",
   "opponent_champion_id": 114,
-  "games": 32,
-  "wins": 14,
-  "losses": 18,
+  "games": 45,
+  "wins": 18,
+  "losses": 27,
   "min_per_side": 15,
-  "comparable": false,
+  "comparable": true,
   "headline": null,
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "winner_gold_at_14": 6180.444444444444,
+  "loser_gold_at_14": 5496.481481481482,
+  "winner_cs_diff_at_14": 29.72222222222222,
+  "loser_cs_diff_at_14": 6.296296296296297,
   "timeline_games": {
     "gold_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 27
     },
     "cs_diff_at_14": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 27
     },
     "starting_items": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 26
     },
     "skill_order": {
-      "winners": 0,
-      "losers": 0
+      "winners": 18,
+      "losers": 27
     }
   },
   "games_without_boots": {
     "winners": 0,
     "losers": 0
   },
-  "divergences": []
+  "divergences": [
+    {
+      "field": "starting_items",
+      "label": "1120",
+      "winner_share": 0.2222222222222222,
+      "loser_share": 0.0,
+      "gap": 0.2222222222222222,
+      "winner_games": 18,
+      "loser_games": 26
+    },
+    {
+      "field": "starting_items",
+      "label": "1055",
+      "winner_share": 0.4444444444444444,
+      "loser_share": 0.6538461538461539,
+      "gap": 0.20940170940170943,
+      "winner_games": 18,
+      "loser_games": 26
+    },
+    {
+      "field": "rune",
+      "label": "8473",
+      "winner_share": 0.2222222222222222,
+      "loser_share": 0.4074074074074074,
+      "gap": 0.18518518518518517,
+      "winner_games": 18,
+      "loser_games": 27
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.5,
+      "loser_share": 0.6666666666666666,
+      "gap": 0.16666666666666663,
+      "winner_games": 18,
+      "loser_games": 27
+    }
+  ]
 }
