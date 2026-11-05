@@ -61,7 +61,18 @@ Deno.test("a janela de coleta aparece na tela, com a nota de patches", () => {
   const html = renderChoose(INDEX, DICT);
   assert(html.includes("2025-10-01"));
   assert(html.includes("2025-11-02"));
-  assert(html.includes("mistura patches"));
+  assert(html.includes("Quanto mais larga a janela, mais patches"));
+  assert(!html.includes("janela larga"));
+});
+
+Deno.test("a janela mostra o numero de dias, contando as duas pontas", () => {
+  // 2025-10-01 a 2025-11-02: 32 dias de diferenca, 33 dias cobertos.
+  assert(renderChoose(INDEX, DICT).includes("Janela de 33 dias (2025-10-01 a 2025-11-02)"));
+  const umDia = { ...INDEX, collected_from: "2025-11-02", collected_through: "2025-11-02" };
+  assert(renderChoose(umDia, DICT).includes("Janela de 1 dia (2025-11-02 a 2025-11-02)"));
+  // atravessa 29/02 de ano bissexto
+  const bissexto = { ...INDEX, collected_from: "2024-02-28", collected_through: "2024-03-01" };
+  assert(renderChoose(bissexto, DICT).includes("Janela de 3 dias"));
 });
 
 Deno.test("janela nula nao imprime null", () => {

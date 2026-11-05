@@ -41,8 +41,17 @@ function cartao(alvo, dict) {
 function janela(index) {
   const { collected_from: de, collected_through: ate } = index;
   if (de == null || ate == null) return "Sem partidas agregadas.";
-  return `Partidas de ${escapeHtml(de)} a ${escapeHtml(ate)}. ` +
-    "Uma janela larga mistura patches na mesma base.";
+  const dias = diasDaJanela(de, ate);
+  return `Janela de ${dias} ${dias === 1 ? "dia" : "dias"} ` +
+    `(${escapeHtml(de)} a ${escapeHtml(ate)}). ` +
+    "Quanto mais larga a janela, mais patches entram na mesma base.";
+}
+
+// Dias de calendario cobertos, contando o primeiro e o ultimo (mesmo dia = 1).
+// Datas YYYY-MM-DD em UTC, como o contrato define.
+function diasDaJanela(de, ate) {
+  const DIA_MS = 24 * 60 * 60 * 1000;
+  return Math.round((Date.parse(ate) - Date.parse(de)) / DIA_MS) + 1;
 }
 
 export function renderChoose(index, dict) {
