@@ -30,6 +30,15 @@ function indexarCampeoes(payload) {
   return campeoes;
 }
 
+// A chave do JSON e um slug ("SummonerFlash"); o id numerico vem em `key`, string.
+function indexarFeiticos(payload) {
+  const feiticos = new Map();
+  for (const feitico of Object.values(payload.data)) {
+    feiticos.set(Number(feitico.key), feitico.name);
+  }
+  return feiticos;
+}
+
 // Indexa a arvore em si (primary_style/secondary_style) e cada runa dos slots.
 function indexarRunas(arvores) {
   const runas = new Map();
@@ -46,16 +55,18 @@ function indexarRunas(arvores) {
 
 export async function loadDdragon(version, fetchFn) {
   const base = `${CDN}/${version}/data/en_US`;
-  const [itens, campeoes, runas] = await Promise.all([
+  const [itens, campeoes, runas, feiticos] = await Promise.all([
     carregarJson(fetchFn, `${base}/item.json`),
     carregarJson(fetchFn, `${base}/champion.json`),
     carregarJson(fetchFn, `${base}/runesReforged.json`),
+    carregarJson(fetchFn, `${base}/summoner.json`),
   ]);
   return {
     version,
     items: indexarItens(itens),
     runes: indexarRunas(runas),
     champions: indexarCampeoes(campeoes),
+    spells: indexarFeiticos(feiticos),
   };
 }
 
@@ -89,6 +100,10 @@ const SHARDS = new Map([
 
 export function shardName(id) {
   return SHARDS.get(id) ?? String(id);
+}
+
+export function spellName(dict, id) {
+  return dict.spells.get(id) ?? String(id);
 }
 
 export function championName(dict, id) {

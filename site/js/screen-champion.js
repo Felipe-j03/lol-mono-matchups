@@ -10,11 +10,13 @@ import {
   itemName,
   runeName,
   shardName,
+  spellName,
 } from "./ddragon.js";
 import { escapeHtml, pct, sample } from "./format.js";
 import { matchupHash } from "./route.js";
 
-const TECLAS = { 1: "Q", 2: "W", 3: "E", 4: "R" };
+// Espelha _SKILL_KEYS de src/lolmono/aggregate.py; slot desconhecido vira o proprio numero.
+const TECLAS ={ 1: "Q", 2: "W", 3: "E", 4: "R" };
 
 function lista(nomes) {
   return nomes.map(escapeHtml).join(", ");
@@ -48,7 +50,7 @@ function base(b, dict) {
     <p class="aside">Taxa de vitória dessa página exata: ${pct(b.runes_win_rate)} ${sample(b.runes_games)}.
     É informação ao lado; não foi o critério que a escolheu.</p>
     <h3>Feitiços <span class="n">${sample(b.spells_games)}</span></h3>
-    <p>${lista(b.spells.map(String))}</p>
+    <p>${lista(b.spells.map((id) => spellName(dict, id)))}</p>
     <h3>Itens finais, um a um</h3>
     <ul class="items">
       ${itens}

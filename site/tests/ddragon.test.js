@@ -6,6 +6,7 @@ import {
   loadDdragon,
   runeName,
   shardName,
+  spellName,
 } from "../js/ddragon.js";
 
 const PAYLOADS = {
@@ -17,6 +18,11 @@ const PAYLOADS = {
   "champion.json": {
     data: {
       Talon: { key: "91", name: "Talon", image: { full: "Talon.png" } },
+    },
+  },
+  "summoner.json": {
+    data: {
+      SummonerFlash: { key: "4", name: "Flash", image: { full: "SummonerFlash.png" } },
     },
   },
   "runesReforged.json": [
@@ -59,18 +65,19 @@ Deno.test("championIcon monta a URL do icone com a versao", async () => {
 });
 
 Deno.test("id desconhecido devolve o id cru, nunca undefined", () => {
-  const dict = { version: "16.21.1", items: new Map(), runes: new Map(), champions: new Map() };
+  const dict = { version: "16.21.1", items: new Map(), runes: new Map(), champions: new Map(), spells: new Map() };
+  assertEquals(spellName(dict, 9999), "9999");
   assertEquals(itemName(dict, 9999), "9999");
   assertEquals(runeName(dict, 9999), "9999");
   assertEquals(championName(dict, 9999), "9999");
   assertEquals(championIcon(dict, 9999), null);
 });
 
-Deno.test("loadDdragon usa a versao recebida nas tres URLs", async () => {
+Deno.test("loadDdragon usa a versao recebida nas quatro URLs", async () => {
   const vistas = [];
   await loadDdragon("16.21.1", (u) => { vistas.push(u); return fakeFetch(u); });
   assert(vistas.every((u) => u.includes("/16.21.1/")));
-  assertEquals(vistas.length, 3);
+  assertEquals(vistas.length, 4);
 });
 
 Deno.test("loadDdragon rejeita com o status quando a CDN nao responde ok", async () => {
@@ -89,4 +96,9 @@ Deno.test("fragmento de atributo resolve para o nome, sem magnitude", () => {
 
 Deno.test("id de fragmento desconhecido devolve o id cru", () => {
   assertEquals(shardName(5099), "5099");
+});
+
+Deno.test("spellName resolve a chave textual do summoner.json por id numerico", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  assertEquals(spellName(dict, 4), "Flash");
 });

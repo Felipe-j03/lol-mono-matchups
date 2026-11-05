@@ -34,6 +34,7 @@ const DICT = {
   runes: new Map([[8112, "Electrocute"], [8100, "Domination"], [8000, "Precision"],
                   [8126, "Cheap Shot"], [8138, "Eyeball Collection"], [8135, "Treasure Hunter"],
                   [9111, "Triumph"], [9104, "Legend: Alacrity"]]),
+  spells: new Map([[4, "Flash"], [14, "Ignite"]]),
   champions: new Map([[91, { name: "Talon", image: "Talon.png" }],
                       [245, { name: "Ekko", image: "Ekko.png" }],
                       [238, { name: "Zed", image: "Zed.png" }]]),
@@ -53,6 +54,17 @@ Deno.test("itens iniciais e ordem de habilidades trazem o proprio denominador", 
   assert(html.includes("em 230 partidas"));   // skill_order_games
   assert(html.includes("Doran&#39;s Blade") || html.includes("Doran's Blade"));
   assert(html.includes("Q &gt; W &gt; E"));
+});
+
+Deno.test("feiticos aparecem pelo nome, nao pelo id", () => {
+  const html = renderChampion(TARGET, DICT);
+  assert(html.includes("Flash, Ignite"));
+  assert(!html.includes("4, 14"));
+});
+
+Deno.test("slot de habilidade desconhecido renderiza como o proprio numero", () => {
+  const t = { ...TARGET, baseline: { ...TARGET.baseline, skill_order: [1, 5, 4] } };
+  assert(renderChampion(t, DICT).includes("Q &gt; 5 &gt; R"));
 });
 
 Deno.test("cada item da frequencia traz suas partidas sobre o total", () => {
