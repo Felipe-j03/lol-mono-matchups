@@ -158,7 +158,12 @@ ${m.comparable ? numerosAos14(m) : ""}
 function pontoCego(m) {
   const { winners, losers } = m.games_without_boots;
   if (!winners && !losers) return "";
-  return `<p class="ponto-cego">Partidas sem botas reconhecidas: ${winners} de vitória e ${losers} de derrota. Quando esse número é alto, a falta de diferença em botas não significa concordância entre os grupos.</p>`;
+  // Botas sao proporcao sobre todas as partidas do lado: o denominador e wins/losses.
+  return `<p class="ponto-cego">Partidas sem botas reconhecidas: ${winners} de ${m.wins} ${
+    partidas(m.wins)
+  } de vitória e ${losers} de ${m.losses} ${
+    partidas(m.losses)
+  } de derrota. Quando esse número é alto, a falta de diferença em botas não significa concordância entre os grupos.</p>`;
 }
 
 function nota(m) {

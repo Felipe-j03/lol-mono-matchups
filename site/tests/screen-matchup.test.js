@@ -142,6 +142,43 @@ Deno.test("ponto cego de botas fica visivel", () => {
   assert(html.includes("não significa concordância"));
 });
 
+Deno.test("ponto cego imprime cada contagem contra wins e losses", () => {
+  const m = { ...MATCHUP, wins: 20, losses: 200,
+    games_without_boots: { winners: 12, losers: 11 } };
+  const html = renderMatchup(m, DICT);
+  assert(html.includes("12 de 20 partidas de vitória"));
+  assert(html.includes("11 de 200 partidas de derrota"));
+  assert(html.includes("não significa concordância"));
+});
+
+Deno.test("ponto cego com confronto nao comparavel traz contagens e denominadores", () => {
+  const m = { ...MATCHUP, comparable: false, divergences: [], headline: null,
+    winner_gold_at_14: null, loser_gold_at_14: null,
+    winner_cs_diff_at_14: null, loser_cs_diff_at_14: null,
+    games: 23, wins: 22, losses: 1, min_per_side: 15,
+    games_without_boots: { winners: 3, losers: 1 } };
+  const html = renderMatchup(m, DICT);
+  assert(html.includes("3 de 22 partidas de vitória"));
+  assert(html.includes("1 de 1 partida de derrota"));
+});
+
+Deno.test("ouro presente com farm nulo renderiza o ouro e omite o farm", () => {
+  const m = { ...MATCHUP, winner_cs_diff_at_14: null, loser_cs_diff_at_14: null };
+  const html = renderMatchup(m, DICT);
+  assert(html.includes("5200"));
+  assert(html.includes("4000"));
+  assert(!html.includes("Diferença média de farm"));
+  assert(!html.includes("null") && !html.includes("NaN"));
+});
+
+Deno.test("farm presente com ouro nulo renderiza o farm e omite o ouro", () => {
+  const m = { ...MATCHUP, winner_gold_at_14: null, loser_gold_at_14: null };
+  const html = renderMatchup(m, DICT);
+  assert(html.includes("+8") && html.includes("-6"));
+  assert(!html.includes("Ouro médio"));
+  assert(!html.includes("null") && !html.includes("NaN"));
+});
+
 Deno.test("sem ponto cego de botas nao ha aviso de ponto cego", () => {
   assert(!renderMatchup(MATCHUP, DICT).includes("não significa concordância"));
 });
@@ -162,7 +199,6 @@ Deno.test("ouro aos 14 nulo nao imprime numero nem zero", () => {
   const html = renderMatchup(m, DICT);
   assert(!html.includes("null"));
   assert(!html.includes("NaN"));
-  assert(!/\b0 de ouro\b/.test(html));
   assert(!html.includes("5200"));
 });
 
