@@ -77,7 +77,10 @@ function base(b, dict) {
     É informação ao lado; não foi o critério que a escolheu.</p>
     <h3>Feitiços <span class="n">${sample(b.spells_games)}</span></h3>
     <p>${lista(b.spells.map((id) => spellName(dict, id)))}</p>
-    <h3>Itens finais, um a um</h3>
+    <h3>Itens no inventário ao fim da partida</h3>
+    <p class="note">Item por item, não a build completa: é o que estava nos seis espaços
+    quando o jogo acabou, incluindo componente que não foi evoluído e consumível ainda
+    na mão. Por isso difere do que um site de meta chama de build.</p>
     <ul class="items">
       ${itens}
     </ul>${truncamento}

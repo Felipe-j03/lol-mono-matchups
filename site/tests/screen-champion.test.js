@@ -218,6 +218,18 @@ const linhasDeItem = (html) => (html.match(/ de \d+ partidas<\/span><\/li>/g) ??
 const itens = (n, games, desde = 1) =>
   Array.from({ length: n }, (_, k) => ({ item_id: 1000 + desde + k, games }));
 
+Deno.test("itens: o titulo diz inventario ao fim, nao build pronta", () => {
+  // O dado e o conteudo dos seis espacos quando o jogo acabou, e no exportado real
+  // ele traz componente nao evoluido (Espada Longa, Picareta) entre os mais
+  // frequentes. Chamar isso de "itens finais" promete build montada e faz quem
+  // compara com um site de meta achar que o numero esta errado — o numero esta
+  // certo, o rotulo e que prometia demais.
+  const html = renderChampion(TARGET, DICT);
+  assert(html.includes("Itens no inventário ao fim da partida"));
+  assert(!html.includes("Itens finais"));
+  assert(html.includes("não a build completa"));
+});
+
 Deno.test("itens: o teto de 12 corta mesmo quando todos passam do piso de 5%", () => {
   const html = comItens(itens(20, 100));   // 20 itens a 10%: so o teto separa
   assert(linhasDeItem(html) === 12);
