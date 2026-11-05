@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "ddragon_version": "16.21.1",
+  "collected_from": "2026-07-18",
+  "collected_through": "2026-11-05",
+  "targets": [
+    {
+      "champion_id": 91,
+      "champion_name": "Talon",
+      "role": "MIDDLE",
+      "has_data": true,
+      "file": "talon-middle.json",
+      "players": 25,
+      "games": 910
+    },
+    {
+      "champion_id": 79,
+      "champion_name": "Gragas",
+      "role": "MIDDLE",
+      "has_data": true,
+      "file": "gragas-middle.json",
+      "players": 7,
+      "games": 265
+    },
+    {
+      "champion_id": 79,
+      "champion_name": "Gragas",
+      "role": "TOP",
+      "has_data": true,
+      "file": "gragas-top.json",
+      "players": 16,
+      "games": 699
+    },
+    {
+      "champion_id": 24,
+      "champion_name": "Jax",
+      "role": "TOP",
+      "has_data": true,
+      "file": "jax-top.json",
+      "players": 26,
+      "games": 1087
+    },
+    {
+      "champion_id": 58,
+      "champion_name": "Renekton",
+      "role": "TOP",
+      "has_data": true,
+      "file": "renekton-top.json",
+      "players": 14,
+      "games": 655
+    }
+  ]
+}

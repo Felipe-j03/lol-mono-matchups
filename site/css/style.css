@@ -1,0 +1,149 @@
+/* CSS puro, sem build. Mobile primeiro; telas largas so ganham colunas. */
+
+:root {
+  --bg: #0f1419;
+  --panel: #182028;
+  --line: #2a3541;
+  --text: #e6e9ee;
+  --muted: #9aa5b1;
+  --accent: #c8aa6e;
+  --good: #5cb85c;
+  --bad: #e0675f;
+  --warn-bg: #3a2f12;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+a { color: var(--accent); }
+h1 { font-size: 1.5rem; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; border-bottom: 1px solid var(--line); padding-bottom: 0.25rem; }
+h3 { font-size: 1rem; margin: 1rem 0 0.25rem; }
+ul { list-style: none; margin: 0; padding: 0; }
+
+.n, small, .note, .aside, .window, .role { color: var(--muted); }
+.n { font-size: 0.85em; font-weight: normal; }
+.role { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.status, .warning {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+.status { color: var(--muted); }
+.warning { background: var(--warn-bg); border-left: 4px solid var(--accent); }
+
+.back { margin-bottom: 0.5rem; }
+
+/* Tela 1: cartoes de escolha */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.card a, .card-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.75rem;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+.card a:hover, .card a:focus-visible { background: #202b36; border-radius: 8px; }
+.card-empty { opacity: 0.55; }
+.card .name { font-weight: 600; }
+.card .count { font-size: 0.85rem; color: var(--muted); }
+.window { margin-top: 1.5rem; font-size: 0.85rem; }
+
+.portrait { border-radius: 6px; vertical-align: middle; }
+
+/* Tela 2: grade de itens, paginas de runas, linhas de matchup */
+.items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.5rem;
+}
+.items li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pagina de runas como no jogo: arvore primaria | arvore secundaria + fragmentos */
+dl.runes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0;
+}
+dl.runes dt { color: var(--accent); font-weight: 600; margin-top: 0.5rem; }
+dl.runes dt:first-child { margin-top: 0; }
+dl.runes dd { margin: 0; }
+dl.runes dt:first-child + dd { font-size: 1.15rem; font-weight: 600; }
+
+.matchups li { border-bottom: 1px solid var(--line); }
+.matchups li a, .matchups li:not(:has(a)) {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+.matchups li a:hover, .matchups li a:focus-visible { background: #202b36; }
+.matchups .name { font-weight: 600; min-width: 6rem; }
+.matchups .n { margin-left: auto; text-align: right; }
+.matchups-below-floor { opacity: 0.65; }
+
+.reference-players { margin-top: 1.5rem; }
+.reference-players summary { cursor: pointer; }
+.reference-players li { padding: 0.25rem 0; }
+
+/* Tela 3: confronto */
+.lado-a-lado {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+.divergencia, .timeline, .sem-comparacao {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+}
+.vencedores strong { color: var(--good); }
+.perdedores strong { color: var(--bad); }
+.timeline ul li { padding: 0.15rem 0; }
+
+@media (min-width: 40rem) {
+  main { padding: 1.5rem; }
+  .lado-a-lado { grid-template-columns: 1fr 1fr; }
+  dl.runes { grid-template-columns: max-content 1fr; }
+  dl.runes dt, dl.runes dd { margin-top: 0; }
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "champion_id": 24,
+  "champion_name": "Jax",
+  "role": "TOP",
+  "opponent_champion_id": 897,
+  "games": 52,
+  "wins": 34,
+  "losses": 18,
+  "min_per_side": 15,
+  "comparable": true,
+  "headline": "Sem partidas suficientes com timeline para comparar: itens iniciais e ordem de habilidades.",
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 0,
+      "losers": 0
+    },
+    "cs_diff_at_14": {
+      "winners": 0,
+      "losers": 0
+    },
+    "starting_items": {
+      "winners": 0,
+      "losers": 0
+    },
+    "skill_order": {
+      "winners": 0,
+      "losers": 0
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "boots",
+      "label": "3047",
+      "winner_share": 0.5,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.2777777777777778,
+      "winner_games": 34,
+      "loser_games": 18
+    },
+    {
+      "field": "boots",
+      "label": "3111",
+      "winner_share": 0.2647058823529412,
+      "loser_share": 0.4444444444444444,
+      "gap": 0.17973856209150324,
+      "winner_games": 34,
+      "loser_games": 18
+    },
+    {
+      "field": "rune",
+      "label": "8451",
+      "winner_share": 0.38235294117647056,
+      "loser_share": 0.5555555555555556,
+      "gap": 0.17320261437908502,
+      "winner_games": 34,
+      "loser_games": 18
+    }
+  ]
+}
