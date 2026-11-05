@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "jsr:@std/assert";
+import { assert, assertEquals, assertRejects } from "jsr:@std/assert";
 import {
   championIcon,
   championName,
@@ -29,9 +29,10 @@ const PAYLOADS = {
 
 function fakeFetch(url) {
   const arquivo = Object.keys(PAYLOADS).find((n) => url.endsWith("/" + n));
+  if (arquivo === undefined) return Promise.resolve({ ok: false, status: 404 });
   return Promise.resolve({
-    ok: arquivo !== undefined,
-    status: arquivo ? 200 : 404,
+    ok: true,
+    status: 200,
     json: () => Promise.resolve(PAYLOADS[arquivo]),
   });
 }
@@ -69,4 +70,12 @@ Deno.test("loadDdragon usa a versao recebida nas tres URLs", async () => {
   await loadDdragon("16.21.1", (u) => { vistas.push(u); return fakeFetch(u); });
   assert(vistas.every((u) => u.includes("/16.21.1/")));
   assertEquals(vistas.length, 3);
+});
+
+Deno.test("loadDdragon rejeita com o status quando a CDN nao responde ok", async () => {
+  await assertRejects(
+    () => loadDdragon("0.0.0", () => Promise.resolve({ ok: false, status: 404 })),
+    Error,
+    "404",
+  );
 });
