@@ -205,6 +205,14 @@ Deno.test("rota malformada e notfound, nunca excecao nem tela vazia", () => {
   }
 });
 
+Deno.test("construtores produzem exatamente o formato que as telas escrevem", () => {
+  // As strings literais abaixo sao o contrato com a Tarefa 5, que afirma
+  // href="#/talon-middle/vs/245" direto. Um round-trip com o parser passaria
+  // com qualquer formato inventado aqui e quebraria aquela tarefa.
+  assertEquals(championHash("talon-middle"), "#/talon-middle");
+  assertEquals(matchupHash("talon-middle", 245), "#/talon-middle/vs/245");
+});
+
 Deno.test("construtores casam com o parser", () => {
   assertEquals(parseRoute(championHash("jax-top")).slug, "jax-top");
   const r = parseRoute(matchupHash("jax-top", 58));
@@ -293,6 +301,7 @@ git commit -m "feat(site): tela de escolha com alvo sem dado nao clicavel"
 - Create: `site/js/screen-champion.js`, `site/tests/screen-champion.test.js`
 
 **Interfaces:**
+- Consumes: `escapeHtml`, `pct`, `sample` de `format.js`; `championHash`, `matchupHash` de `route.js`; `itemName`, `runeName`, `championName`, `championIcon` de `ddragon.js`.
 - Produces: `renderChampion(target, dict) -> string`
 
 - [ ] **Step 1: Escrever os testes que falham**
@@ -356,6 +365,7 @@ git commit -m "feat(site): tela de campeao com piso de amostra e Riot ID escapad
 - Create: `site/js/screen-matchup.js`, `site/tests/screen-matchup.test.js`
 
 **Interfaces:**
+- Consumes: `escapeHtml`, `pct`, `sample` de `format.js`; `itemName`, `runeName`, `championName` de `ddragon.js`. **Não** usa `route.js`: esta tela é folha.
 - Produces: `renderMatchup(matchup, dict) -> string`
 
 - [ ] **Step 1: Escrever os testes que falham**
@@ -373,7 +383,11 @@ Deno.test("divergencia usa winner_games e loser_games, nao wins e losses", () =>
 Deno.test("frase do topo e montada da divergencia, sem id cru", () => {
   const html = renderMatchup(MATCHUP, DICT);   // divergences[0] e botas 3020
   assert(html.includes("Sorcerer's Shoes"));
-  assert(!html.includes("3020"));
+  // O id NAO pode aparecer como texto visivel. A negativa e escopada ao no de
+  // texto de proposito: um icone do Data Dragon tem o id na URL
+  // (item/3020.png), e proibir "3020" no HTML inteiro reprovaria uma
+  // implementacao correta que mostra o icone.
+  assert(!html.includes(">3020<"));
 });
 
 Deno.test("nao comparavel explica a ausencia e mantem os numeros", () => {
@@ -455,7 +469,9 @@ Expected: PASS, todos os testes das tarefas 1 a 6.
 
 - [ ] **Step 5: Verificar no navegador**
 
-Servir `site/` (`python -m http.server -d site 8000`) e conferir, com os dados reais de `site/data/`: a tela de escolha lista os cinco pares; um par com dado abre a Tela 2; um matchup acima do piso abre a Tela 3; `#/kaisa-top` não deixa a tela branca; e um Riot ID com acento aparece correto (prova do charset).
+Primeiro povoar `site/data/`, que nasce vazio nesta worktree: `python -m lolmono export --out site/data` (não usa a API nem a chave; lê o banco de `data/lolmono.sqlite`). Se o banco não existir aqui, copie-o do checkout principal.
+
+Então servir `site/` (`python -m http.server -d site 8000`) e conferir: a tela de escolha lista os cinco pares; um par com dado abre a Tela 2; um matchup acima do piso abre a Tela 3; `#/kaisa-top` não deixa a tela branca; e um Riot ID com acento aparece correto (prova do charset).
 
 - [ ] **Step 6: Commit**
 
