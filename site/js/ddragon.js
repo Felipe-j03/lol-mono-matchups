@@ -67,6 +67,30 @@ export function runeName(dict, id) {
   return dict.runes.get(id) ?? String(id);
 }
 
+// ATENCAO: estes nove nomes NAO vem do Data Dragon, que nao publica nome
+// nenhum para fragmentos de atributo (ausentes de runesReforged, perkstyles,
+// perks, runes e statmods). A fonte e o dono do projeto, que leu os nomes no
+// cliente do jogo. Envelhecem diferente de todo o resto deste modulo: o
+// Data Dragon e versionado por patch, esta tabela e manual. Se um nome parecer
+// errado, desconfie primeiro daqui, nao da CDN.
+// So nomes, nunca o valor ("+6 de Armadura"): a magnitude muda a cada patch,
+// nao esta nos nossos dados e o site nao tem como verifica-la.
+const SHARDS = new Map([
+  [5008, "Força Adaptativa"],
+  [5011, "Vida"],
+  [5005, "Velocidade de Ataque"],
+  [5001, "Vida escalando por nível"],
+  [5013, "Tenacidade e Resistência a Lentidão"],
+  [5007, "Aceleração de Habilidade"],
+  [5010, "Velocidade de Movimento"],
+  [5002, "Armadura"],
+  [5003, "Resistência Mágica"],
+]);
+
+export function shardName(id) {
+  return SHARDS.get(id) ?? String(id);
+}
+
 export function championName(dict, id) {
   return dict.champions.get(id)?.name ?? String(id);
 }

@@ -5,6 +5,7 @@ import {
   itemName,
   loadDdragon,
   runeName,
+  shardName,
 } from "../js/ddragon.js";
 
 const PAYLOADS = {
@@ -78,4 +79,14 @@ Deno.test("loadDdragon rejeita com o status quando a CDN nao responde ok", async
     Error,
     "404",
   );
+});
+
+Deno.test("fragmento de atributo resolve para o nome, sem magnitude", () => {
+  assertEquals(shardName(5008), "Força Adaptativa");
+  assertEquals(shardName(5002), "Armadura");
+  assert(!/\d/.test(shardName(5003)));
+});
+
+Deno.test("id de fragmento desconhecido devolve o id cru", () => {
+  assertEquals(shardName(5099), "5099");
 });
