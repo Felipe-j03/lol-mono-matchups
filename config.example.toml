@@ -9,7 +9,22 @@ min_games = 25
 # CHALLENGER, GRANDMASTER, MASTER, DIAMOND.
 min_tier = "MASTER"
 
-mastery_top_n = 7
+# Peneira por maestria (estagio 2). Um candidato fica como suspeito quando um
+# campeao-alvo esta entre os `mastery_top_n` de maior pontuacao de maestria dele
+# E foi jogado nos ultimos `mastery_max_days` dias.
+#
+# `mastery_top_n` e o parametro de CUSTO mais sensivel do projeto. Medido em
+# BR1 com uma amostra de 500 candidatos: com 7, a taxa de suspeitos foi de
+# 16,2%, o que extrapola para ~1.730 suspeitos em 10.700 candidatos e ~35 horas
+# no estagio 3 (ate 60 requisicoes por suspeito) numa regiao so. Com 3, a
+# peneira exige que o campeao esteja entre os tres de maior maestria, que e o
+# que se espera de quem e mono de verdade -- maestria acumula pela vida toda e
+# um mono acumula desproporcionalmente num campeao.
+#
+# Afrouxar aqui nao corrompe resultado nenhum: a confirmacao no estagio 3 e o
+# filtro de verdade, e a peneira so decide quanto se paga para chegar nela.
+# Apertar demais, por outro lado, perde mono real em silencio.
+mastery_top_n = 3
 mastery_max_days = 30
 
 # Confronto: minimo de partidas e minimo por lado para o delta.
