@@ -127,3 +127,47 @@ sinalizadas.
 - MEDICAO: a conversao suspeito->mono varia MUITO por regiao, e a diferenca e real, nao ruido. Sobre amostras de 107 a 348 suspeitos processados: kr 13,1%, na1 11,2%, br1 5,5%, euw1 4,2%. KR converte 3x mais que EUW1. Consequencia: a projecao de custo por mono de 37,6 min, medida em BR1, e PESSIMISTA para kr e na1 e otimista para euw1. Se houver uma proxima rodada, priorizar kr.
 
 - MEDICAO: Gragas MIDDLE saiu do zero (4 monos de 68) depois de eu registrar que zero em cinco pares era compativel com azar. Era azar mesmo. Mas ele segue sendo o par mais pobre com folga, e e ele que limita o produto: projetado para o fim da janela, ~9 monos e ~341 jogos, o que poe o matchup lider dele em 28-41 jogos. Isso passa o piso de listagem (matchup_min_games=30) na margem e NAO alcanca delta_min_per_side=15 de cada lado, que precisa de ~60 jogos no mesmo matchup. Previsao honesta: Gragas MIDDLE tera base e lista de matchups, mas nao tera comparacao vencedor-vs-perdedor. Os outros quatro pares tem folga.
+
+## Site estatico (05/11/2026) — execucao subagent-driven do plano 2026-11-05-site-estatico.md
+
+- Ruling: `deno.lock` entra no repositorio. Fixa `jsr:@std/assert`, unica dependencia externa do harness de teste; sem ele um `deno task test` futuro resolve outra versao e a suite passa a medir outra coisa. Nao afeta o site publicado, que nunca carrega Deno. Custo se errado: um arquivo a mais.
+
+- Ruling (repetido em quase toda task): PROMOVO ao loop de correcao todo teste cuja assertiva passa contra varias implementacoes plausiveis, quando o valor em jogo e load-bearing. Casos: o arredondamento de `pct`, cujo unico caso (0,5816 para 58%) passava identico sob round, floor e trunc, embora `pct` escreva TODA porcentagem das tres telas; `pct(undefined)` devolvendo "NaN%" quando o arquivo de matchup nao tem campo `win_rate`; as guardas de `vs` e de slug nao-vazio do roteador, cuja remocao faria `#/a/foo/245` virar matchup com a suite inteira verde; o `||` na assercao do Doran, que aceitava saida escapada OU nao escapada e portanto sobreviveria a remocao do escape de nomes de item; e o teste da secao separada, que provava que titulo e campeao apareciam mas nao que um estava DENTRO do outro. Custo se errado em cada: um teste.
+
+- Ruling: DEFIRO o minor da taxa de vitoria ACIMA do piso sem teste, e a distincao importa porque promovi varios parecidos. No `pct` o teste passava sob round/floor/trunc, isto e, a correcao do codigo ATUAL estava nao verificada. Aqui o revisor leu o codigo e confirmou que esta certo hoje; a lacuna e protecao contra regressao futura de um display. Promover tudo que se PARECE com o padrao e tao ruim quanto nao promover nada.
+
+- Ruling: o `throw` do `loadDdragon` em resposta nao-ok FICA, mas com teste que exija o status na mensagem. Sem ele, um `ddragon_version` velho viraria TypeError opaco dentro do indexador em vez de dizer o que houve.
+
+- Ruling ANTECIPADO (defeito de plano visto antes de dispachar, verificado no CDN ao vivo): `runeName` tem que indexar tambem os cinco ids de ARVORE do topo do runesReforged.json. O contrato guarda `primary_style` e `secondary_style`, que sao ids de arvore e NAO estao em nenhum `slots` — um indice que so desca em slots renderiza dois campos da pagina de runas de todo campeao como numero cru, e os testes do brief nunca pegariam porque so exercitam a runa 8112.
+
+- LACUNA FECHADA: os feiticos de invocador sairiam como id cru. `summoner.json` existe no CDN fixado com a mesma forma do champion.json. Ruling: carregar como quarto arquivo, sem tabela hardcoded — e fonte oficial, diferente dos fragmentos. O teste que afirmava 3 URLs passou a afirmar 4, ATUALIZADO e nao afrouxado, porque a contagem e parte do que ele pina.
+
+- Ruling: a tabela de FRAGMENTOS de runa entra em `ddragon.js` com comentario dizendo que a fonte e o DONO DO PROJETO conferindo no cliente do jogo, nao o Data Dragon. Sondei runesReforged, perkstyles, perks, runes e statmods no CDN: os ids 5001, 5002, 5003, 5005, 5007, 5008, 5010, 5011 e 5013 nao existem em nenhum. Aquelas nove linhas envelhecem de forma diferente de todo o resto do modulo e quem ler depois precisa saber em que ordem desconfiar.
+
+- Ruling: entra SO O NOME do fragmento, nunca a magnitude. O dono informou "+6 de Armadura" e "+8 de RM", deliberadamente excluidos: magnitude e especifica do patch, nao esta nos nossos dados, nao pode ser verificada pelo site, e seria numero na tela sem fonte e sem denominador, envelhecendo em silencio no proximo rebalanceamento. "Armadura" e verdade estavel.
+
+- Ruling: o slug do link sai do campo `file` do indice, NUNCA de `champion_name` mais `role`. O exportador e dono dessa transformacao (guarda so minusculas e digitos, entao um nome com apostrofo perde o apostrofo). Nenhum dos cinco alvos tem pontuacao, logo o bug so nasceria quando alguem acrescentasse alvo meses depois.
+
+- Ruling: a tela NAO afirma que a janela de coleta e larga. Imprimia "Uma janela larga mistura patches na mesma base" para QUALQUER janela nao-nula, inclusive de um dia — afirmacao sobre os dados feita sem olhar os dados. Passou a mostrar o vao em dias e enunciar a mistura como regra geral. Agravante medido: o vao real e de ~111 dias mas 85% das partidas estao nos ultimos 30, entao ate "larga" afirmava demais.
+
+- Ruling: NAO guardo contra estados que o contrato declara impossiveis — meia-janela de coleta, `Number(null)` resolvendo como item 0, `comparable: true` com divergences vazio E headline nulo, `starting_items: []` nao-nulo. Guardar contra estado que o exportador nao produz dilui o contrato; se ele mudar, o contrato muda primeiro.
+
+- Ruling: ESCALEI a Important numero 1 da Task 5 para Critical. O revisor marcou Important; abri o `jax-top.json` exportado de verdade e `starting_items` e `skill_order` estavam NULOS, porque o estagio 4 nunca rodou. A tela chamava `.map` neles, lancando TypeError nos CINCO alvos com os dados daquele dia. Nao era caso de borda, era o estado atual.
+
+- Ruling: linha ABAIXO do piso nao imprime taxa de vitoria, so contagem de jogos. O denominador estar presente nao resgata numero que e ruido: 60% em 5 partidas logo abaixo de um titulo dizendo "dados insuficientes" e mensagem contraditoria. O piso e a declaracao do projeto de que abaixo dele nao se afirma nada, e porcentagem e afirmacao.
+
+- Ruling: a linha do PONTO CEGO de botas imprime cada contagem contra seu denominador (`wins` e `losses`, que e o correto para esse campo, nao `timeline_games`). Imprimia "12 de vitoria e 11 de derrota" e deixava "alto" por conta do leitor: 12 de 12 e ponto cego total, 12 de 200 e ruido, e sem denominador os dois leem igual — o leitor nao distingue "houve concordancia" de "nao conseguimos ver".
+
+- Ruling: corte da grade de itens em 5% das partidas da base, teto de 12 linhas, com nota declarando quantos ficaram de fora e o denominador. A tela renderizava a lista INTEIRA, ~130 linhas descendo ate item com uma unica partida; a spec pede grade de itens e o que estava na tela era a loja do jogo, com a build soterrada. SO A VERIFICACAO VISUAL PEGOU: 72 testes passando e cinco telas sem null nem NaN contra dado real, e a pagina principal inutilizavel por excesso — nenhuma assercao de string pega "tecnicamente correto e ilegivel".
+
+- Ruling: a secao abaixo do piso (~80 linhas) e RECOLHIDA em `<details>` com a contagem no summary, nao truncada. E material de referencia: quem procura um matchup raro especifico tem que continuar achando. Recolher nao perde informacao, truncar perderia.
+
+- Ruling: a onda de correcao final leva SO os dois Important da revisao de branch mais o link de volta na tela de erro. Ha exatamente UMA re-revisao da onda, e alargar o escopo reduz a chance de ela verificar o que importa.
+
+- Ruling: a frase que declara ausencia de timeline cita o piso `min_per_side` e os denominadores de cada lado. Dizer que um piso nao foi atingido sem dizer qual e o piso e a regra central do projeto aplicada frouxamente exatamente na linha cuja unica funcao e explicar uma ausencia.
+
+- ERRO MEU, corrigido na revisao final: na Task 6 promovi o teste do par de medias meio-nulo pelo raciocinio certo — o contrato escopa o "tudo ou nada" a CADA par, e ouro e farm sao pares separados — e depois nao notei que a correcao escolheu OMITIR a metrica ausente em silencio, com dois testes carimbando o esconder ("omite o farm", "omite o ouro"). Precisei de um revisor olhando o branch inteiro para ver que eu tinha pedido a coisa certa e aceitado a resposta errada. Licao: uma assertiva que afirma AUSENCIA nao distingue "a tela explicou a lacuna" de "a tela ficou calada".
+
+- ERRO MEU: a assertiva do plano que proibia a frase "0 de ouro" era VAZIA — o codigo nunca produz essa frase. Pior que ausente: a lacuna deixa de ser visivel e quem le o teste acredita que o caso esta coberto. Corrigida no plano e no teste.
+
+- PARA A CONFERENCIA EXTERNA (pendente, do dono): a revisao final confirmou que nada no site quebra se `item_frequency` estiver errado e que nenhum denominador exibido vira falso. A exposicao e outra: se o exportador contar componente e consumivel, o site imprime fielmente uma contagem VERDADEIRA sob um titulo FALSO ("Itens finais"). Nos dados reais, componente e inicial ocupam cerca de um terco da grade principal (o primeiro item do Talon e 1055, Lamina de Doran). A correcao e no exportador ou no titulo, NUNCA uma lista de exclusao no site — isso inventaria semantica que o contrato nao define, o mesmo erro de inventar nome de fragmento.

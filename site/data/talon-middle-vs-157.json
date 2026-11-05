@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "champion_id": 91,
+  "champion_name": "Talon",
+  "role": "MIDDLE",
+  "opponent_champion_id": 157,
+  "games": 40,
+  "wins": 25,
+  "losses": 15,
+  "min_per_side": 15,
+  "comparable": true,
+  "headline": "Sem partidas suficientes com timeline para comparar: itens iniciais e ordem de habilidades.",
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 0,
+      "losers": 0
+    },
+    "cs_diff_at_14": {
+      "winners": 0,
+      "losers": 0
+    },
+    "starting_items": {
+      "winners": 0,
+      "losers": 0
+    },
+    "skill_order": {
+      "winners": 0,
+      "losers": 0
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.12,
+      "loser_share": 0.5333333333333333,
+      "gap": 0.41333333333333333,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8010",
+      "winner_share": 0.6,
+      "loser_share": 0.8666666666666667,
+      "gap": 0.2666666666666667,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "9111",
+      "winner_share": 0.6,
+      "loser_share": 0.8666666666666667,
+      "gap": 0.2666666666666667,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "boots",
+      "label": "3171",
+      "winner_share": 0.32,
+      "loser_share": 0.5333333333333333,
+      "gap": 0.21333333333333332,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8299",
+      "winner_share": 0.6,
+      "loser_share": 0.8,
+      "gap": 0.20000000000000007,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8106",
+      "winner_share": 0.24,
+      "loser_share": 0.06666666666666667,
+      "gap": 0.17333333333333334,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8112",
+      "winner_share": 0.24,
+      "loser_share": 0.06666666666666667,
+      "gap": 0.17333333333333334,
+      "winner_games": 25,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8234",
+      "winner_share": 0.16,
+      "loser_share": 0.0,
+      "gap": 0.16,
+      "winner_games": 25,
+      "loser_games": 15
+    }
+  ]
+}

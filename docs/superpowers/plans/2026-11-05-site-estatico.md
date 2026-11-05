@@ -205,6 +205,14 @@ Deno.test("rota malformada e notfound, nunca excecao nem tela vazia", () => {
   }
 });
 
+Deno.test("construtores produzem exatamente o formato que as telas escrevem", () => {
+  // As strings literais abaixo sao o contrato com a Tarefa 5, que afirma
+  // href="#/talon-middle/vs/245" direto. Um round-trip com o parser passaria
+  // com qualquer formato inventado aqui e quebraria aquela tarefa.
+  assertEquals(championHash("talon-middle"), "#/talon-middle");
+  assertEquals(matchupHash("talon-middle", 245), "#/talon-middle/vs/245");
+});
+
 Deno.test("construtores casam com o parser", () => {
   assertEquals(parseRoute(championHash("jax-top")).slug, "jax-top");
   const r = parseRoute(matchupHash("jax-top", 58));
@@ -274,7 +282,9 @@ Deno.test("janela nula nao imprime null", () => {
 
 - [ ] **Step 3: Implementar `renderChoose` em `site/js/screen-choose.js`**
 
-Cartão com retrato do Data Dragon, nome do campeão, função, contagem de monos e de partidas. `has_data: false` render sem `<a>`. A janela de coleta vai no rodapé da tela, com a nota de que janela larga mistura patches.
+Cartão com retrato do Data Dragon, nome do campeão, função, contagem de monos e de partidas. `has_data: false` render sem `<a>`. O slug do link sai do campo `file` (sem o `.json`), nunca de `champion_name` — o exportador é dono dessa transformação.
+
+A janela de coleta vai no rodapé, mostrando o **vão em dias** ao lado das datas e enunciando a mistura de patches como regra geral ("quanto mais larga a janela, mais patches entram na mesma base"), nunca como veredito sobre este conjunto. A tela não afirma que a janela é larga, porque não mediu isso: medido em 05/11, o vão real é de ~112 dias mas 85% das partidas estão nos últimos 30.
 
 - [ ] **Step 4: Rodar e confirmar que passam** — Expected: PASS.
 
@@ -293,6 +303,7 @@ git commit -m "feat(site): tela de escolha com alvo sem dado nao clicavel"
 - Create: `site/js/screen-champion.js`, `site/tests/screen-champion.test.js`
 
 **Interfaces:**
+- Consumes: `escapeHtml`, `pct`, `sample` de `format.js`; `championHash`, `matchupHash` de `route.js`; `itemName`, `runeName`, `championName`, `championIcon` de `ddragon.js`.
 - Produces: `renderChampion(target, dict) -> string`
 
 - [ ] **Step 1: Escrever os testes que falham**
@@ -356,6 +367,7 @@ git commit -m "feat(site): tela de campeao com piso de amostra e Riot ID escapad
 - Create: `site/js/screen-matchup.js`, `site/tests/screen-matchup.test.js`
 
 **Interfaces:**
+- Consumes: `escapeHtml`, `pct`, `sample` de `format.js`; `itemName`, `runeName`, `championName` de `ddragon.js`. **Não** usa `route.js`: esta tela é folha.
 - Produces: `renderMatchup(matchup, dict) -> string`
 
 - [ ] **Step 1: Escrever os testes que falham**
@@ -373,7 +385,11 @@ Deno.test("divergencia usa winner_games e loser_games, nao wins e losses", () =>
 Deno.test("frase do topo e montada da divergencia, sem id cru", () => {
   const html = renderMatchup(MATCHUP, DICT);   // divergences[0] e botas 3020
   assert(html.includes("Sorcerer's Shoes"));
-  assert(!html.includes("3020"));
+  // O id NAO pode aparecer como texto visivel. A negativa e escopada ao no de
+  // texto de proposito: um icone do Data Dragon tem o id na URL
+  // (item/3020.png), e proibir "3020" no HTML inteiro reprovaria uma
+  // implementacao correta que mostra o icone.
+  assert(!html.includes(">3020<"));
 });
 
 Deno.test("nao comparavel explica a ausencia e mantem os numeros", () => {
@@ -406,7 +422,8 @@ Deno.test("ouro aos 14 nulo nao imprime numero nem zero", () => {
     timeline_games: { ...MATCHUP.timeline_games, gold_at_14: { winners: 0, losers: 0 } } };
   const html = renderMatchup(m, DICT);
   assert(!html.includes("null"));
-  assert(!/\b0 de ouro\b/.test(html));
+  assert(!html.includes("NaN"));
+  assert(!html.includes("5200"));   // o valor que estaria la se a media nao fosse nula
 });
 ```
 
@@ -455,7 +472,9 @@ Expected: PASS, todos os testes das tarefas 1 a 6.
 
 - [ ] **Step 5: Verificar no navegador**
 
-Servir `site/` (`python -m http.server -d site 8000`) e conferir, com os dados reais de `site/data/`: a tela de escolha lista os cinco pares; um par com dado abre a Tela 2; um matchup acima do piso abre a Tela 3; `#/kaisa-top` não deixa a tela branca; e um Riot ID com acento aparece correto (prova do charset).
+Primeiro povoar `site/data/`, que nasce vazio nesta worktree: `python -m lolmono export --out site/data` (não usa a API nem a chave; lê o banco de `data/lolmono.sqlite`). Se o banco não existir aqui, copie-o do checkout principal.
+
+Então servir `site/` (`python -m http.server -d site 8000`) e conferir: a tela de escolha lista os cinco pares; um par com dado abre a Tela 2; um matchup acima do piso abre a Tela 3; `#/kaisa-top` não deixa a tela branca; e um Riot ID com acento aparece correto (prova do charset).
 
 - [ ] **Step 6: Commit**
 
