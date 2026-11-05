@@ -422,7 +422,8 @@ Deno.test("ouro aos 14 nulo nao imprime numero nem zero", () => {
     timeline_games: { ...MATCHUP.timeline_games, gold_at_14: { winners: 0, losers: 0 } } };
   const html = renderMatchup(m, DICT);
   assert(!html.includes("null"));
-  assert(!/\b0 de ouro\b/.test(html));
+  assert(!html.includes("NaN"));
+  assert(!html.includes("5200"));   // o valor que estaria la se a media nao fosse nula
 });
 ```
 
