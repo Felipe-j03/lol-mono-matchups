@@ -327,3 +327,52 @@ def test_cli_riot_error_mid_screening_keeps_committed_batches(tmp_path, capsys):
         assert other.pending_candidates("br1") == puuids[BATCH_SIZE:]
     finally:
         other.close()
+
+def test_limit_screens_only_that_many_and_leaves_the_rest_pending(db):
+    """Calibragem: para depois de N candidatos, sem perder nem gastar os outros."""
+    puuids, masteries = many_players(12)
+    fake = FakeClient(puuids, masteries)
+    collect_ladder(fake, db, cfg, "br1")
+
+    report = screen_candidates(fake, db, cfg, "br1", now_ms, limit=5)
+
+    assert report.screened == 5
+    assert fake.mastery_calls == 5, "nao gasta requisicao alem do limite"
+    assert db.pending_candidates("br1") == puuids[5:]
+
+
+def test_a_limited_run_resumes_where_it_stopped(db):
+    """Os nao triados ficam pendentes, e ninguem e triado duas vezes."""
+    puuids, masteries = many_players(12)
+    fake = FakeClient(puuids, masteries)
+    collect_ladder(fake, db, cfg, "br1")
+
+    screen_candidates(fake, db, cfg, "br1", now_ms, limit=5)
+    second = screen_candidates(fake, db, cfg, "br1", now_ms)
+
+    assert second.screened == 7
+    assert fake.mastery_calls == 12, "cada candidato triado exatamente uma vez"
+    assert db.pending_candidates("br1") == []
+
+
+def test_a_limit_above_the_queue_is_harmless(db):
+    puuids, masteries = many_players(3)
+    fake = FakeClient(puuids, masteries)
+    collect_ladder(fake, db, cfg, "br1")
+
+    report = screen_candidates(fake, db, cfg, "br1", now_ms, limit=999)
+
+    assert report.screened == 3
+    assert db.pending_candidates("br1") == []
+
+
+def test_a_non_positive_limit_is_refused(db):
+    """Zero nao pode virar "tria tudo" nem "tria nada" em silencio."""
+    puuids, masteries = many_players(3)
+    fake = FakeClient(puuids, masteries)
+    collect_ladder(fake, db, cfg, "br1")
+
+    for bad in (0, -1):
+        with pytest.raises(ValueError, match="limit"):
+            screen_candidates(fake, db, cfg, "br1", now_ms, limit=bad)
+    assert fake.mastery_calls == 0, "nao gasta requisicao antes de recusar"

@@ -52,6 +52,15 @@ def _parser() -> argparse.ArgumentParser:
     ):
         command = commands.add_parser(name, help=help_text)
         command.add_argument("--platform", required=True, choices=sorted(PLATFORM_TO_REGIONAL))
+        if name == "screen":
+            command.add_argument(
+                "--limit",
+                type=int,
+                default=None,
+                help="tria no maximo N candidatos e para, para calibrar a peneira "
+                "em minutos antes de soltar a regiao inteira; o resto fica "
+                "pendente e a execucao seguinte continua de onde parou",
+            )
         command.add_argument("--config", type=Path, default=Path("config.toml"))
         command.add_argument("--db", type=Path, default=Path("data/lolmono.sqlite"))
         if name == "timelines":
@@ -281,7 +290,7 @@ def main(
                     )
             else:
                 report = screen_candidates(
-                    client, db, cfg, args.platform, int(time.time() * 1000)
+                    client, db, cfg, args.platform, int(time.time() * 1000), limit=args.limit
                 )
                 print(
                     f"screen {args.platform}: triados: {report.screened}, "

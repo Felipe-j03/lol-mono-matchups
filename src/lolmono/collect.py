@@ -94,9 +94,23 @@ def collect_ladder(client, db, cfg, platform: str) -> int:
     return after - before
 
 
-def screen_candidates(client, db, cfg, platform: str, now_ms: int) -> ScreenReport:
-    """Triagem por maestria dos candidatos pendentes, com commit a cada lote."""
+def screen_candidates(
+    client, db, cfg, platform: str, now_ms: int, *, limit: int | None = None
+) -> ScreenReport:
+    """Triagem por maestria dos candidatos pendentes, com commit a cada lote.
+
+    `limit` tria no maximo esse numero de candidatos e para. Serve para calibrar
+    a severidade da peneira em minutos em vez de horas: uma regiao grande tem
+    milhares de candidatos e uma requisicao cada, entao varrer tudo antes de
+    saber a taxa de suspeitos custa horas e pode revelar uma peneira frouxa
+    tarde demais. Os candidatos nao triados ficam pendentes, e a execucao
+    seguinte continua de onde esta parou.
+    """
     pending = db.pending_candidates(platform)
+    if limit is not None:
+        if limit <= 0:
+            raise ValueError("limit deve ser positivo")
+        pending = pending[:limit]
     screened = 0
     suspects = 0
     for start in range(0, len(pending), BATCH_SIZE):
