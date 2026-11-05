@@ -7,12 +7,15 @@
 import {
   championIcon,
   championName,
+  itemIcon,
   itemName,
+  runeIcon,
   runeName,
   shardName,
+  spellIcon,
   spellName,
 } from "./ddragon.js";
-import { escapeHtml, pct, sample } from "./format.js";
+import { escapeHtml, iconImg, pct, sample } from "./format.js";
 import { matchupHash } from "./route.js";
 
 // Espelha _SKILL_KEYS de src/lolmono/aggregate.py; slot desconhecido vira o proprio numero.
@@ -36,12 +39,25 @@ function ordemDeHabilidades(ordem) {
   return ordem.map((n) => TECLAS[n] ?? String(n)).join(" > ");
 }
 
+// Nome sempre em texto; o icone, quando existe, vem antes e nunca o substitui.
+function comIcone(url, classe, nome) {
+  return `<span class="com-icone">${iconImg(url, classe)}${escapeHtml(nome)}</span>`;
+}
+
+function runaComIcone(dict, id) {
+  return comIcone(runeIcon(dict, id), "icon icon-rune", runeName(dict, id));
+}
+
+function itemComIcone(dict, id) {
+  return comIcone(itemIcon(dict, id), "icon icon-item", itemName(dict, id));
+}
+
 function paginaDeRunas(runas, dict) {
-  const nomes = (ids) => lista(ids.map((id) => runeName(dict, id)));
+  const varias = (ids) => ids.map((id) => runaComIcone(dict, id)).join(" ");
   return `<dl class="runes">
-      <dt>Runa-chave</dt><dd>${escapeHtml(runeName(dict, runas.keystone))}</dd>
-      <dt>${escapeHtml(runeName(dict, runas.primary_style))}</dt><dd>${nomes(runas.primary_perks)}</dd>
-      <dt>${escapeHtml(runeName(dict, runas.secondary_style))}</dt><dd>${nomes(runas.secondary_perks)}</dd>
+      <dt>Runa-chave</dt><dd>${runaComIcone(dict, runas.keystone)}</dd>
+      <dt>${runaComIcone(dict, runas.primary_style)}</dt><dd>${varias(runas.primary_perks)}</dd>
+      <dt>${runaComIcone(dict, runas.secondary_style)}</dt><dd>${varias(runas.secondary_perks)}</dd>
       <dt>Fragmentos</dt><dd>${lista(runas.shards.map(shardName))}</dd>
     </dl>`;
 }
@@ -64,7 +80,7 @@ function base(b, dict) {
     <p class="note">Mostrando ${mostrados.length} de ${total} itens: só os que aparecem em pelo menos
     ${ITENS_PISO_PERCENTUAL}% das ${b.games} ${partidas(b.games)}, até ${ITENS_TETO}. Os demais ficam de fora.</p>`;
   const itens = mostrados.map((i) =>
-    `<li>${escapeHtml(itemName(dict, i.item_id))} <span class="n">${i.games} de ${b.games} ${partidas(b.games)}</span></li>`
+    `<li>${itemComIcone(dict, i.item_id)} <span class="n">${i.games} de ${b.games} ${partidas(b.games)}</span></li>`
   ).join("\n      ");
   return `<section class="baseline">
     <h2>O que os monos fazem por padrão</h2>
@@ -76,7 +92,9 @@ function base(b, dict) {
     <p class="aside">Taxa de vitória dessa página exata: ${pct(b.runes_win_rate)} ${sample(b.runes_games)}.
     É informação ao lado; não foi o critério que a escolheu.</p>
     <h3>Feitiços <span class="n">${sample(b.spells_games)}</span></h3>
-    <p>${lista(b.spells.map((id) => spellName(dict, id)))}</p>
+    <p class="feiticos">${
+      b.spells.map((id) => comIcone(spellIcon(dict, id), "icon icon-feitico", spellName(dict, id))).join(" ")
+    }</p>
     <h3>Itens no inventário ao fim da partida</h3>
     <p class="note">Item por item, não a build completa: é o que estava nos seis espaços
     quando o jogo acabou, incluindo componente que não foi evoluído e consumível ainda
@@ -85,7 +103,11 @@ function base(b, dict) {
       ${itens}
     </ul>${truncamento}
     <h3>Itens iniciais <span class="n">${sample(b.starting_items_games)}</span></h3>
-    <p>${ouSemDado(b.starting_items, (ids) => ids.map((id) => itemName(dict, id)).join(", "))}</p>
+    <p class="iniciais">${
+      b.starting_items == null
+        ? "Sem dado"
+        : b.starting_items.map((id) => itemComIcone(dict, id)).join(" ")
+    }</p>
     <h3>Ordem de habilidades <span class="n">${sample(b.skill_order_games)}</span></h3>
     <p>${ouSemDado(b.skill_order, ordemDeHabilidades)}</p>
   </section>`;

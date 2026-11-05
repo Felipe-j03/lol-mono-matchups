@@ -220,3 +220,45 @@ Deno.test("texto fala de diferenca observada, nunca de recomendacao", () => {
   assert(!/\b(use|recomend|deve|melhor escolha)/i.test(html));
   assert(html.includes("dos vencedores"));
 });
+
+const CDN = "https://ddragon.leagueoflegends.com/cdn";
+const ICONES = {
+  itemImages: new Map([[3020, "3020.png"], [1055, "1055.png"]]),
+  runeIcons: new Map([[8347, "perk-images/Styles/Inspiration/CosmicInsight/CosmicInsight.png"]]),
+};
+const div = (field, label) => ({ field, label, winner_share: 0.8, loser_share: 0.2,
+  gap: 0.6, winner_games: 20, loser_games: 20 });
+
+Deno.test("icone da divergencia: boots e starting_items pelo item, versionado", () => {
+  for (const [f, label] of [["boots", "3020"], ["starting_items", "1055"]]) {
+    const html = renderMatchup({ ...MATCHUP, divergences: [div(f, label)] }, { ...DICT, ...ICONES });
+    assert(html.includes(`src="${CDN}/16.21.1/img/item/${label}.png"`), f);
+  }
+});
+
+Deno.test("icone da divergencia: rune pelo icone de runa, sem versao", () => {
+  const html = renderMatchup({ ...MATCHUP, divergences: [div("rune", "8347")] }, { ...DICT, ...ICONES });
+  assert(html.includes(`src="${CDN}/img/perk-images/Styles/Inspiration/CosmicInsight/CosmicInsight.png"`));
+  assert(!html.includes("16.21.1/img/perk-images"));
+  assert(html.includes("Cosmic Insight"));
+});
+
+Deno.test("skill_order nao tem icone", () => {
+  const html = renderMatchup({ ...MATCHUP, divergences: [div("skill_order", "Q > W > E")] }, { ...DICT, ...ICONES });
+  assert(!html.includes("<img"));
+  assert(html.includes("Q &gt; W &gt; E"));
+});
+
+Deno.test("divergencia sem icone no dict ainda mostra o nome", () => {
+  const html = renderMatchup(MATCHUP, DICT);
+  assert(html.includes("Sorcerer&#39;s Shoes"));
+  assert(!html.includes("<img"));
+});
+
+Deno.test("divergencia com icone mantem o nome e alt em todo <img>", () => {
+  const html = renderMatchup(MATCHUP, { ...DICT, ...ICONES });
+  assert(html.includes("Sorcerer&#39;s Shoes"));
+  const imgs = html.match(/<img\b[^>]*>/g) ?? [];
+  assert(imgs.length > 0);
+  assert(imgs.every((t) => /\balt="/.test(t)));
+});

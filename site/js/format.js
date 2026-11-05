@@ -20,3 +20,10 @@ export function pct(x) {
 export function sample(n) {
   return `em ${n} ${n === 1 ? "partida" : "partidas"}`;
 }
+
+// Icone decorativo ao lado de um nome que continua em texto: alt vazio, para o
+// leitor de tela nao dizer o nome duas vezes. Sem URL, nada: o nome basta.
+export function iconImg(url, classe = "icon") {
+  if (url == null) return "";
+  return `<img class="${escapeHtml(classe)}" src="${escapeHtml(url)}" alt="" width="24" height="24" loading="lazy"> `;
+}

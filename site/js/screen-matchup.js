@@ -6,8 +6,8 @@
 // boots e rune contam todas as partidas do lado, starting_items e skill_order
 // so as que tinham timeline utilizavel.
 
-import { championName, itemName, runeName } from "./ddragon.js";
-import { escapeHtml, pct, sample } from "./format.js";
+import { championName, itemIcon, itemName, runeIcon, runeName } from "./ddragon.js";
+import { escapeHtml, iconImg, pct, sample } from "./format.js";
 
 function partidas(n) {
   return n === 1 ? "partida" : "partidas";
@@ -26,6 +26,21 @@ function rotulo(div, dict) {
       return runeName(dict, id);
     default:
       return div.label;
+  }
+}
+
+// Mesmo despacho de rotulo(): so boots, starting_items e rune tem icone.
+function iconeDoRotulo(div, dict) {
+  const id = Number(div.label);
+  if (!Number.isInteger(id)) return "";
+  switch (div.field) {
+    case "boots":
+    case "starting_items":
+      return iconImg(itemIcon(dict, id), "icon icon-item");
+    case "rune":
+      return iconImg(runeIcon(dict, id), "icon icon-rune");
+    default:
+      return "";
   }
 }
 
@@ -62,7 +77,7 @@ function colunas(div, dict) {
   const nome = escapeHtml(rotulo(div, dict));
   const campo = escapeHtml(nomeDoCampo(div.field));
   return `<li class="divergencia">
-  <h3>${campo}: ${nome}</h3>
+  <h3>${campo}: ${iconeDoRotulo(div, dict)}${nome}</h3>
   <div class="lado-a-lado">
     <div class="vencedores"><strong>Vencedores</strong> ${pct(div.winner_share)} <small>${
     sample(div.winner_games)

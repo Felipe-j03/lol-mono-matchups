@@ -147,3 +147,11 @@ dl.runes dt:first-child + dd { font-size: 1.15rem; font-weight: 600; }
   dl.runes { grid-template-columns: max-content 1fr; }
   dl.runes dt, dl.runes dd { margin-top: 0; }
 }
+
+/* Icones de item, runa e feitico: sempre ao lado do nome, nunca no lugar dele.
+   Com alt vazio, imagem quebrada (CDN fora do ar) nao deixa texto estranho. */
+.icon { border-radius: 4px; vertical-align: middle; background: var(--panel); }
+.icon-rune { border-radius: 50%; }
+.com-icone { display: inline-block; margin-right: 0.75rem; white-space: nowrap; }
+.items li .icon { margin-right: 0.25rem; }
+.divergencia h3 .icon { margin-right: 0.25rem; }

@@ -2,10 +2,13 @@ import { assert, assertEquals, assertRejects } from "jsr:@std/assert";
 import {
   championIcon,
   championName,
+  itemIcon,
   itemName,
   loadDdragon,
+  runeIcon,
   runeName,
   shardName,
+  spellIcon,
   spellName,
 } from "../js/ddragon.js";
 
@@ -29,7 +32,14 @@ const PAYLOADS = {
     {
       id: 8100,
       name: "Domination",
-      slots: [{ runes: [{ id: 8112, name: "Electrocute" }] }],
+      icon: "perk-images/Styles/7200_Domination.png",
+      slots: [{
+        runes: [{
+          id: 8112,
+          name: "Electrocute",
+          icon: "perk-images/Styles/Domination/Electrocute/Electrocute.png",
+        }],
+      }],
     },
   ],
 };
@@ -108,4 +118,49 @@ Deno.test("runeName resolve fragmento de atributo pela tabela de fragmentos", as
   assert(!dict.runes.has(5001));
   assertEquals(runeName(dict, 5001), "Vida escalando por nível");
   assertEquals(runeName(dict, 5001), shardName(5001));
+});
+
+const IMG = "https://ddragon.leagueoflegends.com/cdn";
+
+Deno.test("itemIcon usa a versao e image.full; id desconhecido devolve null", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  assertEquals(itemIcon(dict, 3020), `${IMG}/16.21.1/img/item/3020.png`);
+  assertEquals(itemIcon(dict, 9999), null);
+});
+
+Deno.test("spellIcon usa a versao e image.full; id desconhecido devolve null", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  assertEquals(spellIcon(dict, 4), `${IMG}/16.21.1/img/spell/SummonerFlash.png`);
+  assertEquals(spellIcon(dict, 9999), null);
+});
+
+Deno.test("runeIcon NAO leva a versao, para runa e para arvore", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  const runa = runeIcon(dict, 8112);
+  const arvore = runeIcon(dict, 8100);
+  assertEquals(runa, `${IMG}/img/perk-images/Styles/Domination/Electrocute/Electrocute.png`);
+  assertEquals(arvore, `${IMG}/img/perk-images/Styles/7200_Domination.png`);
+  assert(!runa.includes("16.21.1"));
+  assert(!arvore.includes("16.21.1"));
+  assert(itemIcon(dict, 3020).includes("16.21.1"));
+  assertEquals(runeIcon(dict, 9999), null);
+});
+
+Deno.test("fragmento de atributo nao tem icone: runeIcon devolve null", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  assertEquals(runeIcon(dict, 5008), null);
+});
+
+Deno.test("icone com dict sem os indices novos devolve null, nao quebra", () => {
+  const dict = { version: "1", items: new Map(), runes: new Map(), champions: new Map(), spells: new Map() };
+  assertEquals(itemIcon(dict, 1), null);
+  assertEquals(spellIcon(dict, 1), null);
+  assertEquals(runeIcon(dict, 1), null);
+});
+
+Deno.test("loadDdragon pede os dados em pt_BR e em nenhum outro idioma", async () => {
+  const vistas = [];
+  await loadDdragon("16.21.1", (u) => { vistas.push(u); return fakeFetch(u); });
+  assert(vistas.every((u) => u.includes("/data/pt_BR/")));
+  assert(!vistas.some((u) => u.includes("en_US")));
 });

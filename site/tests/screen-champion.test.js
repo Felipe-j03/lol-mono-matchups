@@ -59,7 +59,8 @@ Deno.test("itens iniciais e ordem de habilidades trazem o proprio denominador", 
 
 Deno.test("feiticos aparecem pelo nome, nao pelo id", () => {
   const html = renderChampion(TARGET, DICT);
-  assert(html.includes("Flash, Ignite"));
+  assert(html.includes("Flash</span>"));
+  assert(html.includes("Ignite</span>"));
   assert(!html.includes("4, 14"));
 });
 
@@ -272,4 +273,65 @@ Deno.test("abaixo do piso: lista dentro de details cujo summary traz a contagem"
 Deno.test("abaixo do piso: um unico confronto fica no singular", () => {
   const t = { ...TARGET, matchups: [TARGET.matchups[1]] };
   assert(renderChampion(t, DICT).includes("<summary>1 confronto com poucas partidas</summary>"));
+});
+
+const ICONES = {
+  itemImages: new Map([[3142, "3142.png"], [1055, "1055.png"]]),
+  spellImages: new Map([[4, "SummonerFlash.png"]]),
+  runeIcons: new Map([
+    [8112, "perk-images/Styles/Domination/Electrocute/Electrocute.png"],
+    [8100, "perk-images/Styles/7200_Domination.png"],
+  ]),
+};
+const CDN = "https://ddragon.leagueoflegends.com/cdn";
+
+Deno.test("icones: item e feitico versionados, runa e arvore sem versao", () => {
+  const html = renderChampion(TARGET, { ...DICT, ...ICONES });
+  assert(html.includes(`src="${CDN}/16.21.1/img/item/3142.png"`));
+  assert(html.includes(`src="${CDN}/16.21.1/img/item/1055.png"`));
+  assert(html.includes(`src="${CDN}/16.21.1/img/spell/SummonerFlash.png"`));
+  assert(html.includes(`src="${CDN}/img/perk-images/Styles/Domination/Electrocute/Electrocute.png"`));
+  assert(html.includes(`src="${CDN}/img/perk-images/Styles/7200_Domination.png"`));
+  assert(!html.includes("16.21.1/img/perk-images"));
+});
+
+Deno.test("icones: o nome continua em texto e todo <img> tem alt", () => {
+  const html = renderChampion(TARGET, { ...DICT, ...ICONES });
+  assert(html.includes("Youmuu&#39;s Ghostblade"));
+  assert(html.includes("Flash"));
+  assert(html.includes("Electrocute"));
+  assert(html.includes("Domination"));
+  const imgs = html.match(/<img\b[^>]*>/g) ?? [];
+  assert(imgs.length > 0);
+  assert(imgs.every((t) => /\balt="/.test(t)));
+});
+
+Deno.test("sem icone no dict o nome ainda renderiza, sem <img> de item, runa ou feitico", () => {
+  const html = renderChampion(TARGET, DICT);
+  assert(html.includes("Youmuu&#39;s Ghostblade"));
+  assert(html.includes("Electrocute"));
+  assert(html.includes("Flash"));
+  assert(!html.includes("/img/item/"));
+  assert(!html.includes("/img/spell/"));
+  assert(!html.includes("perk-images"));
+});
+
+Deno.test("icone so de alguns itens: o item sem icone mantem o nome", () => {
+  const dict = { ...DICT, ...ICONES, itemImages: new Map([[3142, "3142.png"]]) };
+  const html = renderChampion(TARGET, dict);
+  assert(html.includes("/img/item/3142.png"));
+  assert(!html.includes("/img/item/6693.png"));
+  assert(html.includes("Prowler&#39;s Claw"));
+});
+
+Deno.test("fragmentos ficam so com nome, sem imagem", () => {
+  const html = renderChampion(TARGET, { ...DICT, ...ICONES });
+  assert(!html.includes("StatMods"));
+  assert(html.includes("Força Adaptativa"));
+});
+
+Deno.test("URL do icone passa por escapeHtml", () => {
+  const dict = { ...DICT, itemImages: new Map([[3142, '"><script>x</script>.png']]) };
+  const html = renderChampion(TARGET, dict);
+  assert(!html.includes("<script>"));
 });

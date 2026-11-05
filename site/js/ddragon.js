@@ -12,11 +12,13 @@ async function carregarJson(fetchFn, url) {
 }
 
 function indexarItens(payload) {
-  const itens = new Map();
+  const nomes = new Map();
+  const imagens = new Map();
   for (const [id, item] of Object.entries(payload.data)) {
-    itens.set(Number(id), item.name);
+    nomes.set(Number(id), item.name);
+    if (item.image?.full) imagens.set(Number(id), item.image.full);
   }
-  return itens;
+  return { nomes, imagens };
 }
 
 function indexarCampeoes(payload) {
@@ -32,41 +34,52 @@ function indexarCampeoes(payload) {
 
 // A chave do JSON e um slug ("SummonerFlash"); o id numerico vem em `key`, string.
 function indexarFeiticos(payload) {
-  const feiticos = new Map();
+  const nomes = new Map();
+  const imagens = new Map();
   for (const feitico of Object.values(payload.data)) {
-    feiticos.set(Number(feitico.key), feitico.name);
+    nomes.set(Number(feitico.key), feitico.name);
+    if (feitico.image?.full) imagens.set(Number(feitico.key), feitico.image.full);
   }
-  return feiticos;
+  return { nomes, imagens };
 }
 
 // Indexa a arvore em si (primary_style/secondary_style) e cada runa dos slots.
 function indexarRunas(arvores) {
-  const runas = new Map();
+  const nomes = new Map();
+  const icones = new Map();
+  const anota = (r) => {
+    nomes.set(r.id, r.name);
+    if (r.icon) icones.set(r.id, r.icon);
+  };
   for (const arvore of arvores) {
-    runas.set(arvore.id, arvore.name);
+    anota(arvore);
     for (const slot of arvore.slots) {
-      for (const runa of slot.runes) {
-        runas.set(runa.id, runa.name);
-      }
+      for (const runa of slot.runes) anota(runa);
     }
   }
-  return runas;
+  return { nomes, icones };
 }
 
 export async function loadDdragon(version, fetchFn) {
-  const base = `${CDN}/${version}/data/en_US`;
+  const base = `${CDN}/${version}/data/pt_BR`;
   const [itens, campeoes, runas, feiticos] = await Promise.all([
     carregarJson(fetchFn, `${base}/item.json`),
     carregarJson(fetchFn, `${base}/champion.json`),
     carregarJson(fetchFn, `${base}/runesReforged.json`),
     carregarJson(fetchFn, `${base}/summoner.json`),
   ]);
+  const i = indexarItens(itens);
+  const r = indexarRunas(runas);
+  const f = indexarFeiticos(feiticos);
   return {
     version,
-    items: indexarItens(itens),
-    runes: indexarRunas(runas),
+    items: i.nomes,
+    itemImages: i.imagens,
+    runes: r.nomes,
+    runeIcons: r.icones,
     champions: indexarCampeoes(campeoes),
-    spells: indexarFeiticos(feiticos),
+    spells: f.nomes,
+    spellImages: f.imagens,
   };
 }
 
@@ -114,4 +127,26 @@ export function championIcon(dict, id) {
   const campeao = dict.champions.get(id);
   if (!campeao) return null;
   return `${CDN}/${dict.version}/img/champion/${campeao.image}`;
+}
+
+export function itemIcon(dict, id) {
+  const imagem = dict.itemImages?.get(id);
+  if (!imagem) return null;
+  return `${CDN}/${dict.version}/img/item/${imagem}`;
+}
+
+export function spellIcon(dict, id) {
+  const imagem = dict.spellImages?.get(id);
+  if (!imagem) return null;
+  return `${CDN}/${dict.version}/img/spell/${imagem}`;
+}
+
+// ATENCAO: ao contrario de item, feitico e campeao, o icone de runa NAO e
+// versionado. O caminho (`icon` do runesReforged.json) vive em /cdn/img/, e a
+// forma com versao responde 403. Fragmentos de atributo nao tem icone: nenhum
+// arquivo do Data Dragon mapeia id de fragmento para imagem.
+export function runeIcon(dict, id) {
+  const caminho = dict.runeIcons?.get(id);
+  if (!caminho) return null;
+  return `${CDN}/img/${caminho}`;
 }
