@@ -75,7 +75,7 @@ export function itemName(dict, id) {
 }
 
 export function runeName(dict, id) {
-  return dict.runes.get(id) ?? String(id);
+  return dict.runes.get(id) ?? SHARDS.get(id) ?? String(id);
 }
 
 // ATENCAO: estes nove nomes NAO vem do Data Dragon, que nao publica nome

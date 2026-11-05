@@ -102,3 +102,10 @@ Deno.test("spellName resolve a chave textual do summoner.json por id numerico", 
   const dict = await loadDdragon("16.21.1", fakeFetch);
   assertEquals(spellName(dict, 4), "Flash");
 });
+
+Deno.test("runeName resolve fragmento de atributo pela tabela de fragmentos", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  assert(!dict.runes.has(5001));
+  assertEquals(runeName(dict, 5001), "Vida escalando por nível");
+  assertEquals(runeName(dict, 5001), shardName(5001));
+});
