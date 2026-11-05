@@ -15,6 +15,16 @@ Deno.test("pct arredonda para inteiro e marca ausencia", () => {
   assertEquals(pct(null), "—");
 });
 
+Deno.test("pct arredonda ao mais proximo, nao trunca", () => {
+  assertEquals(pct(0.5849), "58%");
+  assertEquals(pct(0.586), "59%");
+  assertEquals(pct(1), "100%");
+});
+
+Deno.test("pct trata undefined como ausencia, nao NaN%", () => {
+  assertEquals(pct(undefined), "—");
+});
+
 Deno.test("sample concorda em numero", () => {
   assertEquals(sample(1), "em 1 partida");
   assertEquals(sample(180), "em 180 partidas");

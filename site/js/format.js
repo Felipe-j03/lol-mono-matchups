@@ -10,9 +10,10 @@ export function escapeHtml(s) {
     .replaceAll("'", "&#39;");
 }
 
-// null significa "sem dado": o contrato anula medias aos pares.
+// null/undefined significam "sem dado": o contrato anula medias aos pares
+// e alguns arquivos nem trazem o campo.
 export function pct(x) {
-  if (x === null) return "—";
+  if (x == null) return "—";
   return `${Math.round(x * 100)}%`;
 }
 
