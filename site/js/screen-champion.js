@@ -46,8 +46,24 @@ function paginaDeRunas(runas, dict) {
     </dl>`;
 }
 
+// O exportador entrega a lista inteira de itens; escolher quanto mostrar e desta tela.
+// Piso de 5% das partidas do grupo (comparacao em inteiros: games/total >= 1/20) e teto de 12.
+const ITENS_PISO_PERCENTUAL = 5;
+const ITENS_TETO = 12;
+
+function itensVisiveis(b) {
+  const acima = b.item_frequency.filter((i) =>
+    i.games * 100 >= b.games * ITENS_PISO_PERCENTUAL
+  );
+  return { mostrados: acima.slice(0, ITENS_TETO), total: b.item_frequency.length };
+}
+
 function base(b, dict) {
-  const itens = b.item_frequency.map((i) =>
+  const { mostrados, total } = itensVisiveis(b);
+  const truncamento = mostrados.length === total ? "" : `
+    <p class="note">Mostrando ${mostrados.length} de ${total} itens: só os que aparecem em pelo menos
+    ${ITENS_PISO_PERCENTUAL}% das ${b.games} ${partidas(b.games)}, até ${ITENS_TETO}. Os demais ficam de fora.</p>`;
+  const itens = mostrados.map((i) =>
     `<li>${escapeHtml(itemName(dict, i.item_id))} <span class="n">${i.games} de ${b.games} ${partidas(b.games)}</span></li>`
   ).join("\n      ");
   return `<section class="baseline">
@@ -64,7 +80,7 @@ function base(b, dict) {
     <h3>Itens finais, um a um</h3>
     <ul class="items">
       ${itens}
-    </ul>
+    </ul>${truncamento}
     <h3>Itens iniciais <span class="n">${sample(b.starting_items_games)}</span></h3>
     <p>${ouSemDado(b.starting_items, (ids) => ids.map((id) => itemName(dict, id)).join(", "))}</p>
     <h3>Ordem de habilidades <span class="n">${sample(b.skill_order_games)}</span></h3>
@@ -107,9 +123,12 @@ function confrontos(matchups, dict) {
   const secaoAbaixo = abaixo.length === 0 ? "" : `
     <h3>Dados insuficientes</h3>
     <p class="note">Poucas partidas para comparar: sem página de confronto.</p>
-    <ul class="matchups matchups-below-floor">
-      ${abaixo.map((m) => confronto(m, dict)).join("\n      ")}
-    </ul>`;
+    <details class="matchups-below-floor-details">
+      <summary>${abaixo.length} ${abaixo.length === 1 ? "confronto" : "confrontos"} com poucas partidas</summary>
+      <ul class="matchups matchups-below-floor">
+        ${abaixo.map((m) => confronto(m, dict)).join("\n        ")}
+      </ul>
+    </details>`;
   return `<section class="matchups-section">
     <h2>Confrontos, do pior para o melhor</h2>
     <ul class="matchups">

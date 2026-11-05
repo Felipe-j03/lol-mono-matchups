@@ -173,11 +173,11 @@ Deno.test("sem matchup abaixo do piso nao ha secao de dados insuficientes", () =
 
 Deno.test("jogadores de referencia ficam atras de um details", () => {
   const html = renderChampion(TARGET, DICT);
-  const d = html.indexOf("<details");
+  const d = html.indexOf("<details class=\"reference-players\"");
   assert(d !== -1);
   assert(html.includes("<summary"));
   assert(html.indexOf("Mono#BR1") > d);
-  assert(html.indexOf("Mono#BR1") < html.indexOf("</details>"));
+  assert(html.indexOf("Mono#BR1") < html.indexOf("</details>", d));
   assert(html.includes("br1"));
 });
 
@@ -201,4 +201,56 @@ Deno.test("o nome do alvo vem do JSON e o do oponente do Data Dragon", () => {
   // oponente fora do dict: cai para o id, nunca undefined
   assert(html.includes("238"));
   assert(!html.includes("undefined"));
+});
+
+function comItens(freq, games = 1000) {
+  const b = { ...TARGET.baseline, games, item_frequency: freq };
+  return renderChampion({ ...TARGET, baseline: b }, DICT);
+}
+const linhasDeItem = (html) => (html.match(/ de \d+ partidas<\/span><\/li>/g) ?? []).length;
+const itens = (n, games, desde = 1) =>
+  Array.from({ length: n }, (_, k) => ({ item_id: 1000 + desde + k, games }));
+
+Deno.test("itens: o teto de 12 corta mesmo quando todos passam do piso de 5%", () => {
+  const html = comItens(itens(20, 100));   // 20 itens a 10%: so o teto separa
+  assert(linhasDeItem(html) === 12);
+  assert(html.includes("Mostrando 12 de 20 itens"));
+  assert(html.includes("5% das 1000 partidas"));
+});
+
+Deno.test("itens: o piso de 5% corta mesmo quando a lista e menor que o teto", () => {
+  const freq = [...itens(3, 200), ...itens(30, 10, 100)];   // 3 acima, 30 a 1%: so o piso separa
+  const html = comItens(freq);
+  assert(linhasDeItem(html) === 3);
+  assert(html.includes("Mostrando 3 de 33 itens"));
+});
+
+Deno.test("itens: exatamente 5% entra, logo abaixo nao", () => {
+  const html = comItens([{ item_id: 1001, games: 50 }, { item_id: 1002, games: 49 }]);
+  assert(linhasDeItem(html) === 1);
+  assert(html.includes("50 de 1000 partidas"));
+  assert(!html.includes("49 de 1000"));
+});
+
+Deno.test("itens: sem corte nao ha aviso de truncamento", () => {
+  assert(!renderChampion(TARGET, DICT).includes("Mostrando"));
+});
+
+Deno.test("abaixo do piso: lista dentro de details cujo summary traz a contagem", () => {
+  const muitos = Array.from({ length: 80 }, (_, k) => ({
+    opponent_champion_id: 5000 + k, games: 3, wins: 1, win_rate: 0.33,
+    below_floor: true, file: null,
+  }));
+  const html = renderChampion({ ...TARGET, matchups: [TARGET.matchups[0], ...muitos] }, DICT);
+  const d = html.indexOf("<details class=\"matchups-below-floor-details\">");
+  assert(d !== -1);
+  assert(html.includes("<summary>80 confrontos com poucas partidas</summary>"));
+  assert(html.indexOf("matchups-below-floor\"", d) > d);
+  assert(html.indexOf("</details>", d) > html.indexOf("matchups-below-floor\"", d));
+  assert(html.indexOf("Ekko") < d);   // os confrontos acima do piso ficam fora do details
+});
+
+Deno.test("abaixo do piso: um unico confronto fica no singular", () => {
+  const t = { ...TARGET, matchups: [TARGET.matchups[1]] };
+  assert(renderChampion(t, DICT).includes("<summary>1 confronto com poucas partidas</summary>"));
 });
