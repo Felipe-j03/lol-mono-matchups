@@ -37,7 +37,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # `enablement: true` liga o Pages no repositorio se ele ainda nao estiver
+      # ligado, em vez de exigir que alguem ache a opcao em Settings. Deixa a
+      # publicacao reprodutivel: clonar o repo e empurrar basta.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Conferir que o dado exportado esta presente
         # O site sem site/data/ carrega e mostra uma mensagem de erro honesta,
