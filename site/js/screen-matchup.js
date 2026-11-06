@@ -74,7 +74,7 @@ function fraseDoTopo(div, dict) {
   return `<p class="topo">Maior diferença observada, em ${campo}: ${venc} ${
     verbo(div.field)
   } <strong>${nome}</strong>, contra ${perd}.</p>
-<p class="ressalva">É uma diferença entre os grupos, não prova de que a escolha causou o resultado.</p>`;
+<p class="ressalva">Diferença observada entre os grupos, não prova de causa.</p>`;
 }
 
 function colunas(div, dict) {

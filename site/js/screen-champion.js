@@ -77,28 +77,30 @@ function itensVisiveis(b) {
 function base(b, dict) {
   const { mostrados, total } = itensVisiveis(b);
   const truncamento = mostrados.length === total ? "" : `
-    <p class="note">Mostrando ${mostrados.length} de ${total} itens: só os que aparecem em pelo menos
-    ${ITENS_PISO_PERCENTUAL}% das ${b.games} ${partidas(b.games)}, até ${ITENS_TETO}. Os demais ficam de fora.</p>`;
+    <p class="note">Mostrando ${mostrados.length} de ${total} itens: os que aparecem em ao menos ${ITENS_PISO_PERCENTUAL}% das ${b.games} ${
+    partidas(b.games)
+  }.</p>`;
   const itens = mostrados.map((i) =>
     `<li>${itemComIcone(dict, i.item_id)} <span class="n">${i.games} de ${b.games} ${partidas(b.games)}</span></li>`
   ).join("\n      ");
   return `<section class="baseline">
     <h2>O que os monos fazem por padrão</h2>
-    <p class="note">Cada bloco é a configuração mais frequente entre as partidas do grupo,
-    vitórias e derrotas juntas: descreve o que se faz por padrão, não o que ganha.
-    Taxa de vitória do grupo: ${pct(b.group_win_rate)} ${sample(b.games)}.</p>
+    <p class="note">A configuração mais frequente do grupo, vitórias e derrotas juntas:
+    o que se faz, não o que ganha. Vitórias do grupo: ${pct(b.group_win_rate)} ${
+    sample(b.games)
+  }.</p>
     <h3>Runas <span class="n">${sample(b.runes_games)}</span></h3>
     ${paginaDeRunas(b.runes, dict)}
-    <p class="aside">Taxa de vitória dessa página exata: ${pct(b.runes_win_rate)} ${sample(b.runes_games)}.
-    É informação ao lado; não foi o critério que a escolheu.</p>
+    <p class="aside">Esta página exata: ${pct(b.runes_win_rate)} ${
+    sample(b.runes_games)
+  } — dado ao lado, não o critério que a escolheu.</p>
     <h3>Feitiços <span class="n">${sample(b.spells_games)}</span></h3>
     <p class="feiticos">${
       b.spells.map((id) => comIcone(spellIcon(dict, id), "icon icon-feitico", spellName(dict, id))).join(" ")
     }</p>
     <h3>Itens no inventário ao fim da partida</h3>
-    <p class="note">Item por item, não a build completa: é o que estava nos seis espaços
-    quando o jogo acabou, incluindo componente que não foi evoluído e consumível ainda
-    na mão. Por isso difere do que um site de meta chama de build.</p>
+    <p class="note">Inventário no fim da partida, item por item — não a build completa:
+    inclui componente e consumível.</p>
     <ul class="items">
       ${itens}
     </ul>${truncamento}
