@@ -68,9 +68,13 @@ function fraseDoTopo(div, dict) {
   const campo = escapeHtml(nomeDoCampo(div.field));
   const venc = proporcao(div.winner_share, "vencedores", div.winner_games);
   const perd = proporcao(div.loser_share, "perdedores", div.loser_games);
+  // A escolha vai em <strong> porque e o nucleo da frase: quem bate o olho na
+  // tela tem que sair sabendo O QUE diferiu, antes de ler o resto. A ressalva
+  // de causalidade sai do destaque e vira nota, para nao competir com ela.
   return `<p class="topo">Maior diferença observada, em ${campo}: ${venc} ${
     verbo(div.field)
-  } ${nome}, contra ${perd}. É uma diferença entre os grupos, não prova de que a escolha causou o resultado.</p>`;
+  } <strong>${nome}</strong>, contra ${perd}.</p>
+<p class="ressalva">É uma diferença entre os grupos, não prova de que a escolha causou o resultado.</p>`;
 }
 
 function colunas(div, dict) {

@@ -155,3 +155,118 @@ dl.runes dt:first-child + dd { font-size: 1.15rem; font-weight: 600; }
 .com-icone { display: inline-block; margin-right: 0.75rem; white-space: nowrap; }
 .items li .icon { margin-right: 0.25rem; }
 .divergencia h3 .icon { margin-right: 0.25rem; }
+
+/* ============================================================
+   Passada de acabamento: hierarquia, colunas e convencoes da
+   categoria (op.gg / u.gg). Vem depois de proposito: estende e
+   sobrepoe as regras acima sem reescreve-las.
+   ============================================================ */
+
+:root { --panel-2: #1e2731; }
+
+/* ---- Hierarquia: conclusao pesa, ressalva recua ---- */
+
+/* A frase do topo e a resposta a pergunta do usuario. Antes tinha o mesmo
+   peso do aviso de correlacao logo abaixo; agora e destaque e o aviso e nota. */
+.topo {
+  background: var(--panel);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0 0.25rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+.topo strong { color: var(--accent); }
+
+.ressalva, .placar, .nota {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.25rem 0 1rem;
+}
+
+/* Ponto cego e alerta, nao nota de rodape: alto, ele muda como se le a tela
+   inteira, porque "sem divergencia de botas" deixa de significar concordancia. */
+.ponto-cego {
+  background: var(--warn-bg);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+/* Ausencia tem que PARECER ausencia, e nao conteudo comum. */
+.sem-dado { color: var(--muted); font-style: italic; }
+
+/* ---- Numeros ---- */
+
+/* Alinham em coluna, como em tabela. */
+.n, .wr, .items li, .aos-14, .matchups .n, .card .count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Convencao que o jogador ja le sem pensar. E reforco de um numero que
+   continua escrito por extenso: nunca a unica pista. */
+.wr { font-weight: 600; }
+.wr-bom { color: var(--good); }
+.wr-ruim { color: var(--bad); }
+
+/* ---- Colunas: corta a rolagem da tela de campeao quase pela metade ---- */
+.colunas { display: grid; grid-template-columns: 1fr; gap: 0 2rem; }
+
+/* ---- Paineis com cabecalho, em vez de titulos soltos sobre o fundo ---- */
+.baseline, .matchups-section, .divergencias, .timeline, .sem-comparacao {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.25rem 1rem 1rem;
+  margin: 1rem 0;
+}
+.baseline h2, .matchups-section h2, .divergencias h2, .timeline h2 {
+  margin: 0 -1rem 0.75rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sem-comparacao { padding: 1rem; }
+
+/* Dentro de um painel nao se empilha outra caixa: o bloco interno so muda
+   de tom, e a divergencia vira linha separada por regua. */
+.baseline dl.runes { background: var(--panel-2); }
+.divergencias ul { display: block; }
+.divergencia {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0.6rem 0;
+  margin: 0;
+}
+.divergencia:last-child { border-bottom: 0; }
+.divergencia h3 { margin: 0 0 0.35rem; }
+
+/* ---- Ladrilhos de item: 12 itens em tres ou quatro linhas, nao doze ---- */
+.items { grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: 0.4rem; }
+.items li {
+  background: var(--panel-2);
+  align-items: center;
+  text-align: center;
+  gap: 0.2rem;
+  padding: 0.45rem 0.25rem;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.items li .icon { width: 32px; height: 32px; margin: 0; }
+
+/* ---- Linhas de confronto: retrato, nome, numero a direita ---- */
+.matchups li a, .matchups li:not(:has(a)) { padding: 0.45rem 0.5rem; border-radius: 6px; }
+.matchups .name { min-width: 0; }
+
+@media (min-width: 64rem) {
+  main { max-width: 76rem; }
+  .colunas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}

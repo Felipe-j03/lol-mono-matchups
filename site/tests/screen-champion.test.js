@@ -153,6 +153,22 @@ Deno.test("abaixo do piso mostra so a contagem, sem taxa de vitoria", () => {
   assert(!html.includes("60%"));
 });
 
+Deno.test("a cor da taxa segue o valor, e 50% conta como bom", () => {
+  // A cor e so reforco de um numero ja escrito, mas e logica: trocar >= por >,
+  // ou inverter as classes, pintaria de vermelho um confronto favoravel e
+  // ninguem notaria, porque o texto continuaria certo.
+  const com = (wr) => renderChampion(
+    { ...TARGET, matchups: [{ ...TARGET.matchups[0], win_rate: wr }] },
+    DICT,
+  );
+  assert(com(0.62).includes('class="wr wr-bom"'));
+  assert(com(0.38).includes('class="wr wr-ruim"'));
+  assert(com(0.5).includes('class="wr wr-bom"'));      // a borda exata
+  assert(com(0.49).includes('class="wr wr-ruim"'));
+  // e o numero continua escrito, com ou sem cor
+  assert(com(0.38).includes("38%"));
+});
+
 Deno.test("itens iniciais e habilidades nulos (timeline nao coletada) nao derrubam a tela", () => {
   for (const [campo, jogos] of [["starting_items", "starting_items_games"],
                                 ["skill_order", "skill_order_games"]]) {

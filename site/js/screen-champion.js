@@ -131,7 +131,10 @@ function resumoDoConfronto(m) {
   // Abaixo do piso o exportador entrega win_rate, mas a tela nao o manchete:
   // abaixo do piso nao afirmamos taxa, so dizemos quantas partidas existem.
   if (m.below_floor) return sample(m.games);
-  return `${pct(m.win_rate)} de vitórias ${sample(m.games)}`;
+  // A cor e convencao da categoria: verde acima de 50%, vermelho abaixo. E so
+  // reforco visual de um numero que ja esta escrito, nunca a unica pista.
+  const faixa = m.win_rate >= 0.5 ? "wr-bom" : "wr-ruim";
+  return `<span class="wr ${faixa}">${pct(m.win_rate)}</span> de vitórias ${sample(m.games)}`;
 }
 
 function confronto(m, dict) {
@@ -182,8 +185,9 @@ function jogadores(players) {
 export function renderChampion(target, dict) {
   return `<section class="champion">
   <h1>${escapeHtml(target.champion_name)} <span class="role">${escapeHtml(target.role)}</span></h1>
-  ${base(target.baseline, dict)}
-  ${confrontos(target.matchups, dict)}
-  ${jogadores(target.reference_players)}
+  <div class="colunas">
+    <div class="coluna">${base(target.baseline, dict)}</div>
+    <div class="coluna">${confrontos(target.matchups, dict)}${jogadores(target.reference_players)}</div>
+  </div>
 </section>`;
 }
