@@ -318,6 +318,46 @@
   },
   "matchups": [
     {
+      "opponent_champion_id": 8,
+      "games": 18,
+      "wins": 6,
+      "win_rate": 0.3333333333333333,
+      "below_floor": false,
+      "file": "talon-middle-vs-8.json"
+    },
+    {
+      "opponent_champion_id": 711,
+      "games": 16,
+      "wins": 6,
+      "win_rate": 0.375,
+      "below_floor": false,
+      "file": "talon-middle-vs-711.json"
+    },
+    {
+      "opponent_champion_id": 13,
+      "games": 18,
+      "wins": 7,
+      "win_rate": 0.3888888888888889,
+      "below_floor": false,
+      "file": "talon-middle-vs-13.json"
+    },
+    {
+      "opponent_champion_id": 245,
+      "games": 19,
+      "wins": 8,
+      "win_rate": 0.42105263157894735,
+      "below_floor": false,
+      "file": "talon-middle-vs-245.json"
+    },
+    {
+      "opponent_champion_id": 131,
+      "games": 17,
+      "wins": 8,
+      "win_rate": 0.47058823529411764,
+      "below_floor": false,
+      "file": "talon-middle-vs-131.json"
+    },
+    {
       "opponent_champion_id": 127,
       "games": 21,
       "wins": 10,
@@ -340,6 +380,22 @@
       "win_rate": 0.5,
       "below_floor": false,
       "file": "talon-middle-vs-777.json"
+    },
+    {
+      "opponent_champion_id": 105,
+      "games": 18,
+      "wins": 9,
+      "win_rate": 0.5,
+      "below_floor": false,
+      "file": "talon-middle-vs-105.json"
+    },
+    {
+      "opponent_champion_id": 166,
+      "games": 18,
+      "wins": 9,
+      "win_rate": 0.5,
+      "below_floor": false,
+      "file": "talon-middle-vs-166.json"
     },
     {
       "opponent_champion_id": 238,
@@ -372,6 +428,14 @@
       "win_rate": 0.5555555555555556,
       "below_floor": false,
       "file": "talon-middle-vs-4.json"
+    },
+    {
+      "opponent_champion_id": 893,
+      "games": 18,
+      "wins": 10,
+      "win_rate": 0.5555555555555556,
+      "below_floor": false,
+      "file": "talon-middle-vs-893.json"
     },
     {
       "opponent_champion_id": 55,
@@ -476,70 +540,6 @@
       "win_rate": 0.7142857142857143,
       "below_floor": false,
       "file": "talon-middle-vs-910.json"
-    },
-    {
-      "opponent_champion_id": 245,
-      "games": 19,
-      "wins": 8,
-      "win_rate": 0.42105263157894735,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 8,
-      "games": 18,
-      "wins": 6,
-      "win_rate": 0.3333333333333333,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 13,
-      "games": 18,
-      "wins": 7,
-      "win_rate": 0.3888888888888889,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 105,
-      "games": 18,
-      "wins": 9,
-      "win_rate": 0.5,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 166,
-      "games": 18,
-      "wins": 9,
-      "win_rate": 0.5,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 893,
-      "games": 18,
-      "wins": 10,
-      "win_rate": 0.5555555555555556,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 131,
-      "games": 17,
-      "wins": 8,
-      "win_rate": 0.47058823529411764,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 711,
-      "games": 16,
-      "wins": 6,
-      "win_rate": 0.375,
-      "below_floor": true,
-      "file": null
     },
     {
       "opponent_champion_id": 34,

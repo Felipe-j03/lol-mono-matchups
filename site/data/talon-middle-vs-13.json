@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "champion_id": 91,
+  "champion_name": "Talon",
+  "role": "MIDDLE",
+  "opponent_champion_id": 13,
+  "games": 18,
+  "wins": 7,
+  "losses": 11,
+  "min_per_side": 8,
+  "comparable": false,
+  "headline": null,
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 7,
+      "losers": 11
+    },
+    "cs_diff_at_14": {
+      "winners": 7,
+      "losers": 11
+    },
+    "starting_items": {
+      "winners": 7,
+      "losers": 11
+    },
+    "skill_order": {
+      "winners": 7,
+      "losers": 11
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": []
+}

@@ -403,6 +403,14 @@
   },
   "matchups": [
     {
+      "opponent_champion_id": 86,
+      "games": 18,
+      "wins": 5,
+      "win_rate": 0.2777777777777778,
+      "below_floor": false,
+      "file": "renekton-top-vs-86.json"
+    },
+    {
       "opponent_champion_id": 114,
       "games": 45,
       "wins": 18,
@@ -425,6 +433,14 @@
       "win_rate": 0.4375,
       "below_floor": false,
       "file": "renekton-top-vs-24.json"
+    },
+    {
+      "opponent_champion_id": 777,
+      "games": 17,
+      "wins": 8,
+      "win_rate": 0.47058823529411764,
+      "below_floor": false,
+      "file": "renekton-top-vs-777.json"
     },
     {
       "opponent_champion_id": 904,
@@ -457,6 +473,14 @@
       "win_rate": 0.5454545454545454,
       "below_floor": false,
       "file": "renekton-top-vs-126.json"
+    },
+    {
+      "opponent_champion_id": 82,
+      "games": 18,
+      "wins": 10,
+      "win_rate": 0.5555555555555556,
+      "below_floor": false,
+      "file": "renekton-top-vs-82.json"
     },
     {
       "opponent_champion_id": 2,
@@ -515,44 +539,20 @@
       "file": "renekton-top-vs-106.json"
     },
     {
+      "opponent_champion_id": 79,
+      "games": 16,
+      "wins": 11,
+      "win_rate": 0.6875,
+      "below_floor": false,
+      "file": "renekton-top-vs-79.json"
+    },
+    {
       "opponent_champion_id": 516,
       "games": 21,
       "wins": 15,
       "win_rate": 0.7142857142857143,
       "below_floor": false,
       "file": "renekton-top-vs-516.json"
-    },
-    {
-      "opponent_champion_id": 82,
-      "games": 18,
-      "wins": 10,
-      "win_rate": 0.5555555555555556,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 86,
-      "games": 18,
-      "wins": 5,
-      "win_rate": 0.2777777777777778,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 777,
-      "games": 17,
-      "wins": 8,
-      "win_rate": 0.47058823529411764,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 79,
-      "games": 16,
-      "wins": 11,
-      "win_rate": 0.6875,
-      "below_floor": true,
-      "file": null
     },
     {
       "opponent_champion_id": 68,

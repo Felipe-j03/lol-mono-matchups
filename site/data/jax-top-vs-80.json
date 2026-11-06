@@ -7,7 +7,7 @@
   "games": 44,
   "wins": 23,
   "losses": 21,
-  "min_per_side": 10,
+  "min_per_side": 8,
   "comparable": true,
   "headline": null,
   "winner_gold_at_14": 5190.739130434783,

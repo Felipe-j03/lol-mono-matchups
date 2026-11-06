@@ -7,13 +7,13 @@
   "games": 24,
   "wins": 14,
   "losses": 10,
-  "min_per_side": 10,
+  "min_per_side": 8,
   "comparable": true,
   "headline": null,
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "winner_gold_at_14": 6021.214285714285,
+  "loser_gold_at_14": 5702.888888888889,
+  "winner_cs_diff_at_14": -1.7142857142857142,
+  "loser_cs_diff_at_14": -0.3333333333333333,
   "timeline_games": {
     "gold_at_14": {
       "winners": 14,

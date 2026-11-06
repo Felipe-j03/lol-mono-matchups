@@ -64,11 +64,20 @@ mastery_max_days = 30
 # que 10 de cada lado e POSSIVEL: assim a pagina so existe quando pode ter
 # conteudo, e quando a divisao real nao alcanca ela declara isso.
 #
-# Custo se errado: Talon vs Ekko, o confronto que originou o projeto, tem 19
-# partidas divididas em 8 e 11 e continua sem comparacao — passaria so com
-# piso 8, onde a margem de erro de qualquer proporcao ja beira 17 pontos.
-matchup_min_games = 20
-delta_min_per_side = 10
+# Baixado de 10 para 8 em 06/11/2026 a pedido do dono, que queria o confronto
+# Talon vs Ekko — 19 partidas divididas em 8 e 11, o que originou o projeto.
+# Em 8 uma divergencia AINDA exige dois jogadores (12,5 < 15), entao a regra
+# que importa se mantem. O que se perde e margem: com 8 partidas o erro padrao
+# de uma proporcao beira 17 pontos, maior que o proprio limiar.
+#
+# Feito como REGRA e nao como excecao para aquele confronto. Escolher um
+# padrao mais frouxo so para o caso cuja resposta se quer ver e raciocinio
+# motivado virando configuracao; uma regra vale para todos ou nao vale.
+#
+# Custo se errado: 22 confrontos alem do Ekko passam a comparar sobre dados
+# mais finos. Voltar e trocar dois numeros e reexportar.
+matchup_min_games = 16
+delta_min_per_side = 8
 
 # Versao fixada do Data Dragon usada para confirmar champion_id.
 ddragon_version = "16.21.1"

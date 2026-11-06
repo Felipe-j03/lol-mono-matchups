@@ -7,13 +7,13 @@
   "games": 21,
   "wins": 12,
   "losses": 9,
-  "min_per_side": 10,
-  "comparable": false,
+  "min_per_side": 8,
+  "comparable": true,
   "headline": null,
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "winner_gold_at_14": 5224.25,
+  "loser_gold_at_14": 4910.222222222223,
+  "winner_cs_diff_at_14": 0.25,
+  "loser_cs_diff_at_14": -9.333333333333334,
   "timeline_games": {
     "gold_at_14": {
       "winners": 12,
@@ -36,5 +36,78 @@
     "winners": 1,
     "losers": 0
   },
-  "divergences": []
+  "divergences": [
+    {
+      "field": "rune",
+      "label": "8451",
+      "winner_share": 0.0,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.2222222222222222,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "5007",
+      "winner_share": 0.75,
+      "loser_share": 0.5555555555555556,
+      "gap": 0.19444444444444442,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8017",
+      "winner_share": 0.25,
+      "loser_share": 0.4444444444444444,
+      "gap": 0.19444444444444442,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "skill_order",
+      "label": "E > Q > W",
+      "winner_share": 0.16666666666666666,
+      "loser_share": 0.0,
+      "gap": 0.16666666666666666,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "starting_items",
+      "label": "1027",
+      "winner_share": 0.16666666666666666,
+      "loser_share": 0.0,
+      "gap": 0.16666666666666666,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "starting_items",
+      "label": "2031",
+      "winner_share": 0.16666666666666666,
+      "loser_share": 0.0,
+      "gap": 0.16666666666666666,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "starting_items",
+      "label": "1056",
+      "winner_share": 0.8333333333333334,
+      "loser_share": 1.0,
+      "gap": 0.16666666666666663,
+      "winner_games": 12,
+      "loser_games": 9
+    },
+    {
+      "field": "starting_items",
+      "label": "2003",
+      "winner_share": 0.8333333333333334,
+      "loser_share": 1.0,
+      "gap": 0.16666666666666663,
+      "winner_games": 12,
+      "loser_games": 9
+    }
+  ]
 }

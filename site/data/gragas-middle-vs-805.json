@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "champion_id": 79,
+  "champion_name": "Gragas",
+  "role": "MIDDLE",
+  "opponent_champion_id": 805,
+  "games": 17,
+  "wins": 8,
+  "losses": 9,
+  "min_per_side": 8,
+  "comparable": true,
+  "headline": "Sem partidas suficientes com timeline para comparar: ordem de habilidades.",
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 7,
+      "losers": 9
+    },
+    "cs_diff_at_14": {
+      "winners": 7,
+      "losers": 9
+    },
+    "starting_items": {
+      "winners": 8,
+      "losers": 9
+    },
+    "skill_order": {
+      "winners": 7,
+      "losers": 9
+    }
+  },
+  "games_without_boots": {
+    "winners": 1,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "rune",
+      "label": "8112",
+      "winner_share": 0.625,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.4027777777777778,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8236",
+      "winner_share": 0.5,
+      "loser_share": 0.8888888888888888,
+      "gap": 0.38888888888888884,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8106",
+      "winner_share": 0.375,
+      "loser_share": 0.0,
+      "gap": 0.375,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8140",
+      "winner_share": 0.375,
+      "loser_share": 0.0,
+      "gap": 0.375,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.625,
+      "loser_share": 0.3333333333333333,
+      "gap": 0.2916666666666667,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8237",
+      "winner_share": 0.375,
+      "loser_share": 0.1111111111111111,
+      "gap": 0.2638888888888889,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8210",
+      "winner_share": 0.75,
+      "loser_share": 1.0,
+      "gap": 0.25,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8126",
+      "winner_share": 0.25,
+      "loser_share": 0.0,
+      "gap": 0.25,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8009",
+      "winner_share": 0.0,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.2222222222222222,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8229",
+      "winner_share": 0.0,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.2222222222222222,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8345",
+      "winner_share": 0.0,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.2222222222222222,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8347",
+      "winner_share": 0.0,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.2222222222222222,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8017",
+      "winner_share": 0.25,
+      "loser_share": 0.4444444444444444,
+      "gap": 0.19444444444444442,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.25,
+      "loser_share": 0.4444444444444444,
+      "gap": 0.19444444444444442,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8230",
+      "winner_share": 0.375,
+      "loser_share": 0.5555555555555556,
+      "gap": 0.18055555555555558,
+      "winner_games": 8,
+      "loser_games": 9
+    },
+    {
+      "field": "rune",
+      "label": "8143",
+      "winner_share": 0.375,
+      "loser_share": 0.2222222222222222,
+      "gap": 0.1527777777777778,
+      "winner_games": 8,
+      "loser_games": 9
+    }
+  ]
+}

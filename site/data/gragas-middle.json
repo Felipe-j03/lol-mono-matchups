@@ -283,8 +283,8 @@
       "games": 17,
       "wins": 8,
       "win_rate": 0.47058823529411764,
-      "below_floor": true,
-      "file": null
+      "below_floor": false,
+      "file": "gragas-middle-vs-805.json"
     },
     {
       "opponent_champion_id": 3,

@@ -476,6 +476,14 @@
       "file": "gragas-top-vs-114.json"
     },
     {
+      "opponent_champion_id": 31,
+      "games": 18,
+      "wins": 11,
+      "win_rate": 0.6111111111111112,
+      "below_floor": false,
+      "file": "gragas-top-vs-31.json"
+    },
+    {
       "opponent_champion_id": 126,
       "games": 27,
       "wins": 17,
@@ -498,14 +506,6 @@
       "win_rate": 0.6896551724137931,
       "below_floor": false,
       "file": "gragas-top-vs-777.json"
-    },
-    {
-      "opponent_champion_id": 31,
-      "games": 18,
-      "wins": 11,
-      "win_rate": 0.6111111111111112,
-      "below_floor": true,
-      "file": null
     },
     {
       "opponent_champion_id": 68,

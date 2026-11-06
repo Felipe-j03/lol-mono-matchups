@@ -318,8 +318,13 @@ def test_exported_timeline_counts_match_the_timelines_actually_stored(cfg, tmp_p
     database.init_schema()
     database.confirm_player("br1", KNOWN_PUUID, "Mono#BR1", TALON, "MIDDLE", 40, 0.8)
     n = 0
-    # 20 wins and 20 losses; 18 winners but only 9 losers have a timeline.
-    for win, with_timeline in ((True, 18), (False, 9)):
+    # 20 wins and 20 losses; the winners are comfortably above the per-side
+    # floor and the losers are deliberately ONE BELOW it. Derived from cfg
+    # instead of hard-coded: a literal here silently stops exercising the rule
+    # the day someone changes delta_min_per_side, which is exactly what
+    # happened when it went from 15 to 8.
+    poucos = cfg.delta_min_per_side - 1
+    for win, with_timeline in ((True, 18), (False, poucos)):
         for i in range(20):
             n += 1
             database.insert_match(_match(n, win, EKKO, 3020 if win else 3047))
@@ -330,11 +335,11 @@ def test_exported_timeline_counts_match_the_timelines_actually_stored(cfg, tmp_p
     export_all(database, cfg, out)
     database.close()
     detail = _read(out / f"talon-middle-vs-{EKKO}.json")
-    assert detail["timeline_games"]["gold_at_14"] == {"winners": 18, "losers": 9}
-    assert detail["timeline_games"]["starting_items"] == {"winners": 18, "losers": 9}
-    assert detail["timeline_games"]["skill_order"] == {"winners": 18, "losers": 9}
-    # 9 < 15 losers with data: no gold figure, but the match counts and the
-    # boots divergence are still there.
+    assert detail["timeline_games"]["gold_at_14"] == {"winners": 18, "losers": poucos}
+    assert detail["timeline_games"]["starting_items"] == {"winners": 18, "losers": poucos}
+    assert detail["timeline_games"]["skill_order"] == {"winners": 18, "losers": poucos}
+    # One below the floor on the losing side: no gold figure, but the match
+    # counts and the boots divergence are still there.
     assert detail["winner_gold_at_14"] is None and detail["loser_gold_at_14"] is None
     assert (detail["wins"], detail["losses"], detail["games"]) == (20, 20, 40)
     assert detail["comparable"] is True
