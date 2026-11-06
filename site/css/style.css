@@ -287,3 +287,60 @@ dl.runes dt:first-child + dd { font-size: 1.15rem; font-weight: 600; }
 }
 .items { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); }
 .items li { min-width: 0; overflow-wrap: anywhere; }
+
+/* ============================================================
+   Tela de confronto: duas colunas por direcao, com barra de
+   proporcao. A barra nunca e a unica pista — o percentual e o
+   denominador seguem escritos ao lado, para leitor de tela, para
+   quem nao distingue as cores e para quando o CSS nao carrega.
+   ============================================================ */
+
+.duas-colunas { display: grid; grid-template-columns: 1fr; gap: 0 2rem; }
+
+.coluna-divergencia h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 1rem 0 0.25rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--line);
+}
+.col-venc h3 { color: var(--good); }
+.col-perd h3 { color: var(--bad); }
+.coluna-divergencia h4 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0.75rem 0 0.2rem;
+}
+
+.divergencias-lista .divergencia {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.divergencias-lista .divergencia:last-child { border-bottom: 0; }
+.divergencia .rotulo { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; }
+.divergencia .pontos { margin-left: auto; color: var(--accent); font-variant-numeric: tabular-nums; }
+.divergencia .lado { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; }
+.divergencia .valor { min-width: 2.5rem; font-variant-numeric: tabular-nums; }
+
+/* O trilho tem largura fixa para que duas barras de linhas diferentes sejam
+   comparaveis entre si, nao so dentro da propria linha. */
+.barra {
+  flex: 0 0 5rem;
+  height: 0.5rem;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.barra .preenche { display: block; height: 100%; }
+.barra.boa .preenche { background: var(--good); }
+.barra.ruim .preenche { background: var(--bad); }
+
+@media (min-width: 64rem) {
+  .duas-colunas { grid-template-columns: 1fr 1fr; align-items: start; }
+}

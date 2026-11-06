@@ -55,49 +55,111 @@ function nomeDoCampo(field) {
   return CAMPO[field] ?? field;
 }
 
-function verbo(field) {
-  return field === "skill_order" ? "seguiram a ordem" : "levaram";
-}
 
-function proporcao(share, lado, n) {
-  return `${pct(share)} dos ${lado} (${sample(n)})`;
-}
 
+// A frase do topo NAO repete a primeira linha da lista: ela diz o campo e o
+// tamanho, e a lista mostra qual escolha foi. Antes dizia as duas coisas e o
+// leitor lia o mesmo fato duas vezes seguidas.
 function fraseDoTopo(div, dict) {
   const nome = escapeHtml(rotulo(div, dict));
   const campo = escapeHtml(nomeDoCampo(div.field));
-  const venc = proporcao(div.winner_share, "vencedores", div.winner_games);
-  const perd = proporcao(div.loser_share, "perdedores", div.loser_games);
-  // A escolha vai em <strong> porque e o nucleo da frase: quem bate o olho na
-  // tela tem que sair sabendo O QUE diferiu, antes de ler o resto. A ressalva
-  // de causalidade sai do destaque e vira nota, para nao competir com ela.
-  return `<p class="topo">Maior diferença observada, em ${campo}: ${venc} ${
-    verbo(div.field)
-  } <strong>${nome}</strong>, contra ${perd}.</p>
+  const lado = div.winner_share > div.loser_share ? "vencedores" : "perdedores";
+  return `<p class="topo">A maior diferença está em <strong>${campo}</strong>: ${
+    pontos(div)
+  } a mais entre os ${lado}, em <strong>${nome}</strong>.</p>
 <p class="ressalva">Diferença observada entre os grupos, não prova de causa.</p>`;
 }
 
-function colunas(div, dict) {
-  const nome = escapeHtml(rotulo(div, dict));
-  const campo = escapeHtml(nomeDoCampo(div.field));
-  return `<li class="divergencia">
-  <h3>${campo}: ${iconeDoRotulo(div, dict)}${nome}</h3>
-  <div class="lado-a-lado">
-    <div class="vencedores"><strong>Vencedores</strong> ${pct(div.winner_share)} <small>${
-    sample(div.winner_games)
-  }</small></div>
-    <div class="perdedores"><strong>Perdedores</strong> ${pct(div.loser_share)} <small>${
-    sample(div.loser_games)
-  }</small></div>
-  </div>
-</li>`;
+// A diferenca em pontos percentuais, que e o que o leitor calculava de cabeca
+// comparando os dois numeros linha a linha.
+function pontos(div) {
+  return `${Math.round(Math.abs(div.winner_share - div.loser_share) * 100)} pontos`;
 }
 
+// Barra de proporcao. Largura e a propria proporcao, entao a comparacao e
+// visual antes de ser numerica. NUNCA e a unica pista: o percentual e o
+// denominador seguem escritos ao lado, para leitor de tela, para quem nao
+// distingue as cores e para quando o CSS nao carrega.
+function barra(share, classe) {
+  const largura = Math.round(share * 100);
+  return `<span class="barra ${classe}"><span class="preenche" style="width:${largura}%"></span></span>`;
+}
+
+function linhaDivergencia(div, dict) {
+  const nome = escapeHtml(rotulo(div, dict));
+  return `<li class="divergencia">
+    <span class="rotulo">${iconeDoRotulo(div, dict)}${nome} <strong class="pontos">${
+    pontos(div)
+  }</strong></span>
+    <span class="lado vencedores">${barra(div.winner_share, "boa")} <span class="valor">${
+    pct(div.winner_share)
+  }</span> <small>${sample(div.winner_games)}</small></span>
+    <span class="lado perdedores">${barra(div.loser_share, "ruim")} <span class="valor">${
+    pct(div.loser_share)
+  }</span> <small>${sample(div.loser_games)}</small></span>
+  </li>`;
+}
+
+const ORDEM_CAMPOS = ["rune", "boots", "starting_items", "skill_order"];
+
+// Dentro de uma coluna: agrupado por campo, e por tamanho da diferenca dentro
+// de cada grupo. Sem isso a lista intercala runa, bota e habilidade, e quem
+// quer olhar so as runas varre tudo.
+function grupos(divs, dict) {
+  return ORDEM_CAMPOS
+    .map((campo) => [campo, divs.filter((d) => d.field === campo)])
+    .filter(([, ds]) => ds.length)
+    .map(([campo, ds]) =>
+      `<h4>${escapeHtml(nomeDoCampo(campo))}</h4>
+      <ul class="divergencias-lista">${
+        ds.toSorted((a, b) => b.gap - a.gap).map((d) => linhaDivergencia(d, dict)).join("")
+      }</ul>`
+    ).join("");
+}
+
+function coluna(titulo, classe, divs, dict) {
+  if (!divs.length) {
+    return `<div class="coluna-divergencia ${classe}">
+      <h3>${titulo}</h3><p class="sem-dado">Nada acima do limiar deste lado.</p>
+    </div>`;
+  }
+  return `<div class="coluna-divergencia ${classe}">
+    <h3>${titulo} <span class="n">${divs.length}</span></h3>
+    ${grupos(divs, dict)}
+  </div>`;
+}
+
+// Um jogador pesa 100/N pontos numa proporcao. Quando isso se aproxima do
+// limiar de 15 que define uma diferenca aqui, a lista cresce por causa do
+// tamanho da amostra e nao do confronto — medido: mediana de 13 divergencias
+// com 8-9 partidas por lado, contra 4,5 com 25 ou mais. Dizer isso na tela e
+// o oposto de recomendar: e avisar que aqui ha pouco a concluir.
+const LIMIAR_PONTOS = 15;
+
+function confiabilidade(m) {
+  const menor = Math.min(m.wins, m.losses);
+  if (!menor) return "";
+  const peso = Math.round(100 / menor);
+  if (peso * 2 <= LIMIAR_PONTOS) return "";
+  return `<p class="ponto-cego">Amostra pequena: com ${menor} ${
+    partidas(menor)
+  } do lado menor, um único jogador muda uma proporção em ${peso} pontos — perto dos ${LIMIAR_PONTOS} que definem uma diferença aqui. Confrontos com poucas partidas mostram mais diferenças, e isso vem do tamanho da amostra, não do confronto.</p>`;
+}
+
+// A DIRECAO e o eixo principal, nao o campo: a pergunta de quem abre e "o que
+// quem ganhou fez diferente", e com duas colunas isso se le de relance em vez
+// de sair de comparar dois numeros dezoito vezes.
 function divergencias(m, dict) {
   if (!m.divergences.length) return "";
+  const vencedores = m.divergences.filter((d) => d.winner_share > d.loser_share);
+  const perdedores = m.divergences.filter((d) => d.winner_share <= d.loser_share);
   return `<section class="divergencias">
 <h2>Onde vencedores e perdedores divergiram</h2>
-<ul>${m.divergences.map((d) => colunas(d, dict)).join("")}</ul>
+${confiabilidade(m)}
+<div class="duas-colunas">
+  ${coluna("Mais entre os vencedores", "col-venc", vencedores, dict)}
+  ${coluna("Mais entre os perdedores", "col-perd", perdedores, dict)}
+</div>
 </section>`;
 }
 

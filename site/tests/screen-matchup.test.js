@@ -46,10 +46,19 @@ Deno.test("proporcao de cada lado vem com o denominador do proprio lado", () => 
     { field: "rune", label: "8347", winner_share: 0.71, loser_share: 0.3,
       gap: 0.41, winner_games: 28, loser_games: 9 }] };
   const html = renderMatchup(m, DICT);
-  assert(html.includes("71% dos vencedores"));
-  assert(html.includes("em 28 partidas"));
-  assert(html.includes("30% dos perdedores"));
-  assert(html.includes("em 9 partidas"));
+  // Pina o PAREAMENTO, nao so a presenca: o lado dos vencedores carrega 71%
+  // junto de 28, e o dos perdedores 30% junto de 9. Com wins=30 e losses=10 na
+  // fixture, usar o denominador errado imprimiria "em 30 partidas" e "em 10
+  // partidas" — e so uma assercao por lado, separada, pega isso.
+  const trecho = (classe) => {
+    const i = html.indexOf(`<span class="lado ${classe}">`);
+    return html.slice(i, html.indexOf("</span>", html.indexOf("<small>", i)));
+  };
+  const venc = trecho("vencedores");
+  const perd = trecho("perdedores");
+  assert(venc.includes("71%") && venc.includes("em 28 partidas"), venc);
+  assert(perd.includes("30%") && perd.includes("em 9 partidas"), perd);
+  assert(!venc.includes("em 30 partidas") && !perd.includes("em 10 partidas"));
   assert(html.includes("Cosmic Insight"));
 });
 
@@ -218,7 +227,8 @@ Deno.test("ouro aos 14 nulo nao imprime numero nem zero", () => {
 Deno.test("texto fala de diferenca observada, nunca de recomendacao", () => {
   const html = renderMatchup(MATCHUP, DICT);
   assert(!/\b(use|recomend|deve|melhor escolha)/i.test(html));
-  assert(html.includes("dos vencedores"));
+  assert(html.includes("Diferença observada entre os grupos, não prova de causa"));
+  assert(html.includes("vencedores"));
 });
 
 const CDN = "https://ddragon.leagueoflegends.com/cdn";
