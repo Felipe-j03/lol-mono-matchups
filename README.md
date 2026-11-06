@@ -1,4 +1,4 @@
-# lolmono — coletor e agregação
+# lolmono — coletor, agregação e site
 
 Coletor de partidas de League of Legends que encontra jogadores **mono** de um
 par campeão/função em elo alto, baixa as partidas deles e compara o que os
@@ -246,7 +246,7 @@ veredito "rejeitado", e a fila de suspeitos exclui quem já tem veredito —
 consertar o parser não os devolveria, e a recuperação seria apagar o banco e
 repagar o estágio caro.
 
-## Testes
+## Testes do coletor
 
 ```sh
 python -m pytest
@@ -256,6 +256,72 @@ Os cálculos que sustentam os números do produto (concentração de mono, taxa 
 vitória por confronto, comparação vencedor contra perdedor) são escritos com
 teste antes do código, sobre partidas de mentira com resposta conhecida. São
 contas simples, e é exatamente por isso que um erro nelas passa desapercebido.
+
+## A outra metade: o site estático
+
+O coletor termina no `export`. O que o usuário final abre é um site estático em
+`site/`, que lê os JSON de `site/data/` e não fala com a API da Riot — a chave
+nunca sai desta máquina.
+
+Está publicado em
+**<https://felipe-j03.github.io/lol-mono-matchups/>**, e todo push na `main` que
+toque `site/**` republica sozinho, pelo workflow em
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml). Ele existe porque
+o Pages só serve a raiz do repositório ou `/docs`, e o site mora em `site/`.
+
+### Como mexer nele
+
+HTML, CSS e JavaScript puros. **Sem framework e sem passo de build**: os mesmos
+arquivos que o navegador importa são os que os testes importam. Não há
+`package.json` nem `node_modules`.
+
+```
+site/index.html          casca: charset, viewport, <main>, <script type=module>
+site/css/style.css       todo o estilo
+site/js/format.js        escapeHtml, pct, sample, iconImg
+site/js/ddragon.js       nomes, ícones e preços do CDN da Riot
+site/js/route.js         roteamento por hash
+site/js/screen-*.js      as três telas
+site/js/main.js          o ÚNICO que toca document, fetch, location e storage
+site/data/               o que o export escreveu; versionado, porque o Pages serve do repo
+```
+
+A regra de arquitetura que sustenta o resto: **os módulos de tela recebem JSON
+já lido e devolvem string de HTML; nenhum deles toca o DOM.** É isso que permite
+testar as três telas em Deno sem shim de DOM, e é o que você quebra primeiro se
+mover trabalho de DOM para dentro deles.
+
+### Testes do site
+
+```sh
+deno task test
+```
+
+**Deno é dependência de desenvolvimento**, não do site publicado — ele nunca
+carrega Deno. Rode os dois comandos antes de empurrar: `python -m pytest` para o
+coletor e `deno task test` para o site.
+
+### Depois de recoletar
+
+```sh
+python -m lolmono export --out site/data
+git add site/data && git commit && git push
+```
+
+O workflow republica. O navegador de quem já visitou segura CSS e JS por dez
+minutos (`Cache-Control: max-age=600` do Pages), então para ver a mudança na
+hora é recarregar ignorando cache.
+
+### Antes de confiar numa mudança de tela
+
+A suíte afirma comportamento, não aparência, e já deixou passar duas coisas que
+só apareceram na tela: a lista de itens renderizando inteira, com a build
+soterrada sob cem linhas de cauda, e nomes vazando para fora do ladrilho. Sirva
+e olhe:
+
+```sh
+python -m http.server -d site 8000
+```
 
 ## Conferência externa
 

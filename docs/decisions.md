@@ -171,3 +171,71 @@ sinalizadas.
 - ERRO MEU: a assertiva do plano que proibia a frase "0 de ouro" era VAZIA — o codigo nunca produz essa frase. Pior que ausente: a lacuna deixa de ser visivel e quem le o teste acredita que o caso esta coberto. Corrigida no plano e no teste.
 
 - PARA A CONFERENCIA EXTERNA (pendente, do dono): a revisao final confirmou que nada no site quebra se `item_frequency` estiver errado e que nenhum denominador exibido vira falso. A exposicao e outra: se o exportador contar componente e consumivel, o site imprime fielmente uma contagem VERDADEIRA sob um titulo FALSO ("Itens finais"). Nos dados reais, componente e inicial ocupam cerca de um terco da grade principal (o primeiro item do Talon e 1055, Lamina de Doran). A correcao e no exportador ou no titulo, NUNCA uma lista de exclusao no site — isso inventaria semantica que o contrato nao define, o mesmo erro de inventar nome de fragmento.
+
+## Ajustes de produto depois do merge (06/11/2026)
+
+Decisoes tomadas com o site ja publicado, a pedido do dono. Ficam aqui porque
+o historico guarda o que mudou e nao o porque — e porque o piso de amostra em
+particular mudou duas vezes na mesma noite, por motivos diferentes.
+
+- Ruling: o texto explicativo caiu de 129 para 82 palavras SEM remover nenhuma
+  afirmacao. Cada frase existia contra um mal-entendido concreto (que a base e
+  recomendacao, que a lista de itens e build pronta, que a taxa da pagina de
+  runas foi o criterio); todas encurtaram, nenhuma saiu. A de itens foi de 41
+  para 16 dizendo a mesma coisa. Preservei de proposito as frases que os testes
+  de comportamento afirmam, entao nenhuma assertiva foi afrouxada.
+
+- Ruling: itens exibidos do mais barato ao mais caro, mas a SELECAO continua por
+  frequencia. Sao dois passos distintos de proposito: ordenar por preco e so
+  entao cortar 12 mostraria os doze itens mais baratos do inventario, que nao
+  diz nada. `itemGold` devolve null e nao 0 para id desconhecido, porque 0 e
+  preco valido e poria o desconhecido antes do mais barato de verdade.
+
+- ERRO MEU: o teste que prova que a selecao continua por frequencia nasceu com
+  tres itens, abaixo do teto de 12 — entao ordenar antes ou depois do corte dava
+  no mesmo e o bug classico passava com zero falhas. Assertiva com a ideia certa
+  e fixture que nao exercita a regra, o mesmo padrao que promovi a sessao
+  inteira. So apareceu porque rodei a mutacao. Refeito com 15 itens acima do
+  piso.
+
+- PISO DE AMOSTRA, primeira mudanca (30/15 -> 20/10): o pedido era pagina para
+  confronto com mais de 10 partidas. Medi antes: baixar so `matchup_min_games`
+  criaria 111 paginas e ZERO comparacoes, porque 15 por lado exige 30 partidas.
+  O piso que importava era o outro. Criterio usado: o limiar de divergencia e
+  15 pontos percentuais, entao com N partidas de um lado um jogador move 100/N
+  — em 15 uma divergencia exige 3 jogadores, em 10 exige 2, em 5 exige UM e
+  toda divergencia vira ruido por construcao.
+
+- PISO DE AMOSTRA, segunda mudanca (20/10 -> 16/8): o dono pediu explicitamente
+  o confronto Talon vs Ekko, 19 partidas divididas em 8 e 11, que originou o
+  projeto. Feito como REGRA e nao como excecao para aquele confronto: escolher
+  um padrao mais frouxo so para o caso cuja resposta se quer ver e raciocinio
+  motivado virando configuracao.
+
+- MEDICAO QUE PESA CONTRA ESSA ESCOLHA, e que o dono recebeu antes de decidir
+  publicar: o numero de divergencias SOBE quando a amostra encolhe. Mediana de
+  13 divergencias com 8-9 por lado, 9 com 10-14, 7 com 15-24, 4,5 com 25+. Isso
+  e assinatura de ruido — efeito real daria mais diferenca confiavel com mais
+  dado, nao menos. A pagina do Ekko tem 18 divergencias e as bem amostradas tem
+  4 ou 5. O dono optou por publicar sabendo disso. Voltar e trocar dois numeros
+  em config.toml e reexportar.
+
+- Ruling: nenhum filtro de componente na lista de itens. Medi: o teste obvio
+  (item com campo "into" no Data Dragon) marca botas de tier 2, que sao item
+  final legitimo na maioria das partidas. Nao existe linha limpa entre
+  componente sobrando e item barato que o jogador quis terminar segurando, e
+  inventar uma seria regra minha virando verdade na tela. O que estava errado
+  era o TITULO: "Itens finais" prometia build pronta, virou "Itens no
+  inventario ao fim da partida".
+
+- Ruling: fragmento de runa nao ganha icone. As imagens existem em
+  perk-images/StatMods/, mas nenhum arquivo do Data Dragon mapeia id para nome
+  de arquivo. Adivinhar nove nomes seria inventar dado, o mesmo erro que
+  recusamos quando o dono forneceu os nomes em vez de eu chutar.
+
+- OBSERVACAO DE PROCESSO: assistir deploy por "o run mais recente" e corrida de
+  tempo — peguei o run anterior segundos depois de um push e conclui que
+  arquivos novos estavam dando 404 por propagacao de CDN. Fixar pelo commit
+  (`select(.headSha==$SHA)`) resolve. E a mesma licao do main.js buscar arquivo
+  pelo nome que o JSON da em vez de montar: identificar pela coisa, nao pela
+  posicao.
