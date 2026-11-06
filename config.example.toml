@@ -44,9 +44,31 @@ min_tier = "DIAMOND"
 mastery_top_n = 3
 mastery_max_days = 30
 
-# Confronto: minimo de partidas e minimo por lado para o delta.
-matchup_min_games = 30
-delta_min_per_side = 15
+# Confronto: minimo de partidas para ganhar pagina, e minimo por lado para
+# comparar vencedores com perdedores.
+#
+# Baixado de 30/15 para 20/10 em 06/11/2026, por uma razao mensuravel e nao
+# por gosto. O limiar de divergencia e MIN_GAP = 15 pontos percentuais, entao
+# com N partidas de um lado um unico jogador move 100/N pontos:
+#
+#   N = 15 -> 1 jogador vale  6,7 pts: uma divergencia exige 3 jogadores
+#   N = 10 -> 1 jogador vale 10,0 pts: exige 2 jogadores
+#   N =  8 -> 1 jogador vale 12,5 pts: exige 2, no limite
+#   N =  5 -> 1 jogador vale 20,0 pts: UM jogador sozinho cria divergencia
+#
+# Abaixo de 7 a conta quebra e toda divergencia vira ruido por construcao.
+# Em 10 ainda sao necessarios dois jogadores, com margem, e os confrontos
+# comparaveis sobem de 27 para 58 nos dados de 100 monos.
+#
+# `matchup_min_games` acompanha em 20 porque esse e o minimo de partidas em
+# que 10 de cada lado e POSSIVEL: assim a pagina so existe quando pode ter
+# conteudo, e quando a divisao real nao alcanca ela declara isso.
+#
+# Custo se errado: Talon vs Ekko, o confronto que originou o projeto, tem 19
+# partidas divididas em 8 e 11 e continua sem comparacao — passaria so com
+# piso 8, onde a margem de erro de qualquer proporcao ja beira 17 pontos.
+matchup_min_games = 20
+delta_min_per_side = 10
 
 # Versao fixada do Data Dragon usada para confirmar champion_id.
 ddragon_version = "16.21.1"

@@ -7,13 +7,13 @@
   "games": 32,
   "wins": 14,
   "losses": 18,
-  "min_per_side": 15,
-  "comparable": false,
+  "min_per_side": 10,
+  "comparable": true,
   "headline": null,
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "winner_gold_at_14": 5414.5,
+  "loser_gold_at_14": 4846.166666666667,
+  "winner_cs_diff_at_14": 18.857142857142858,
+  "loser_cs_diff_at_14": -0.8333333333333334,
   "timeline_games": {
     "gold_at_14": {
       "winners": 14,
@@ -36,5 +36,60 @@
     "winners": 0,
     "losers": 0
   },
-  "divergences": []
+  "divergences": [
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.14285714285714285,
+      "loser_share": 0.4444444444444444,
+      "gap": 0.30158730158730157,
+      "winner_games": 14,
+      "loser_games": 18
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.8571428571428571,
+      "loser_share": 0.5555555555555556,
+      "gap": 0.3015873015873015,
+      "winner_games": 14,
+      "loser_games": 18
+    },
+    {
+      "field": "boots",
+      "label": "3047",
+      "winner_share": 0.5,
+      "loser_share": 0.7777777777777778,
+      "gap": 0.2777777777777778,
+      "winner_games": 14,
+      "loser_games": 18
+    },
+    {
+      "field": "boots",
+      "label": "3111",
+      "winner_share": 0.42857142857142855,
+      "loser_share": 0.16666666666666666,
+      "gap": 0.26190476190476186,
+      "winner_games": 14,
+      "loser_games": 18
+    },
+    {
+      "field": "starting_items",
+      "label": "1054",
+      "winner_share": 0.42857142857142855,
+      "loser_share": 0.6666666666666666,
+      "gap": 0.23809523809523808,
+      "winner_games": 14,
+      "loser_games": 18
+    },
+    {
+      "field": "starting_items",
+      "label": "1055",
+      "winner_share": 0.5,
+      "loser_share": 0.2777777777777778,
+      "gap": 0.2222222222222222,
+      "winner_games": 14,
+      "loser_games": 18
+    }
+  ]
 }

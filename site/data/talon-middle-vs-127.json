@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "champion_id": 91,
+  "champion_name": "Talon",
+  "role": "MIDDLE",
+  "opponent_champion_id": 127,
+  "games": 21,
+  "wins": 10,
+  "losses": 11,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": 6011.9,
+  "loser_gold_at_14": 6175.454545454545,
+  "winner_cs_diff_at_14": -8.6,
+  "loser_cs_diff_at_14": -7.545454545454546,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 10,
+      "losers": 11
+    },
+    "cs_diff_at_14": {
+      "winners": 10,
+      "losers": 11
+    },
+    "starting_items": {
+      "winners": 10,
+      "losers": 11
+    },
+    "skill_order": {
+      "winners": 10,
+      "losers": 11
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.0,
+      "loser_share": 0.45454545454545453,
+      "gap": 0.45454545454545453,
+      "winner_games": 10,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "8135",
+      "winner_share": 0.5,
+      "loser_share": 0.7272727272727273,
+      "gap": 0.2272727272727273,
+      "winner_games": 10,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "8105",
+      "winner_share": 0.2,
+      "loser_share": 0.0,
+      "gap": 0.2,
+      "winner_games": 10,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "8210",
+      "winner_share": 0.0,
+      "loser_share": 0.18181818181818182,
+      "gap": 0.18181818181818182,
+      "winner_games": 10,
+      "loser_games": 11
+    }
+  ]
+}

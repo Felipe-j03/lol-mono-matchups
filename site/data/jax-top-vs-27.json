@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "champion_id": 24,
+  "champion_name": "Jax",
+  "role": "TOP",
+  "opponent_champion_id": 27,
+  "games": 20,
+  "wins": 8,
+  "losses": 12,
+  "min_per_side": 10,
+  "comparable": false,
+  "headline": null,
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 8,
+      "losers": 12
+    },
+    "cs_diff_at_14": {
+      "winners": 8,
+      "losers": 12
+    },
+    "starting_items": {
+      "winners": 8,
+      "losers": 12
+    },
+    "skill_order": {
+      "winners": 8,
+      "losers": 12
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": []
+}

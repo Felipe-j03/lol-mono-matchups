@@ -550,6 +550,22 @@
       "file": "jax-top-vs-41.json"
     },
     {
+      "opponent_champion_id": 27,
+      "games": 20,
+      "wins": 8,
+      "win_rate": 0.4,
+      "below_floor": false,
+      "file": "jax-top-vs-27.json"
+    },
+    {
+      "opponent_champion_id": 266,
+      "games": 29,
+      "wins": 14,
+      "win_rate": 0.4827586206896552,
+      "below_floor": false,
+      "file": "jax-top-vs-266.json"
+    },
+    {
       "opponent_champion_id": 85,
       "games": 66,
       "wins": 32,
@@ -590,6 +606,14 @@
       "file": "jax-top-vs-799.json"
     },
     {
+      "opponent_champion_id": 6,
+      "games": 23,
+      "wins": 12,
+      "win_rate": 0.5217391304347826,
+      "below_floor": false,
+      "file": "jax-top-vs-6.json"
+    },
+    {
       "opponent_champion_id": 80,
       "games": 44,
       "wins": 23,
@@ -604,6 +628,46 @@
       "win_rate": 0.5333333333333333,
       "below_floor": false,
       "file": "jax-top-vs-114.json"
+    },
+    {
+      "opponent_champion_id": 122,
+      "games": 28,
+      "wins": 15,
+      "win_rate": 0.5357142857142857,
+      "below_floor": false,
+      "file": "jax-top-vs-122.json"
+    },
+    {
+      "opponent_champion_id": 164,
+      "games": 22,
+      "wins": 12,
+      "win_rate": 0.5454545454545454,
+      "below_floor": false,
+      "file": "jax-top-vs-164.json"
+    },
+    {
+      "opponent_champion_id": 150,
+      "games": 23,
+      "wins": 13,
+      "win_rate": 0.5652173913043478,
+      "below_floor": false,
+      "file": "jax-top-vs-150.json"
+    },
+    {
+      "opponent_champion_id": 2,
+      "games": 27,
+      "wins": 16,
+      "win_rate": 0.5925925925925926,
+      "below_floor": false,
+      "file": "jax-top-vs-2.json"
+    },
+    {
+      "opponent_champion_id": 36,
+      "games": 28,
+      "wins": 17,
+      "win_rate": 0.6071428571428571,
+      "below_floor": false,
+      "file": "jax-top-vs-36.json"
     },
     {
       "opponent_champion_id": 86,
@@ -628,70 +692,6 @@
       "win_rate": 0.6935483870967742,
       "below_floor": false,
       "file": "jax-top-vs-897.json"
-    },
-    {
-      "opponent_champion_id": 266,
-      "games": 29,
-      "wins": 14,
-      "win_rate": 0.4827586206896552,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 36,
-      "games": 28,
-      "wins": 17,
-      "win_rate": 0.6071428571428571,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 122,
-      "games": 28,
-      "wins": 15,
-      "win_rate": 0.5357142857142857,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 2,
-      "games": 27,
-      "wins": 16,
-      "win_rate": 0.5925925925925926,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 6,
-      "games": 23,
-      "wins": 12,
-      "win_rate": 0.5217391304347826,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 150,
-      "games": 23,
-      "wins": 13,
-      "win_rate": 0.5652173913043478,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 164,
-      "games": 22,
-      "wins": 12,
-      "win_rate": 0.5454545454545454,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 27,
-      "games": 20,
-      "wins": 8,
-      "win_rate": 0.4,
-      "below_floor": true,
-      "file": null
     },
     {
       "opponent_champion_id": 8,

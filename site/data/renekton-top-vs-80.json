@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "champion_id": 58,
+  "champion_name": "Renekton",
+  "role": "TOP",
+  "opponent_champion_id": 80,
+  "games": 24,
+  "wins": 10,
+  "losses": 14,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": 5904.0,
+  "loser_gold_at_14": 5100.538461538462,
+  "winner_cs_diff_at_14": 19.2,
+  "loser_cs_diff_at_14": -1.8461538461538463,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 10,
+      "losers": 13
+    },
+    "cs_diff_at_14": {
+      "winners": 10,
+      "losers": 13
+    },
+    "starting_items": {
+      "winners": 10,
+      "losers": 14
+    },
+    "skill_order": {
+      "winners": 10,
+      "losers": 13
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 1
+  },
+  "divergences": [
+    {
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.2,
+      "loser_share": 0.7142857142857143,
+      "gap": 0.5142857142857142,
+      "winner_games": 10,
+      "loser_games": 14
+    },
+    {
+      "field": "rune",
+      "label": "8451",
+      "winner_share": 0.6,
+      "loser_share": 0.35714285714285715,
+      "gap": 0.24285714285714283,
+      "winner_games": 10,
+      "loser_games": 14
+    },
+    {
+      "field": "rune",
+      "label": "8242",
+      "winner_share": 0.3,
+      "loser_share": 0.5,
+      "gap": 0.2,
+      "winner_games": 10,
+      "loser_games": 14
+    },
+    {
+      "field": "rune",
+      "label": "8444",
+      "winner_share": 0.9,
+      "loser_share": 0.7142857142857143,
+      "gap": 0.18571428571428572,
+      "winner_games": 10,
+      "loser_games": 14
+    },
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.6,
+      "loser_share": 0.42857142857142855,
+      "gap": 0.17142857142857143,
+      "winner_games": 10,
+      "loser_games": 14
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.4,
+      "loser_share": 0.5714285714285714,
+      "gap": 0.17142857142857137,
+      "winner_games": 10,
+      "loser_games": 14
+    }
+  ]
+}

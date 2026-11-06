@@ -380,6 +380,54 @@
       "file": "gragas-top-vs-41.json"
     },
     {
+      "opponent_champion_id": 39,
+      "games": 20,
+      "wins": 9,
+      "win_rate": 0.45,
+      "below_floor": false,
+      "file": "gragas-top-vs-39.json"
+    },
+    {
+      "opponent_champion_id": 150,
+      "games": 21,
+      "wins": 10,
+      "win_rate": 0.47619047619047616,
+      "below_floor": false,
+      "file": "gragas-top-vs-150.json"
+    },
+    {
+      "opponent_champion_id": 86,
+      "games": 27,
+      "wins": 13,
+      "win_rate": 0.48148148148148145,
+      "below_floor": false,
+      "file": "gragas-top-vs-86.json"
+    },
+    {
+      "opponent_champion_id": 122,
+      "games": 24,
+      "wins": 12,
+      "win_rate": 0.5,
+      "below_floor": false,
+      "file": "gragas-top-vs-122.json"
+    },
+    {
+      "opponent_champion_id": 516,
+      "games": 24,
+      "wins": 12,
+      "win_rate": 0.5,
+      "below_floor": false,
+      "file": "gragas-top-vs-516.json"
+    },
+    {
+      "opponent_champion_id": 36,
+      "games": 22,
+      "wins": 11,
+      "win_rate": 0.5,
+      "below_floor": false,
+      "file": "gragas-top-vs-36.json"
+    },
+    {
       "opponent_champion_id": 799,
       "games": 39,
       "wins": 20,
@@ -394,6 +442,22 @@
       "win_rate": 0.53125,
       "below_floor": false,
       "file": "gragas-top-vs-164.json"
+    },
+    {
+      "opponent_champion_id": 98,
+      "games": 20,
+      "wins": 11,
+      "win_rate": 0.55,
+      "below_floor": false,
+      "file": "gragas-top-vs-98.json"
+    },
+    {
+      "opponent_champion_id": 904,
+      "games": 21,
+      "wins": 12,
+      "win_rate": 0.5714285714285714,
+      "below_floor": false,
+      "file": "gragas-top-vs-904.json"
     },
     {
       "opponent_champion_id": 266,
@@ -412,92 +476,28 @@
       "file": "gragas-top-vs-114.json"
     },
     {
-      "opponent_champion_id": 777,
-      "games": 29,
-      "wins": 20,
-      "win_rate": 0.6896551724137931,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 86,
-      "games": 27,
-      "wins": 13,
-      "win_rate": 0.48148148148148145,
-      "below_floor": true,
-      "file": null
-    },
-    {
       "opponent_champion_id": 126,
       "games": 27,
       "wins": 17,
       "win_rate": 0.6296296296296297,
-      "below_floor": true,
-      "file": null
+      "below_floor": false,
+      "file": "gragas-top-vs-126.json"
     },
     {
       "opponent_champion_id": 2,
       "games": 25,
       "wins": 16,
       "win_rate": 0.64,
-      "below_floor": true,
-      "file": null
+      "below_floor": false,
+      "file": "gragas-top-vs-2.json"
     },
     {
-      "opponent_champion_id": 122,
-      "games": 24,
-      "wins": 12,
-      "win_rate": 0.5,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 516,
-      "games": 24,
-      "wins": 12,
-      "win_rate": 0.5,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 36,
-      "games": 22,
-      "wins": 11,
-      "win_rate": 0.5,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 150,
-      "games": 21,
-      "wins": 10,
-      "win_rate": 0.47619047619047616,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 904,
-      "games": 21,
-      "wins": 12,
-      "win_rate": 0.5714285714285714,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 39,
-      "games": 20,
-      "wins": 9,
-      "win_rate": 0.45,
-      "below_floor": true,
-      "file": null
-    },
-    {
-      "opponent_champion_id": 98,
-      "games": 20,
-      "wins": 11,
-      "win_rate": 0.55,
-      "below_floor": true,
-      "file": null
+      "opponent_champion_id": 777,
+      "games": 29,
+      "wins": 20,
+      "win_rate": 0.6896551724137931,
+      "below_floor": false,
+      "file": "gragas-top-vs-777.json"
     },
     {
       "opponent_champion_id": 31,

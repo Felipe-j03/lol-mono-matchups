@@ -7,13 +7,13 @@
   "games": 35,
   "wins": 20,
   "losses": 15,
-  "min_per_side": 15,
+  "min_per_side": 10,
   "comparable": true,
-  "headline": "Sem partidas suficientes com timeline para comparar: ordem de habilidades.",
-  "winner_gold_at_14": null,
-  "loser_gold_at_14": null,
-  "winner_cs_diff_at_14": null,
-  "loser_cs_diff_at_14": null,
+  "headline": null,
+  "winner_gold_at_14": 5218.8421052631575,
+  "loser_gold_at_14": 5164.5,
+  "winner_cs_diff_at_14": 0.7894736842105263,
+  "loser_cs_diff_at_14": 7.857142857142857,
   "timeline_games": {
     "gold_at_14": {
       "winners": 19,
@@ -45,6 +45,15 @@
       "gap": 0.39999999999999997,
       "winner_games": 20,
       "loser_games": 15
+    },
+    {
+      "field": "skill_order",
+      "label": "Q > E > W",
+      "winner_share": 0.35,
+      "loser_share": 0.6428571428571429,
+      "gap": 0.2928571428571429,
+      "winner_games": 20,
+      "loser_games": 14
     },
     {
       "field": "starting_items",

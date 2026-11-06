@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "champion_id": 91,
+  "champion_name": "Talon",
+  "role": "MIDDLE",
+  "opponent_champion_id": 3,
+  "games": 26,
+  "wins": 15,
+  "losses": 11,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": 6105.733333333334,
+  "loser_gold_at_14": 5954.181818181818,
+  "winner_cs_diff_at_14": 1.2,
+  "loser_cs_diff_at_14": 12.818181818181818,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 15,
+      "losers": 11
+    },
+    "cs_diff_at_14": {
+      "winners": 15,
+      "losers": 11
+    },
+    "starting_items": {
+      "winners": 15,
+      "losers": 11
+    },
+    "skill_order": {
+      "winners": 15,
+      "losers": 11
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "boots",
+      "label": "3173",
+      "winner_share": 0.3333333333333333,
+      "loser_share": 0.6363636363636364,
+      "gap": 0.30303030303030304,
+      "winner_games": 15,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.4,
+      "loser_share": 0.18181818181818182,
+      "gap": 0.2181818181818182,
+      "winner_games": 15,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "8313",
+      "winner_share": 0.0,
+      "loser_share": 0.18181818181818182,
+      "gap": 0.18181818181818182,
+      "winner_games": 15,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "8135",
+      "winner_share": 0.5333333333333333,
+      "loser_share": 0.36363636363636365,
+      "gap": 0.16969696969696968,
+      "winner_games": 15,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.4666666666666667,
+      "loser_share": 0.6363636363636364,
+      "gap": 0.16969696969696968,
+      "winner_games": 15,
+      "loser_games": 11
+    },
+    {
+      "field": "rune",
+      "label": "8345",
+      "winner_share": 0.3333333333333333,
+      "loser_share": 0.18181818181818182,
+      "gap": 0.1515151515151515,
+      "winner_games": 15,
+      "loser_games": 11
+    }
+  ]
+}

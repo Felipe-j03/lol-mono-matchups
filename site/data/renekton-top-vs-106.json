@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "champion_id": 58,
+  "champion_name": "Renekton",
+  "role": "TOP",
+  "opponent_champion_id": 106,
+  "games": 23,
+  "wins": 15,
+  "losses": 8,
+  "min_per_side": 10,
+  "comparable": false,
+  "headline": null,
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 15,
+      "losers": 8
+    },
+    "cs_diff_at_14": {
+      "winners": 15,
+      "losers": 8
+    },
+    "starting_items": {
+      "winners": 15,
+      "losers": 8
+    },
+    "skill_order": {
+      "winners": 15,
+      "losers": 8
+    }
+  },
+  "games_without_boots": {
+    "winners": 1,
+    "losers": 0
+  },
+  "divergences": []
+}

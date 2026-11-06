@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "champion_id": 91,
+  "champion_name": "Talon",
+  "role": "MIDDLE",
+  "opponent_champion_id": 55,
+  "games": 23,
+  "wins": 13,
+  "losses": 10,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": 6450.692307692308,
+  "loser_gold_at_14": 5848.8,
+  "winner_cs_diff_at_14": 17.076923076923077,
+  "loser_cs_diff_at_14": 11.2,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 13,
+      "losers": 10
+    },
+    "cs_diff_at_14": {
+      "winners": 13,
+      "losers": 10
+    },
+    "starting_items": {
+      "winners": 13,
+      "losers": 10
+    },
+    "skill_order": {
+      "winners": 13,
+      "losers": 10
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.15384615384615385,
+      "loser_share": 0.6,
+      "gap": 0.4461538461538461,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8299",
+      "winner_share": 0.46153846153846156,
+      "loser_share": 0.8,
+      "gap": 0.3384615384615385,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "skill_order",
+      "label": "W > Q > W",
+      "winner_share": 0.3076923076923077,
+      "loser_share": 0.0,
+      "gap": 0.3076923076923077,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "5011",
+      "winner_share": 0.6153846153846154,
+      "loser_share": 0.9,
+      "gap": 0.2846153846153846,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "5001",
+      "winner_share": 0.38461538461538464,
+      "loser_share": 0.1,
+      "gap": 0.2846153846153846,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8010",
+      "winner_share": 0.46153846153846156,
+      "loser_share": 0.7,
+      "gap": 0.2384615384615384,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8105",
+      "winner_share": 0.23076923076923078,
+      "loser_share": 0.0,
+      "gap": 0.23076923076923078,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.07692307692307693,
+      "loser_share": 0.3,
+      "gap": 0.22307692307692306,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8140",
+      "winner_share": 0.3076923076923077,
+      "loser_share": 0.1,
+      "gap": 0.2076923076923077,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8210",
+      "winner_share": 0.0,
+      "loser_share": 0.2,
+      "gap": 0.2,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "skill_order",
+      "label": "W > Q > Q",
+      "winner_share": 0.0,
+      "loser_share": 0.2,
+      "gap": 0.2,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8143",
+      "winner_share": 1.0,
+      "loser_share": 0.8,
+      "gap": 0.19999999999999996,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8112",
+      "winner_share": 0.46153846153846156,
+      "loser_share": 0.3,
+      "gap": 0.16153846153846158,
+      "winner_games": 13,
+      "loser_games": 10
+    },
+    {
+      "field": "boots",
+      "label": "3174",
+      "winner_share": 0.15384615384615385,
+      "loser_share": 0.0,
+      "gap": 0.15384615384615385,
+      "winner_games": 13,
+      "loser_games": 10
+    }
+  ]
+}

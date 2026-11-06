@@ -48,8 +48,8 @@ def test_loads_example_config_with_spec_defaults():
     assert cfg.min_share == 0.50
     assert cfg.min_games == 25
     assert cfg.min_tier == "DIAMOND"
-    assert cfg.matchup_min_games == 30
-    assert cfg.delta_min_per_side == 15
+    assert cfg.matchup_min_games == 20
+    assert cfg.delta_min_per_side == 10
     assert cfg.regions == ("br1", "kr", "euw1", "na1")
     assert Target(91, "Talon", "MIDDLE") in cfg.targets
     assert len(cfg.targets) == 5

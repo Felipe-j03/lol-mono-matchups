@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "champion_id": 24,
+  "champion_name": "Jax",
+  "role": "TOP",
+  "opponent_champion_id": 266,
+  "games": 29,
+  "wins": 14,
+  "losses": 15,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": 5367.142857142857,
+  "loser_gold_at_14": 4698.533333333334,
+  "winner_cs_diff_at_14": 2.4285714285714284,
+  "loser_cs_diff_at_14": -14.866666666666667,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 14,
+      "losers": 15
+    },
+    "cs_diff_at_14": {
+      "winners": 14,
+      "losers": 15
+    },
+    "starting_items": {
+      "winners": 14,
+      "losers": 15
+    },
+    "skill_order": {
+      "winners": 14,
+      "losers": 15
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 0
+  },
+  "divergences": [
+    {
+      "field": "boots",
+      "label": "3158",
+      "winner_share": 0.5714285714285714,
+      "loser_share": 0.2,
+      "gap": 0.3714285714285714,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "5005",
+      "winner_share": 1.0,
+      "loser_share": 0.6666666666666666,
+      "gap": 0.33333333333333337,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.42857142857142855,
+      "loser_share": 0.13333333333333333,
+      "gap": 0.2952380952380952,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8347",
+      "winner_share": 0.6428571428571429,
+      "loser_share": 0.4,
+      "gap": 0.24285714285714288,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8313",
+      "winner_share": 0.2857142857142857,
+      "loser_share": 0.06666666666666667,
+      "gap": 0.21904761904761905,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "5001",
+      "winner_share": 0.21428571428571427,
+      "loser_share": 0.0,
+      "gap": 0.21428571428571427,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8010",
+      "winner_share": 0.0,
+      "loser_share": 0.2,
+      "gap": 0.2,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8017",
+      "winner_share": 0.21428571428571427,
+      "loser_share": 0.4,
+      "gap": 0.18571428571428575,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.2857142857142857,
+      "loser_share": 0.4666666666666667,
+      "gap": 0.18095238095238098,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8237",
+      "winner_share": 0.6428571428571429,
+      "loser_share": 0.4666666666666667,
+      "gap": 0.17619047619047623,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "boots",
+      "label": "3047",
+      "winner_share": 0.35714285714285715,
+      "loser_share": 0.5333333333333333,
+      "gap": 0.17619047619047618,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8275",
+      "winner_share": 0.5714285714285714,
+      "loser_share": 0.4,
+      "gap": 0.17142857142857137,
+      "winner_games": 14,
+      "loser_games": 15
+    },
+    {
+      "field": "rune",
+      "label": "8210",
+      "winner_share": 0.5,
+      "loser_share": 0.3333333333333333,
+      "gap": 0.16666666666666669,
+      "winner_games": 14,
+      "loser_games": 15
+    }
+  ]
+}

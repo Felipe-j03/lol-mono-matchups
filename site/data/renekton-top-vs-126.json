@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "champion_id": 58,
+  "champion_name": "Renekton",
+  "role": "TOP",
+  "opponent_champion_id": 126,
+  "games": 22,
+  "wins": 12,
+  "losses": 10,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": null,
+  "loser_gold_at_14": null,
+  "winner_cs_diff_at_14": null,
+  "loser_cs_diff_at_14": null,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 12,
+      "losers": 9
+    },
+    "cs_diff_at_14": {
+      "winners": 12,
+      "losers": 9
+    },
+    "starting_items": {
+      "winners": 12,
+      "losers": 10
+    },
+    "skill_order": {
+      "winners": 12,
+      "losers": 10
+    }
+  },
+  "games_without_boots": {
+    "winners": 0,
+    "losers": 1
+  },
+  "divergences": [
+    {
+      "field": "skill_order",
+      "label": "Q > E > W",
+      "winner_share": 0.25,
+      "loser_share": 0.6,
+      "gap": 0.35,
+      "winner_games": 12,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "9104",
+      "winner_share": 0.5833333333333334,
+      "loser_share": 0.8,
+      "gap": 0.21666666666666667,
+      "winner_games": 12,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "9105",
+      "winner_share": 0.4166666666666667,
+      "loser_share": 0.2,
+      "gap": 0.21666666666666667,
+      "winner_games": 12,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8005",
+      "winner_share": 0.5833333333333334,
+      "loser_share": 0.4,
+      "gap": 0.18333333333333335,
+      "winner_games": 12,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8451",
+      "winner_share": 0.5833333333333334,
+      "loser_share": 0.4,
+      "gap": 0.18333333333333335,
+      "winner_games": 12,
+      "loser_games": 10
+    },
+    {
+      "field": "rune",
+      "label": "8010",
+      "winner_share": 0.4166666666666667,
+      "loser_share": 0.6,
+      "gap": 0.1833333333333333,
+      "winner_games": 12,
+      "loser_games": 10
+    }
+  ]
+}

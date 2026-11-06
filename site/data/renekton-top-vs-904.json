@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "champion_id": 58,
+  "champion_name": "Renekton",
+  "role": "TOP",
+  "opponent_champion_id": 904,
+  "games": 23,
+  "wins": 11,
+  "losses": 12,
+  "min_per_side": 10,
+  "comparable": true,
+  "headline": null,
+  "winner_gold_at_14": 5204.7,
+  "loser_gold_at_14": 4958.25,
+  "winner_cs_diff_at_14": 11.7,
+  "loser_cs_diff_at_14": 10.416666666666666,
+  "timeline_games": {
+    "gold_at_14": {
+      "winners": 10,
+      "losers": 12
+    },
+    "cs_diff_at_14": {
+      "winners": 10,
+      "losers": 12
+    },
+    "starting_items": {
+      "winners": 11,
+      "losers": 12
+    },
+    "skill_order": {
+      "winners": 11,
+      "losers": 12
+    }
+  },
+  "games_without_boots": {
+    "winners": 1,
+    "losers": 1
+  },
+  "divergences": [
+    {
+      "field": "skill_order",
+      "label": "Q > W > E",
+      "winner_share": 0.45454545454545453,
+      "loser_share": 0.08333333333333333,
+      "gap": 0.3712121212121212,
+      "winner_games": 11,
+      "loser_games": 12
+    },
+    {
+      "field": "rune",
+      "label": "8242",
+      "winner_share": 0.5454545454545454,
+      "loser_share": 0.25,
+      "gap": 0.2954545454545454,
+      "winner_games": 11,
+      "loser_games": 12
+    },
+    {
+      "field": "starting_items",
+      "label": "3340",
+      "winner_share": 0.5454545454545454,
+      "loser_share": 0.8333333333333334,
+      "gap": 0.28787878787878796,
+      "winner_games": 11,
+      "loser_games": 12
+    },
+    {
+      "field": "rune",
+      "label": "5005",
+      "winner_share": 0.0,
+      "loser_share": 0.16666666666666666,
+      "gap": 0.16666666666666666,
+      "winner_games": 11,
+      "loser_games": 12
+    },
+    {
+      "field": "rune",
+      "label": "8453",
+      "winner_share": 0.0,
+      "loser_share": 0.16666666666666666,
+      "gap": 0.16666666666666666,
+      "winner_games": 11,
+      "loser_games": 12
+    },
+    {
+      "field": "skill_order",
+      "label": "W > E > Q",
+      "winner_share": 0.0,
+      "loser_share": 0.16666666666666666,
+      "gap": 0.16666666666666666,
+      "winner_games": 11,
+      "loser_games": 12
+    },
+    {
+      "field": "rune",
+      "label": "8473",
+      "winner_share": 0.8181818181818182,
+      "loser_share": 0.6666666666666666,
+      "gap": 0.1515151515151516,
+      "winner_games": 11,
+      "loser_games": 12
+    }
+  ]
+}
