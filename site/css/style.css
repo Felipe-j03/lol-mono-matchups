@@ -270,3 +270,20 @@ dl.runes dt:first-child + dd { font-size: 1.15rem; font-weight: 600; }
   main { max-width: 76rem; }
   .colunas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
+
+/* O `nowrap` de .com-icone serve a frase corrida (feiticos, itens iniciais),
+   onde separar o icone do nome no fim da linha ficaria estranho. Dentro do
+   ladrilho, de largura fixa, ele empurrava o nome para fora da caixa: aqui o
+   icone vai ACIMA do nome e o nome quebra. */
+.items li .com-icone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: normal;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.items { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); }
+.items li { min-width: 0; overflow-wrap: anywhere; }
