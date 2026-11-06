@@ -9,13 +9,14 @@ import {
   runeName,
   shardName,
   spellIcon,
+  itemGold,
   spellName,
 } from "../js/ddragon.js";
 
 const PAYLOADS = {
   "item.json": {
     data: {
-      "3020": { name: "Sorcerer's Shoes", image: { full: "3020.png" } },
+      "3020": { name: "Sorcerer's Shoes", image: { full: "3020.png" }, gold: { total: 1100 } },
     },
   },
   "champion.json": {
@@ -163,4 +164,10 @@ Deno.test("loadDdragon pede os dados em pt_BR e em nenhum outro idioma", async (
   await loadDdragon("16.21.1", (u) => { vistas.push(u); return fakeFetch(u); });
   assert(vistas.every((u) => u.includes("/data/pt_BR/")));
   assert(!vistas.some((u) => u.includes("en_US")));
+});
+
+Deno.test("itemGold devolve o custo total, e null para id desconhecido", async () => {
+  const dict = await loadDdragon("16.21.1", fakeFetch);
+  assertEquals(itemGold(dict, 3020), 1100);
+  assertEquals(itemGold(dict, 9999), null);
 });

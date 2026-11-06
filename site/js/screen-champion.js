@@ -7,6 +7,7 @@
 import {
   championIcon,
   championName,
+  itemGold,
   itemIcon,
   itemName,
   runeIcon,
@@ -67,15 +68,22 @@ function paginaDeRunas(runas, dict) {
 const ITENS_PISO_PERCENTUAL = 5;
 const ITENS_TETO = 12;
 
-function itensVisiveis(b) {
+// A SELECAO e por frequencia e a EXIBICAO e por preco. Os dois passos sao
+// distintos de proposito: ordenar por preco e so entao cortar 12 mostraria os
+// doze itens mais baratos do inventario, que nao diz nada. Item sem preco no
+// dicionario vai para o fim, em vez de fingir que custa zero.
+function itensVisiveis(b, dict) {
   const acima = b.item_frequency.filter((i) =>
     i.games * 100 >= b.games * ITENS_PISO_PERCENTUAL
   );
-  return { mostrados: acima.slice(0, ITENS_TETO), total: b.item_frequency.length };
+  const mostrados = acima.slice(0, ITENS_TETO).toSorted((x, y) =>
+    (itemGold(dict, x.item_id) ?? Infinity) - (itemGold(dict, y.item_id) ?? Infinity)
+  );
+  return { mostrados, total: b.item_frequency.length };
 }
 
 function base(b, dict) {
-  const { mostrados, total } = itensVisiveis(b);
+  const { mostrados, total } = itensVisiveis(b, dict);
   const truncamento = mostrados.length === total ? "" : `
     <p class="note">Mostrando ${mostrados.length} de ${total} itens: os que aparecem em ao menos ${ITENS_PISO_PERCENTUAL}% das ${b.games} ${
     partidas(b.games)
@@ -100,7 +108,8 @@ function base(b, dict) {
     }</p>
     <h3>Itens no inventário ao fim da partida</h3>
     <p class="note">Inventário no fim da partida, item por item — não a build completa:
-    inclui componente e consumível.</p>
+    inclui componente e consumível. Do mais barato ao mais caro; os mostrados são os
+    mais jogados.</p>
     <ul class="items">
       ${itens}
     </ul>${truncamento}

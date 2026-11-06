@@ -351,3 +351,58 @@ Deno.test("URL do icone passa por escapeHtml", () => {
   const html = renderChampion(TARGET, dict);
   assert(!html.includes("<script>"));
 });
+
+// Dicionario com preco: o DICT geral nao tem, de proposito, para nao mexer na
+// ordem que os testes antigos observam.
+const DICT_COM_PRECO = {
+  ...DICT,
+  items: new Map([[1, "Espada Longa"], [2, "Botas"], [3, "Item Caro"], [4, "Barato Raro"]]),
+  itemGold: new Map([[1, 350], [2, 900], [3, 3000], [4, 100]]),
+};
+
+const alvoComItens = (freq) => ({
+  ...TARGET,
+  baseline: { ...TARGET.baseline, games: 1000, item_frequency: freq },
+});
+
+Deno.test("itens saem do mais barato ao mais caro, nao na ordem de frequencia", () => {
+  // Entram por frequencia nesta ordem: Caro (500), Espada (300), Botas (200).
+  const html = renderChampion(
+    alvoComItens([{ item_id: 3, games: 500 }, { item_id: 1, games: 300 }, { item_id: 2, games: 200 }]),
+    DICT_COM_PRECO,
+  );
+  const pos = (n) => html.indexOf(n);
+  assert(pos("Espada Longa") < pos("Botas"));      // 350 < 900
+  assert(pos("Botas") < pos("Item Caro"));         // 900 < 3000
+  // e o mais frequente NAO e o primeiro, que e o ponto
+  assert(pos("Item Caro") > pos("Espada Longa"));
+});
+
+Deno.test("a selecao continua por frequencia: ordenar antes de cortar seria bug", () => {
+  // O teto e 12. Monto 15 itens acima do piso de 5%: doze caros e muito
+  // jogados, e tres baratissimos jogados menos (mas ainda acima do piso).
+  //
+  // Correto: o corte pega os 12 mais JOGADOS (os caros) e so entao ordena por
+  // preco. Bug: ordenar os 15 por preco e entao cortar 12 traz os tres baratos
+  // e joga fora tres itens que as pessoas de fato usam.
+  //
+  // A fixture precisa de mais de 12 itens, senao o teto nunca entra em acao e
+  // o teste passa com as duas implementacoes.
+  const caros = Array.from({ length: 12 }, (_, k) => ({ item_id: 100 + k, games: 500 }));
+  const baratos = [{ item_id: 200, games: 60 }, { item_id: 201, games: 60 }, { item_id: 202, games: 60 }];
+  const dict = {
+    ...DICT,
+    items: new Map([
+      ...caros.map((c, k) => [c.item_id, `Caro ${k}`]),
+      [200, "Barato A"], [201, "Barato B"], [202, "Barato C"],
+    ]),
+    itemGold: new Map([
+      ...caros.map((c) => [c.item_id, 3000]),
+      [200, 100], [201, 100], [202, 100],
+    ]),
+  };
+  const html = renderChampion(alvoComItens([...caros, ...baratos]), dict);
+  assert(html.includes("Caro 0"));
+  assert(html.includes("Caro 11"));
+  for (const n of ["Barato A", "Barato B", "Barato C"]) assert(!html.includes(n));
+});

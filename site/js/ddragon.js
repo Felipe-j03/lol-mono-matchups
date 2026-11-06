@@ -14,11 +14,13 @@ async function carregarJson(fetchFn, url) {
 function indexarItens(payload) {
   const nomes = new Map();
   const imagens = new Map();
+  const precos = new Map();
   for (const [id, item] of Object.entries(payload.data)) {
     nomes.set(Number(id), item.name);
     if (item.image?.full) imagens.set(Number(id), item.image.full);
+    if (typeof item.gold?.total === "number") precos.set(Number(id), item.gold.total);
   }
-  return { nomes, imagens };
+  return { nomes, imagens, precos };
 }
 
 function indexarCampeoes(payload) {
@@ -75,6 +77,7 @@ export async function loadDdragon(version, fetchFn) {
     version,
     items: i.nomes,
     itemImages: i.imagens,
+    itemGold: i.precos,
     runes: r.nomes,
     runeIcons: r.icones,
     champions: indexarCampeoes(campeoes),
@@ -85,6 +88,13 @@ export async function loadDdragon(version, fetchFn) {
 
 export function itemName(dict, id) {
   return dict.items.get(id) ?? String(id);
+}
+
+// Custo total em ouro. Devolve null, e nao 0, para id desconhecido: 0 e um
+// preco valido (itens de inicio de temporada ja tiveram) e ordenar por ele
+// poria o desconhecido antes do mais barato de verdade.
+export function itemGold(dict, id) {
+  return dict.itemGold?.get(id) ?? null;
 }
 
 export function runeName(dict, id) {
